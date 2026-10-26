@@ -3,6 +3,8 @@
 /out/
 CMakeUserPresetes.json
 CmakeLists.txt.DotSettings.user
+compile_commands.json
+vsxmake2026/
 
 # Visual Studio
 .vs/
