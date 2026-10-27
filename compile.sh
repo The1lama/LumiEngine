@@ -11,10 +11,11 @@ then
 else 
   "${RED}Error: xmake not installed${NC}"
   read -rsp $'Press enter to continue...\n'
+  exit 1;
 fi
 
-xmake || { echo "${RED}Failed to compile program${NC}"; read -rsp $'Press enter to continue...\n'; }
+xmake || { echo "${RED}Failed to compile program${NC}"; read -rsp $'Press enter to continue...\n'; exit 1; }
 
 echo "${GREEN}Compile succsessful program${NC}"
 
-xmake run || { echo "${RED}Failed to Run program${NC}"; read -rsp $'Press enter to continue...\n'; }
+xmake run || { echo "${RED}Failed to Run program${NC}"; read -rsp $'Press enter to continue...\n'; exit 1; }
