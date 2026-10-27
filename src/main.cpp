@@ -12,6 +12,12 @@ void framebufferSizeCallback(GLFWwindow *, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
+struct EditorSettings {
+  int windowWidth = 640;
+  int windowHeight = 480;
+  const char *windowTitle = "LumiEngine";
+};
+
 int main(int argc, char **argv) {
 
   glfwSetErrorCallback(glfwErrorCallback);
@@ -26,9 +32,12 @@ int main(int argc, char **argv) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+  EditorSettings settings;
+
   /* Create a windowed mode window and its OpenGL context */
   GLFWwindow *window =
-      glfwCreateWindow(640, 480, "LumiEngine", nullptr, nullptr);
+      glfwCreateWindow(settings.windowWidth, settings.windowHeight,
+                       settings.windowTitle, nullptr, nullptr);
 
   if (!window) {
     std::cout << "Something on window initialize went wrong" << "\n";
@@ -105,6 +114,7 @@ int main(int argc, char **argv) {
     glfwPollEvents();
   }
 
+  basicShader.DeleteShader();
   glDeleteBuffers(1, &VBO);
   glDeleteVertexArrays(1, &VAO);
 
