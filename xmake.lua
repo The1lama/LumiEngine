@@ -28,10 +28,12 @@ add_requires("glad v0.1.36", {
 	},
 })
 
+add_requires("glm 1.0.3")
+
 target("LumiEngine")
 set_kind("binary")
 add_files("src/**.cpp")
-add_packages("glfw", "glad")
+add_packages("glfw", "glad", "glm")
 set_languages("c++17")
 
 after_build(function(target)

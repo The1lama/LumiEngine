@@ -3,11 +3,21 @@
 layout (location = 0) in vec3 aPosition;
 layout (location = 1) in vec3 aColor;
 
+uniform float xPosOffset;
+uniform float yPosOffset;
+uniform float xScale;
+uniform float yScale;
+
+uniform vec3 uColor;
+
 out vec3 vertexColor;
 
 void main(){
-  vertexColor = aColor;
+  vertexColor = uColor;
 
-  gl_Position = vec4(aPosition, 1.0);
+  float newX = (aPosition.x * xScale) + xPosOffset;
+  float newY = (aPosition.y * yScale) + yPosOffset;
+
+  gl_Position = vec4(newX, newY, 1.0, 1.0);
 }
 

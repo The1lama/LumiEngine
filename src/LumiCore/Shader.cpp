@@ -1,17 +1,31 @@
 #include "Shader.h"
 
+#include "glm/gtc/type_ptr.hpp"
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
 
 Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
-  ID = createShaderProgram(vertexPath, fragmentPath);
+  m_ID = createShaderProgram(vertexPath, fragmentPath);
 }
 Shader::~Shader() { DeleteShader(); }
 
-void Shader::Use() const { glUseProgram(ID); }
+void Shader::Use() const { glUseProgram(m_ID); }
 
-void Shader::DeleteShader() const { glDeleteProgram(ID); }
+void Shader::DeleteShader() const { glDeleteProgram(m_ID); }
+
+///////// Set Uniforms /////////
+
+void Shader::SetFloat(const std::string &name, float value) const {
+  glUniform1f(glGetUniformLocation(m_ID, name.c_str()), value);
+}
+
+void Shader::SetVec3(const std::string &name, glm::vec3 value) const {
+  glUniform3fv(glGetUniformLocation(m_ID, name.c_str()), 1,
+               glm::value_ptr(value));
+}
+
+///////// Set Uniforms /////////
 
 ///////// Initialize code section /////////
 
