@@ -30,7 +30,7 @@ add_requires("glad v0.1.36", {
 
 target("LumiEngine")
 set_kind("binary")
-add_files("src/*.cpp")
+add_files("src/**.cpp")
 add_packages("glfw", "glad")
 set_languages("c++17")
 
