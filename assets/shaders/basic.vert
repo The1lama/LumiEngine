@@ -9,15 +9,23 @@ uniform float xScale;
 uniform float yScale;
 
 uniform vec3 uColor;
+uniform float uRotationAngle;
 
 out vec3 vertexColor;
 
 void main(){
   vertexColor = uColor;
+  const float w = radians(uRotationAngle);
+
+  // Rotation matrix
+  mat3 A = mat3(cos(w), -sin(w), 0.0,
+                sin(w),  cos(w), 0.0,
+                   0.0,     0.0, 0.0);
 
   float newX = (aPosition.x * xScale) + xPosOffset;
   float newY = (aPosition.y * yScale) + yPosOffset;
 
-  gl_Position = vec4(newX, newY, 1.0, 1.0);
+  vec3 aPos = vec3(newX, newY, 1.0);
+  gl_Position = vec4(A*aPos, 1.0);
 }
 

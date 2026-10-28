@@ -39,7 +39,7 @@ unsigned int triangleVBO, triangleVAO, triangleEBO;
 
 void DrawTriangle(Shader &shader, const glm::vec2 xyOffsets,
                   const glm::vec2 xyScale, const glm::vec3 color,
-                  const float runningTime) {
+                  const float runningTime, const float rotationAngle) {
   glBindVertexArray(triangleVAO);
 
   shader.SetFloat("uTime", runningTime);
@@ -49,6 +49,7 @@ void DrawTriangle(Shader &shader, const glm::vec2 xyOffsets,
   shader.SetFloat("xScale", xyScale.x);
   shader.SetFloat("yScale", xyScale.y);
   shader.SetVec3("uColor", color);
+  shader.SetFloat("uRotationAngle", rotationAngle);
 
   glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(triangleIndicies.size()),
                  GL_UNSIGNED_INT, nullptr);
@@ -57,7 +58,7 @@ void DrawTriangle(Shader &shader, const glm::vec2 xyOffsets,
 }
 void DrawQuad(Shader &shader, const glm::vec2 xyOffsets,
               const glm::vec2 xyScale, const glm::vec3 color,
-              const float runningTime) {
+              const float runningTime, const float rotationAngle) {
   glBindVertexArray(quadVAO);
 
   shader.SetFloat("uTime", runningTime);
@@ -67,6 +68,7 @@ void DrawQuad(Shader &shader, const glm::vec2 xyOffsets,
   shader.SetFloat("xScale", xyScale.x);
   shader.SetFloat("yScale", xyScale.y);
   shader.SetVec3("uColor", color);
+  shader.SetFloat("uRotationAngle", rotationAngle);
 
   glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(quadIndicies.size()),
                  GL_UNSIGNED_INT, nullptr);
@@ -217,19 +219,19 @@ int main() {
 
     // Facade
     DrawQuad(basicShader, glm::vec2(0, -.15), glm::vec2(1.08, .57), blackColor,
-             runningTime);
+             runningTime, 0);
     // Roof
     DrawTriangle(basicShader, glm::vec2(0, .42), glm::vec2(1.18, 0.6),
-                 bToggleRoofColor ? redColor : blueColor, runningTime + .1);
+                 bToggleRoofColor ? redColor : blueColor, runningTime + .3, 0);
     // Door
-    DrawQuad(basicShader, glm::vec2(0, -.285), glm::vec2(.17, .3), blueColor,
-             1);
+    DrawQuad(basicShader, glm::vec2(0, -.285), glm::vec2(.17, .3), blueColor, 1,
+             0);
     // Window Left
     DrawQuad(basicShader, glm::vec2(-.33, -.08), glm::vec2(.20, .20), redColor,
-             1);
+             1, -2);
     // Window Right
     DrawQuad(basicShader, glm::vec2(.33, -.15), glm::vec2(.10, .20), redColor,
-             runningTime + 0.4);
+             runningTime + 0.4, 12);
 
     glfwSwapBuffers(window);
     /* Poll for and process events */
