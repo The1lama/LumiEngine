@@ -1,10 +1,14 @@
 #include <GLFW/glfw3.h>
-#include <fstream>
 #include <glad/glad.h>
 
+#include "LumiCore/2D/Quad.h"
+#include "LumiCore/2D/Triangle.h"
+#include "LumiCore/Mesh.h"
+#include "LumiCore/Shader.h"
+#include "glm/ext/vector_float2.hpp"
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 #include <iostream>
-#include <sstream>
-#include <stdexcept>
 
 void glfwErrorCallback(int error, const char *description) {
   std::cout << "GLFW error (" << error << "): " << description << "\n";
@@ -14,80 +18,34 @@ void framebufferSizeCallback(GLFWwindow *, int width, int height) {
   glViewport(0, 0, width, height);
 }
 
-std::string readTextFile(const std::string &path) {
-  std::ifstream file(path);
-  if (!file)
-    throw std::runtime_error("Could not open file: " + path);
+struct EditorSettings {
+  int windowWidth = 640;
+  int windowHeight = 480;
+  const char *windowTitle = "LumiEngine";
+};
 
-  std::ostringstream contents;
-  contents << file.rdbuf();
-  return contents.str();
+void DrawTriangle(Shader &shader, Mesh &mesh, const float runningTime) {
+  mesh.SetTime(runningTime);
+  mesh.Render(shader);
+}
+void DrawQuad(Shader &shader, Mesh &mesh, const float runningTime) {
+  mesh.SetTime(runningTime);
+  mesh.Render(shader);
 }
 
-GLuint compileShader(GLenum type, const std::string &source,
-                     const std::string &label) {
-  const GLuint shader = glCreateShader(type);
-  const char *sourcePtr = source.c_str();
-
-  glShaderSource(shader, 1, &sourcePtr, nullptr);
-  glCompileShader(shader);
-
-  GLint success = GL_FALSE;
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-
-  if (success == GL_FALSE) {
-    GLint logLenght = 0;
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLenght);
-
-    std::string log(static_cast<std::size_t>(logLenght), '\0');
-    glGetShaderInfoLog(shader, logLenght, nullptr, log.data());
-
-    glDeleteShader(shader);
-    throw std::runtime_error("Shader compilation failed (" + label + "):\n" +
-                             log);
+bool processInput(GLFWwindow *window, bool &bToggleColor) {
+  bool hasPressed = false;
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+    bToggleColor = !bToggleColor;
+    hasPressed = true;
   }
-  return shader;
+  return hasPressed;
 }
 
-GLuint createShaderProgram(const std::string &vertexPath,
-                           const std::string &fragmentPath) {
-  const std::string vertexSource = readTextFile(vertexPath);
-  const std::string fragmentSource = readTextFile(fragmentPath);
-
-  const GLuint vertexShader =
-      compileShader(GL_VERTEX_SHADER, vertexSource, vertexPath);
-
-  const GLuint fragmentShader =
-      compileShader(GL_FRAGMENT_SHADER, fragmentSource, fragmentPath);
-
-  const GLuint program = glCreateProgram();
-  glAttachShader(program, vertexShader);
-  glAttachShader(program, fragmentShader);
-  glLinkProgram(program);
-
-  glDeleteShader(vertexShader);
-  glDeleteShader(fragmentShader);
-
-  GLint success = GL_FALSE;
-  glGetProgramiv(program, GL_LINK_STATUS, &success);
-
-  if (success == GL_FALSE) {
-    GLint logLenght = 0;
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLenght);
-
-    std::string log(static_cast<std::size_t>(logLenght), '\0');
-    glGetProgramInfoLog(program, logLenght, nullptr, log.data());
-
-    glDeleteProgram(program);
-    throw std::runtime_error("Shader program link failed:\n" + log);
-  }
-  return program;
-}
-
-int main(int argc, char **argv) {
-  std::cout << "hello world!" << std::endl;
+int main() {
 
   glfwSetErrorCallback(glfwErrorCallback);
+
   /* Initialize the library */
   if (!glfwInit()) {
     std::cout << "Failed to initialize GLFW.\n";
@@ -98,9 +56,12 @@ int main(int argc, char **argv) {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+  EditorSettings settings;
+
   /* Create a windowed mode window and its OpenGL context */
   GLFWwindow *window =
-      glfwCreateWindow(640, 480, "LumiEngine", nullptr, nullptr);
+      glfwCreateWindow(settings.windowWidth, settings.windowHeight,
+                       settings.windowTitle, nullptr, nullptr);
 
   if (!window) {
     std::cout << "Something on window initialize went wrong" << "\n";
@@ -123,74 +84,104 @@ int main(int argc, char **argv) {
 
   ///////////////
 
-  float vertices[] = {// Position // Color
-                      -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f, 0.5f, -0.5f, 0.0f,
-                      0.0f,  1.0f,  0.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.0f,  1.0f};
+  /// Colors ///
+  glm::vec3 redColor = glm::vec3(1.0f, 0.0f, 0.0f);
+  glm::vec3 blueColor = glm::vec3(0.0f, 0.0f, 1.0f);
+  glm::vec3 blackColor = glm::vec3(0.0f, 0.0f, 0.0f);
 
-  unsigned int VBO, VAO;
-  glGenBuffers(1, &VBO);
-  glGenVertexArrays(1, &VAO);
+  // Roof
+  Triangle roofTriangle;
+  roofTriangle.SetOffset(glm::vec2(0, .42f));
+  roofTriangle.SetScale(glm::vec2(1.18f, .6f));
+  roofTriangle.SetAngle(0);
 
-  glBindVertexArray(VAO);
+  // Facade
+  Quad facadeQuad;
+  facadeQuad.SetOffset(glm::vec2(.00f, -.15f));
+  facadeQuad.SetScale(glm::vec2(1.08f, .57f));
+  facadeQuad.SetAngle(0);
+  facadeQuad.SetColor(blackColor);
 
-  // Create VBO
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+  // Door
+  Quad doorQuad;
+  doorQuad.SetOffset(glm::vec2(.00f, -.285f));
+  doorQuad.SetScale(glm::vec2(.17f, .30f));
+  doorQuad.SetAngle(0);
+  doorQuad.SetColor(redColor);
 
-  constexpr GLsizei stride = 6 * sizeof(float);
+  // Window Left
+  Quad leftWindowQuad;
+  leftWindowQuad.SetOffset(glm::vec2(-.33, -.08f));
+  leftWindowQuad.SetScale(glm::vec2(.20f, .20f));
+  leftWindowQuad.SetAngle(-2);
+  leftWindowQuad.SetColor(blueColor);
 
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
-                        static_cast<void *>(0));
-  glEnableVertexAttribArray(0);
+  // Window Right
+  Quad rightWindowQuad;
+  rightWindowQuad.SetOffset(glm::vec2(.33, -.15f));
+  rightWindowQuad.SetScale(glm::vec2(.10f, .20f));
+  rightWindowQuad.SetAngle(12);
+  rightWindowQuad.SetColor(blueColor);
 
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
-                        reinterpret_cast<void *>(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
+  ///////////////
 
-  glBindVertexArray(0);
-
-  GLuint shaderProgram = 0;
-
-  try {
-    shaderProgram = createShaderProgram("assets/shaders/basic.vert",
-                                        "assets/shaders/basic.frag");
-  } catch (const std::exception &exception) {
-    std::cout << exception.what() << '\n';
-    glDeleteBuffers(1, &VBO);
-    glDeleteVertexArrays(1, &VAO);
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    return 1;
-  }
+  Shader basicShader =
+      Shader("assets/shaders/basic.vert", "assets/shaders/basic.frag");
 
   ///////////////
 
   std::cout << "OpenGL: " << glGetString(GL_VERSION) << "\n";
   std::cout << "Renderer: " << glGetString(GL_RENDERER) << "\n";
 
+  bool bToggleRoofColor = false;
+  float lastInputTime;
+  float inputDeadTime = 0.4f;
+
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window)) {
+    float runningTime = glfwGetTime();
+
+    if (runningTime - lastInputTime > inputDeadTime) {
+      if (processInput(window, bToggleRoofColor))
+        lastInputTime = runningTime;
+    }
+
     /* Render here */
     glClearColor(.1f, .09f, .12f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-
-    glUseProgram(shaderProgram);
-    glBindVertexArray(VAO);
 
     // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // draws a wireframe of the
     // model
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    glDrawArrays(GL_TRIANGLES, 0, 6);
+    basicShader.Use();
+
+    // Facade
+    DrawQuad(basicShader, facadeQuad, runningTime);
+
+    // Roof
+    roofTriangle.SetColor(bToggleRoofColor ? redColor : blueColor);
+    DrawTriangle(basicShader, roofTriangle, runningTime + .3f);
+
+    // Door
+    DrawQuad(basicShader, doorQuad, 1);
+
+    // Window Left
+    DrawQuad(basicShader, leftWindowQuad, 1);
+
+    // Window Right
+    DrawQuad(basicShader, rightWindowQuad, runningTime + .4f);
 
     glfwSwapBuffers(window);
     /* Poll for and process events */
     glfwPollEvents();
   }
 
-  glDeleteProgram(shaderProgram);
-  glDeleteBuffers(1, &VBO);
-  glDeleteVertexArrays(1, &VAO);
+  basicShader.DeleteShader();
+  roofTriangle.Release();
+  doorQuad.Release();
+  leftWindowQuad.Release();
+  rightWindowQuad.Release();
 
   glfwTerminate();
   return 0;
