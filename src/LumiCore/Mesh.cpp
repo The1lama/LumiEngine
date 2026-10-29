@@ -2,6 +2,7 @@
 
 #include "Shader.h"
 #include "iostream"
+namespace LumiCore {
 
 Mesh::Mesh(std::vector<float> vertecies, std::vector<unsigned int> indicies,
            GLenum renderType) {
@@ -33,11 +34,12 @@ void Mesh::Release() {
 void Mesh::CreateMesh(std::vector<float> &vertecies,
                       std::vector<unsigned int> &indicies) {
 
-  glGenBuffers(1, &m_VBO);
-
+  // Create VAO
   glGenVertexArrays(1, &m_VAO);
   glBindVertexArray(m_VAO);
+
   // Create VBO
+  glGenBuffers(1, &m_VBO);
   glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
   glBufferData(GL_ARRAY_BUFFER, m_verticies.size() * sizeof(float),
                vertecies.data(), GL_STATIC_DRAW);
@@ -83,3 +85,5 @@ void Mesh::Render(Shader &shader) {
 
   glBindVertexArray(0);
 }
+
+} // namespace LumiCore

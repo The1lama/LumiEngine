@@ -2,7 +2,7 @@
 
 #include "../Mesh.h"
 
-class Triangle : public Mesh {
+class Triangle : public LumiCore::Mesh {
 public:
   Triangle()
       : Mesh(Triangle::GenerateVertexArray(), Triangle::GenerateIndicies(),

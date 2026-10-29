@@ -2,7 +2,7 @@
 
 #include "../Mesh.h"
 
-class Quad : public Mesh {
+class Quad : public LumiCore::Mesh {
 public:
   Quad()
       : Mesh(Quad::GenerateVertexArray(), Quad::GenerateIndicies(),
