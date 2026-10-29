@@ -6,6 +6,8 @@
 
 class Shader;
 
+namespace LumiCore {
+
 class Mesh {
 public:
   Mesh() = default;
@@ -42,3 +44,5 @@ private:
 
   inline bool IsFunctional() { return m_indicies.size() > 0 && m_VBO != 0; }
 };
+
+} // namespace LumiCore

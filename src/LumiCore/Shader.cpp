@@ -16,13 +16,24 @@ void Shader::DeleteShader() const { glDeleteProgram(m_ID); }
 
 ///////// Set Uniforms /////////
 
-void Shader::SetFloat(const std::string &name, float value) const {
-  glUniform1f(glGetUniformLocation(m_ID, name.c_str()), value);
+Shader Shader::SetBool(const std::string &name, bool value) const {
+  glUniform1i(glGetUniformLocation(m_ID, name.c_str()), (int)value);
+  return *this;
+}
+Shader Shader::SetInt(const std::string &name, int value) const {
+  glUniform1i(glGetUniformLocation(m_ID, name.c_str()), (int)value);
+  return *this;
 }
 
-void Shader::SetVec3(const std::string &name, glm::vec3 value) const {
+Shader Shader::SetFloat(const std::string &name, float value) const {
+  glUniform1f(glGetUniformLocation(m_ID, name.c_str()), value);
+  return *this;
+}
+
+Shader Shader::SetVec3(const std::string &name, glm::vec3 value) const {
   glUniform3fv(glGetUniformLocation(m_ID, name.c_str()), 1,
                glm::value_ptr(value));
+  return *this;
 }
 
 ///////// Set Uniforms /////////
@@ -48,20 +59,6 @@ GLuint Shader::compileShader(GLenum type, const std::string &source,
   glShaderSource(shader, 1, &sourcePtr, nullptr);
   glCompileShader(shader);
 
-  GLint success = GL_FALSE;
-  glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
-
-  if (success == GL_FALSE) {
-    GLint logLenght = 0;
-    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logLenght);
-
-    std::string log(static_cast<std::size_t>(logLenght), '\0');
-    glGetShaderInfoLog(shader, logLenght, nullptr, log.data());
-
-    glDeleteShader(shader);
-    throw std::runtime_error("Shader compilation failed (" + label + "):\n" +
-                             log);
-  }
   return shader;
 }
 
@@ -85,18 +82,5 @@ GLuint Shader::createShaderProgram(const std::string &vertexPath,
   glDeleteShader(vertexShader);
   glDeleteShader(fragmentShader);
 
-  GLint success = GL_FALSE;
-  glGetProgramiv(program, GL_LINK_STATUS, &success);
-
-  if (success == GL_FALSE) {
-    GLint logLenght = 0;
-    glGetProgramiv(program, GL_INFO_LOG_LENGTH, &logLenght);
-
-    std::string log(static_cast<std::size_t>(logLenght), '\0');
-    glGetProgramInfoLog(program, logLenght, nullptr, log.data());
-
-    glDeleteProgram(program);
-    throw std::runtime_error("Shader program link failed:\n" + log);
-  }
   return program;
 }

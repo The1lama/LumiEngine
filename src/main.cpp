@@ -3,7 +3,6 @@
 
 #include "LumiCore/2D/Quad.h"
 #include "LumiCore/2D/Triangle.h"
-#include "LumiCore/Mesh.h"
 #include "LumiCore/Shader.h"
 #include "glm/ext/vector_float2.hpp"
 #include <glm/vec2.hpp>
@@ -24,11 +23,12 @@ struct EditorSettings {
   const char *windowTitle = "LumiEngine";
 };
 
-void DrawTriangle(Shader &shader, Mesh &mesh, const float runningTime) {
+void DrawTriangle(Shader &shader, LumiCore::Mesh &mesh,
+                  const float runningTime) {
   mesh.SetTime(runningTime);
   mesh.Render(shader);
 }
-void DrawQuad(Shader &shader, Mesh &mesh, const float runningTime) {
+void DrawQuad(Shader &shader, LumiCore::Mesh &mesh, const float runningTime) {
   mesh.SetTime(runningTime);
   mesh.Render(shader);
 }
