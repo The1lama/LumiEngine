@@ -3,6 +3,7 @@
 
 #include "LumiCore/2D/Quad.h"
 #include "LumiCore/2D/Triangle.h"
+#include "LumiCore/3D/Cube.h"
 #include "LumiCore/Shader.h"
 #include "glm/ext/vector_float2.hpp"
 #include <glm/vec2.hpp>
@@ -183,38 +184,48 @@ int main() {
   glm::vec3 blackColor = glm::vec3(0.0f, 0.0f, 0.0f);
 
   // Roof
-  Triangle roofTriangle;
+  LumiCore2D::Triangle roofTriangle;
   roofTriangle.SetOffset(glm::vec2(0, .42f));
   roofTriangle.SetScale(glm::vec2(1.18f, .6f));
   roofTriangle.SetAngle(0);
 
   // Facade
-  Quad facadeQuad;
+  LumiCore2D::Quad facadeQuad;
   facadeQuad.SetOffset(glm::vec2(.00f, -.15f));
   facadeQuad.SetScale(glm::vec2(1.08f, .57f));
   facadeQuad.SetAngle(0);
   facadeQuad.SetColor(blackColor);
 
   // Door
-  Quad doorQuad;
+  LumiCore2D::Quad doorQuad;
   doorQuad.SetOffset(glm::vec2(.00f, -.285f));
   doorQuad.SetScale(glm::vec2(.17f, .30f));
   doorQuad.SetAngle(0);
   doorQuad.SetColor(redColor);
 
   // Window Left
-  Quad leftWindowQuad;
+  LumiCore2D::Quad leftWindowQuad;
   leftWindowQuad.SetOffset(glm::vec2(-.33, -.08f));
   leftWindowQuad.SetScale(glm::vec2(.20f, .20f));
   leftWindowQuad.SetAngle(-2);
   leftWindowQuad.SetColor(blueColor);
 
   // Window Right
-  Quad rightWindowQuad;
+  LumiCore2D::Quad rightWindowQuad;
   rightWindowQuad.SetOffset(glm::vec2(.33, -.15f));
   rightWindowQuad.SetScale(glm::vec2(.10f, .20f));
   rightWindowQuad.SetAngle(12);
   rightWindowQuad.SetColor(blueColor);
+
+  // Cube
+  LumiCore3D::Cube cube;
+  cube.SetOffset(glm::vec2(.6, 0));
+  cube.SetScale(glm::vec2(.3, 0.1));
+  cube.SetColor(glm::vec3(1.0f, 1.0f, 1.0f));
+
+  ///////////////
+
+  glm::mat4 trans = glm::mat4(1.0f);
 
   ///////////////
 
@@ -230,6 +241,10 @@ int main() {
   float lastInputTime;
   float inputDeadTime = 0.4f;
 
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // draws a wireframe of the
+  // model
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window)) {
     float runningTime = glfwGetTime();
@@ -242,10 +257,6 @@ int main() {
     /* Render here */
     glClearColor(.1f, .09f, .12f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
-
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // draws a wireframe of the
-    // model
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     basicShader.Use();
 
@@ -264,6 +275,9 @@ int main() {
 
     // Window Right
     DrawQuad(basicShader, rightWindowQuad, runningTime + .4f);
+
+    // Cube
+    DrawQuad(basicShader, cube, 1);
 
     glfwSwapBuffers(window);
     glfwPollEvents();

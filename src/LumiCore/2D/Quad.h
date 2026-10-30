@@ -2,6 +2,8 @@
 
 #include "../Mesh.h"
 
+namespace LumiCore2D {
+
 class Quad : public LumiCore::Mesh {
 public:
   Quad()
@@ -19,3 +21,5 @@ private:
     return std::vector<unsigned int>{0, 1, 2, 0, 3, 2};
   }
 };
+
+} // namespace LumiCore2D

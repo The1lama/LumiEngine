@@ -8,6 +8,12 @@ class Shader;
 
 namespace LumiCore {
 
+struct Vertex {
+  glm::vec3 Position;
+  glm::vec3 Color;
+  glm::vec3 Normal;
+};
+
 class Mesh {
 public:
   Mesh() = default;
@@ -21,6 +27,12 @@ public:
   void SetScale(const glm::vec2 scale) { m_xyScale = scale; }
   void SetColor(const glm::vec3 color) { m_color = color; }
 
+  Mesh SetLocation(const glm::vec3 newLocation);
+  Mesh SetRotation(const glm::vec3 newRotation);
+  Mesh SetScale(const glm::vec3 newScale);
+
+  float CalculateAngleFromVector3(const glm::vec3 vectorAngles);
+
   virtual void Render(Shader &shader);
   virtual void Release();
 
@@ -29,6 +41,12 @@ protected:
   std::vector<unsigned int> m_indicies;
 
   GLenum m_renderType;
+
+  glm::vec3 m_location;
+  glm::vec3 m_rotation;
+  glm::vec3 m_scale;
+
+  glm::mat4 m_transformMatrix;
 
 private:
   float m_time = 1.f;
@@ -41,6 +59,8 @@ private:
 
   void CreateMesh(std::vector<float> &vertecies,
                   std::vector<unsigned int> &indicies);
+
+  void GenerateTransformationMatrix();
 
   inline bool IsFunctional() { return m_indicies.size() > 0 && m_VBO != 0; }
 };

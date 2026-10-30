@@ -2,6 +2,8 @@
 
 #include "../Mesh.h"
 
+namespace LumiCore2D {
+
 class Triangle : public LumiCore::Mesh {
 public:
   Triangle()
@@ -18,3 +20,5 @@ private:
     return std::vector<unsigned int>{0, 1, 2};
   }
 };
+
+} // namespace LumiCore2D
