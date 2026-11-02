@@ -89,8 +89,8 @@ void Mesh::GenerateTransformationMatrix() {
   auto upVector = glm::vec3(0, 0, 1);
   glm::mat4 newTrans = glm::mat4(1.0f);
   newTrans = glm::translate(newTrans, m_location);
-  newTrans =
-      glm::rotate(newTrans, CalculateAngleFromVector3(m_rotation), upVector);
+  // newTrans =
+  //     glm::rotate(newTrans, CalculateAngleFromVector3(m_rotation), upVector);
   newTrans = glm::scale(newTrans, m_scale);
   m_transformMatrix = std::move(newTrans);
 }
