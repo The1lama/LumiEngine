@@ -5,6 +5,7 @@
 #include "LumiCore/2D/Triangle.h"
 #include "LumiCore/Shader.h"
 #include "glm/ext/vector_float2.hpp"
+#include "glm/ext/vector_float3.hpp"
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <iostream>
@@ -23,13 +24,30 @@ struct EditorSettings {
   const char *windowTitle = "LumiEngine";
 };
 
+struct MeshData {
+  glm::vec2 offset;
+  glm::vec2 scale;
+  glm::vec3 color;
+  float angle;
+  float time;
+
+  MeshData(glm::vec2 Offset, glm::vec2 Scale, float Angle, glm::vec3 Color,
+           float Time)
+      : offset(Offset), scale(Scale), color(Color), angle(Angle), time(Time) {};
+};
+
 void DrawTriangle(Shader &shader, LumiCore::Mesh &mesh,
                   const float runningTime) {
   mesh.SetTime(runningTime);
   mesh.Render(shader);
 }
-void DrawQuad(Shader &shader, LumiCore::Mesh &mesh, const float runningTime) {
-  mesh.SetTime(runningTime);
+void DrawQuad(Shader &shader, LumiCore::Mesh &mesh,
+              const MeshData uniformData) {
+  mesh.SetOffset(uniformData.offset);
+  mesh.SetScale(uniformData.scale);
+  mesh.SetAngle(uniformData.angle);
+  mesh.SetColor(uniformData.color);
+  mesh.SetTime(uniformData.time);
   mesh.Render(shader);
 }
 
@@ -188,33 +206,45 @@ int main() {
   roofTriangle.SetScale(glm::vec2(1.18f, .6f));
   roofTriangle.SetAngle(0);
 
+  Quad quadMesh;
+
   // Facade
-  Quad facadeQuad;
-  facadeQuad.SetOffset(glm::vec2(.00f, -.15f));
-  facadeQuad.SetScale(glm::vec2(1.08f, .57f));
-  facadeQuad.SetAngle(0);
-  facadeQuad.SetColor(blackColor);
+  MeshData facadeData(glm::vec2(.00f, -.15f), glm::vec2(1.08f, .57f), .0f,
+                      blackColor, 1);
+
+  // Quad facadeQuad;
+  // facadeQuad.SetOffset(glm::vec2(.00f, -.15f));
+  // facadeQuad.SetScale(glm::vec2(1.08f, .57f));
+  // facadeQuad.SetAngle(0);
+  // facadeQuad.SetColor(blackColor);
 
   // Door
-  Quad doorQuad;
-  doorQuad.SetOffset(glm::vec2(.00f, -.285f));
-  doorQuad.SetScale(glm::vec2(.17f, .30f));
-  doorQuad.SetAngle(0);
-  doorQuad.SetColor(redColor);
+  // Quad doorQuad;
+  MeshData doorData(glm::vec2(.00f, -.285f), glm::vec2(.17f, .30f), .0f,
+                    redColor, 1);
+
+  // doorQuad.SetOffset(glm::vec2(.00f, -.285f));
+  // doorQuad.SetScale(glm::vec2(.17f, .30f));
+  // doorQuad.SetAngle(0);
+  // doorQuad.SetColor(redColor);
 
   // Window Left
-  Quad leftWindowQuad;
-  leftWindowQuad.SetOffset(glm::vec2(-.33, -.08f));
-  leftWindowQuad.SetScale(glm::vec2(.20f, .20f));
-  leftWindowQuad.SetAngle(-2);
-  leftWindowQuad.SetColor(blueColor);
+  MeshData leftWindowData(glm::vec2(-.33f, -.08f), glm::vec2(.20f, .20f), -2.0f,
+                          blueColor, 1);
+  // Quad leftWindowQuad;
+  // leftWindowQuad.SetOffset(glm::vec2(-.33, -.08f));
+  // leftWindowQuad.SetScale(glm::vec2(.20f, .20f));
+  // leftWindowQuad.SetAngle(-2);
+  // leftWindowQuad.SetColor(blueColor);
 
   // Window Right
-  Quad rightWindowQuad;
-  rightWindowQuad.SetOffset(glm::vec2(.33, -.15f));
-  rightWindowQuad.SetScale(glm::vec2(.10f, .20f));
-  rightWindowQuad.SetAngle(12);
-  rightWindowQuad.SetColor(blueColor);
+  MeshData rightWindowData(glm::vec2(.33f, -.15f), glm::vec2(.10f, .20f), .12f,
+                           blueColor, 1);
+  // Quad rightWindowQuad;
+  // rightWindowQuad.SetOffset(glm::vec2(.33, -.15f));
+  // rightWindowQuad.SetScale(glm::vec2(.10f, .20f));
+  // rightWindowQuad.SetAngle(12);
+  // rightWindowQuad.SetColor(blueColor);
 
   ///////////////
 
@@ -250,20 +280,22 @@ int main() {
     basicShader.Use();
 
     // Facade
-    DrawQuad(basicShader, facadeQuad, runningTime);
+    facadeData.time = runningTime;
+    DrawQuad(basicShader, quadMesh, facadeData);
 
     // Roof
     roofTriangle.SetColor(bToggleRoofColor ? redColor : blueColor);
     DrawTriangle(basicShader, roofTriangle, runningTime + .3f);
 
     // Door
-    DrawQuad(basicShader, doorQuad, 1);
+    DrawQuad(basicShader, quadMesh, doorData);
 
     // Window Left
-    DrawQuad(basicShader, leftWindowQuad, 1);
+    DrawQuad(basicShader, quadMesh, leftWindowData);
 
-    // Window Right
-    DrawQuad(basicShader, rightWindowQuad, runningTime + .4f);
+    // Window Righ
+    rightWindowData.time = runningTime + .4f;
+    DrawQuad(basicShader, quadMesh, rightWindowData);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
@@ -271,9 +303,7 @@ int main() {
 
   basicShader.DeleteShader();
   roofTriangle.Release();
-  doorQuad.Release();
-  leftWindowQuad.Release();
-  rightWindowQuad.Release();
+  quadMesh.Release();
 
   glfwTerminate();
   return 0;
