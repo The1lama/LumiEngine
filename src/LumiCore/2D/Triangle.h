@@ -11,12 +11,12 @@ public:
              GL_TRIANGLES) {};
 
 private:
-  inline std::vector<float> GenerateVertexArray() {
+  inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
     // clang-format off
-    return std::vector<float>{
-      -0.5f, -0.5f, 0.0f, 1.0f, 0.0f, 0.0f,
-       0.5f, -0.5f, 0.0f, 0.0f, 1.0f, 0.0f,
-      -0.5f, 0.5f,  0.0f, 0.0f, 0.0f, 1.0f
+    return std::vector<LumiCore::Vertex>{
+      glm::vec3(-0.5f, -0.5f, 0.0f),
+      glm::vec3( 0.5f, -0.5f, 0.0f),
+      glm::vec3(-0.5f, 0.5f,  0.0f)
     };
     // clang-format on
   }

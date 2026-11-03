@@ -5,11 +5,12 @@
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "iostream"
+#include <cstddef>
 #include <utility>
 
 namespace LumiCore {
 
-Mesh::Mesh(std::vector<float> vertecies, std::vector<unsigned int> indicies,
+Mesh::Mesh(std::vector<Vertex> vertecies, std::vector<unsigned int> indicies,
            GLenum renderType) {
   m_verticies = vertecies;
   m_verticies.shrink_to_fit();
@@ -22,6 +23,8 @@ Mesh::Mesh(std::vector<float> vertecies, std::vector<unsigned int> indicies,
   m_location = glm::vec3(0, 0, 0);
   m_rotation = glm::vec3(0, 0, 0);
   m_scale = glm::vec3(1, 1, 1);
+
+  m_transformMatrix = glm::mat4(1.0f);
 
   CreateMesh(m_verticies, m_indicies);
 }
@@ -37,8 +40,10 @@ void Mesh::Release() {
     glDeleteBuffers(1, &m_EBO);
 }
 
-void Mesh::CreateMesh(std::vector<float> &vertecies,
+void Mesh::CreateMesh(std::vector<Vertex> &vertecies,
                       std::vector<unsigned int> &indicies) {
+
+  constexpr size_t vertexSize = sizeof(Vertex);
 
   // Create VAO
   glGenVertexArrays(1, &m_VAO);
@@ -47,7 +52,7 @@ void Mesh::CreateMesh(std::vector<float> &vertecies,
   // Create VBO
   glGenBuffers(1, &m_VBO);
   glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-  glBufferData(GL_ARRAY_BUFFER, m_verticies.size() * sizeof(float),
+  glBufferData(GL_ARRAY_BUFFER, m_verticies.size() * vertexSize,
                vertecies.data(), GL_STATIC_DRAW);
 
   // Create EBO
@@ -56,15 +61,16 @@ void Mesh::CreateMesh(std::vector<float> &vertecies,
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicies.size() * sizeof(unsigned int),
                indicies.data(), GL_STATIC_DRAW);
 
-  constexpr GLsizei stride = 6 * sizeof(float);
+  constexpr GLsizei stride = sizeof(Vertex);
 
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
                         static_cast<void *>(0));
   glEnableVertexAttribArray(0);
 
-  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
-                        reinterpret_cast<void *>(3 * sizeof(float)));
-  glEnableVertexAttribArray(1);
+  // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
+  //                       reinterpret_cast<void *>(offsetof(Vertex,
+  //                       position)));
+  // glEnableVertexAttribArray(1);
 
   glBindVertexArray(0);
 }

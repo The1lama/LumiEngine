@@ -1,7 +1,6 @@
 #version 460 core 
 
 layout (location = 0) in vec3 aPosition;
-layout (location = 1) in vec3 aColor;
 
 uniform float xPosOffset;
 uniform float yPosOffset;
