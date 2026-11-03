@@ -11,7 +11,7 @@ public:
              GL_TRIANGLES) {};
 
 private:
-  inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
+  static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
     // clang-format off
     return std::vector<LumiCore::Vertex>{
       glm::vec3(-0.5f, -0.5f, 0.0f),
@@ -20,7 +20,7 @@ private:
     };
     // clang-format on
   }
-  inline std::vector<unsigned int> GenerateIndicies() {
+  static inline std::vector<unsigned int> GenerateIndicies() {
     return std::vector<unsigned int>{0, 1, 2};
   }
 };

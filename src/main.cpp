@@ -3,9 +3,14 @@
 
 #include "LumiCore/2D/Quad.h"
 #include "LumiCore/2D/Triangle.h"
+#include "LumiCore/3D/Cube.h"
 #include "LumiCore/Shader.h"
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float2.hpp"
 #include "glm/ext/vector_float3.hpp"
+#include "glm/geometric.hpp"
+#include "glm/trigonometric.hpp"
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <iostream>
@@ -35,21 +40,6 @@ struct MeshData {
            float Time)
       : offset(Offset), scale(Scale), color(Color), angle(Angle), time(Time) {};
 };
-
-void DrawTriangle(Shader &shader, LumiCore::Mesh &mesh,
-                  const float runningTime) {
-  mesh.SetTime(runningTime);
-  mesh.Render(shader);
-}
-void DrawQuad(Shader &shader, LumiCore::Mesh &mesh,
-              const MeshData uniformData) {
-  mesh.SetOffset(uniformData.offset);
-  mesh.SetScale(uniformData.scale);
-  mesh.SetAngle(uniformData.angle);
-  mesh.SetColor(uniformData.color);
-  mesh.SetTime(uniformData.time);
-  mesh.Render(shader);
-}
 
 bool processInput(GLFWwindow *window, bool &bToggleColor) {
   bool hasPressed = false;
@@ -200,35 +190,61 @@ int main() {
   glm::vec3 blueColor = glm::vec3(0.0f, 0.0f, 1.0f);
   glm::vec3 blackColor = glm::vec3(0.0f, 0.0f, 0.0f);
 
-  // Roof
-  LumiCore2D::Triangle roofTriangle;
-  roofTriangle.SetOffset(glm::vec2(0, .42f));
-  roofTriangle.SetScale(glm::vec2(1.18f, .6f));
-  roofTriangle.SetAngle(0);
-
   LumiCore2D::Quad quadMesh;
+  if (!quadMesh.IsValid()) {
+    std::cout << "Mesh VAO could not do its thing" << '\n';
+    return -10;
+  }
 
   // Facade
   MeshData facadeData(glm::vec2(.00f, -.15f), glm::vec2(1.08f, .57f), .0f,
                       blackColor, 1);
 
-  // Door
-  // Quad doorQuad;
-  MeshData doorData(glm::vec2(.00f, -.285f), glm::vec2(.17f, .30f), .0f,
-                    redColor, 1);
+  LumiCore3D::Cube cubeObject;
+  if (!cubeObject.IsValid()) {
+    std::cout << "Mesh VAO could not do its thing" << '\n';
+    return -20;
+  }
 
-  // Window Left
-  MeshData leftWindowData(glm::vec2(-.33f, -.08f), glm::vec2(.20f, .20f), -2.0f,
-                          blueColor, 1);
+  /////////////// PROJECTION ///////////////
 
-  // Window Right
-  MeshData rightWindowData(glm::vec2(.33f, -.15f), glm::vec2(.10f, .20f), .12f,
-                           blueColor, 1);
+  glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+  glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
+  glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
+
+  glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+  glm::vec3 cameraRight = glm::normalize(glm::cross(worldUp, cameraDirection));
+
+  glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+
+  glm::mat4 viewMatix(1.0f);
+  viewMatix = glm::lookAt(cameraPos, cameraTarget, worldUp);
+
+  const auto fov = glm::radians(45.0f);
+  int frameWidth, frameHeight;
+  glfwGetFramebufferSize(window, &frameWidth, &frameHeight);
+
+  const auto aspectRatio = (float)frameWidth / (float)frameHeight;
+  const float nearPlane = 0.1f;
+  const float farPlane = 100.0f;
+  glm::mat4 projectionMatrix =
+      glm::perspective(fov, aspectRatio, nearPlane, farPlane);
 
   ///////////////
 
   Shader basic2DShader =
       Shader("assets/shaders/2dShader.vert", "assets/shaders/2dShader.frag");
+  if (!basic2DShader.IsValid()) {
+    std::cout << "2D Shader could not compile" << '\n';
+    return -3;
+  }
+
+  Shader basic3DShader = Shader("assets/shaders/3dBasicShader.vert",
+                                "assets/shaders/3dBasicShader.frag");
+  if (!basic3DShader.IsValid()) {
+    std::cout << "3D Shader could not compile" << '\n';
+    return -2;
+  }
 
   ///////////////
 
@@ -238,6 +254,14 @@ int main() {
   bool bToggleRoofColor = false;
   float lastInputTime;
   float inputDeadTime = 0.4f;
+
+  glClearColor(.1f, .09f, .12f, 1.0f);
+
+  // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // draws a wireframe of the
+  // model
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+  glEnable(GL_DEPTH_TEST);
 
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window)) {
@@ -249,39 +273,47 @@ int main() {
     }
 
     /* Render here */
-    glClearColor(.1f, .09f, .12f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // draws a wireframe of the
-    // model
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     basic2DShader.Use();
 
-    // Facade
-    facadeData.time = runningTime;
-    DrawQuad(basic2DShader, quadMesh, facadeData);
+    //// Facade
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
+    model =
+        glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
 
-    // Roof
-    roofTriangle.SetColor(bToggleRoofColor ? redColor : blueColor);
-    DrawTriangle(basic2DShader, roofTriangle, runningTime + .3f);
+    basic2DShader.SetMatrix4("u_Model", model);
+    basic2DShader.SetVec3("uColor", blueColor);
+    basic2DShader.SetMatrix4("u_Projection", projectionMatrix);
+    basic2DShader.SetMatrix4("u_View", viewMatix);
+    quadMesh.Render(basic2DShader);
 
-    // Door
-    DrawQuad(basic2DShader, quadMesh, doorData);
+    basic3DShader.Use();
 
-    // Window Left
-    DrawQuad(basic2DShader, quadMesh, leftWindowData);
+    glm::mat4 cubeModel = glm::mat4(1.0f);
 
-    // Window Righ
-    rightWindowData.time = runningTime + .4f;
-    DrawQuad(basic2DShader, quadMesh, rightWindowData);
+    cubeModel = glm::translate(cubeModel, glm::vec3(0.4f, 0.0f, 0.0f));
+
+    cubeModel = glm::rotate(cubeModel, glm::radians(-55.0f),
+                            glm::vec3(1.0f, 0.0f, 0.0f));
+    cubeModel = glm::rotate(cubeModel, glm::radians(-55.0f),
+                            glm::vec3(0.0f, 0.0f, 1.0f));
+
+    cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
+
+    basic2DShader.SetVec3("uColor", redColor);
+    basic3DShader.SetMatrix4("u_Projection", projectionMatrix);
+    basic3DShader.SetMatrix4("u_View", viewMatix);
+    basic3DShader.SetMatrix4("u_Model", cubeModel);
+    cubeObject.Render(basic3DShader);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 
   basic2DShader.DeleteShader();
-  roofTriangle.Release();
   quadMesh.Release();
 
   glfwTerminate();

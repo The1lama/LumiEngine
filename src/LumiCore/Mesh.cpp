@@ -75,20 +75,19 @@ void Mesh::CreateMesh(std::vector<Vertex> &vertecies,
   glBindVertexArray(0);
 }
 
-Mesh Mesh::SetLocation(const glm::vec3 newLocation) {
+bool Mesh::IsValid() const { return glIsVertexArray(m_VAO); }
+
+void Mesh::SetLocation(const glm::vec3 newLocation) {
   m_location = newLocation;
   GenerateTransformationMatrix();
-  return *this;
 }
-Mesh Mesh::SetRotation(const glm::vec3 newRotation) {
+void Mesh::SetRotation(const glm::vec3 newRotation) {
   m_rotation = newRotation;
   GenerateTransformationMatrix();
-  return *this;
 }
-Mesh Mesh::SetScale(const glm::vec3 newScale) {
+void Mesh::SetScale(const glm::vec3 newScale) {
   m_scale = newScale;
   GenerateTransformationMatrix();
-  return *this;
 }
 
 void Mesh::GenerateTransformationMatrix() {
@@ -110,14 +109,6 @@ void Mesh::Render(Shader &shader) {
   }
 
   glBindVertexArray(m_VAO);
-
-  shader.SetFloat("uTime", m_time);
-  shader.SetFloat("xPosOffset", m_xyOffsets.x);
-  shader.SetFloat("yPosOffset", m_xyOffsets.y);
-  shader.SetFloat("xScale", m_xyScale.x);
-  shader.SetFloat("yScale", m_xyScale.y);
-  shader.SetVec3("uColor", m_color);
-  shader.SetFloat("uRotationAngle", m_angle);
 
   glDrawElements(m_renderType, static_cast<GLsizei>(m_indicies.size()),
                  GL_UNSIGNED_INT, nullptr);

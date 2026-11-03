@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glad/glad.h>
+#include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 #include <string>
 
@@ -10,17 +11,22 @@ public:
   ~Shader();
 
   void Use() const;
+  bool IsValid() const;
   void DeleteShader() const;
 
   unsigned int GetProgramID() const { return m_ID; }
 
-  Shader SetBool(const std::string &name, bool value) const;
-  Shader SetFloat(const std::string &name, float value) const;
-  Shader SetInt(const std::string &name, int value) const;
-  Shader SetVec3(const std::string &name, glm::vec3 value) const;
+  void SetBool(const std::string &name, bool value) const;
+  void SetFloat(const std::string &name, float value) const;
+  void SetInt(const std::string &name, int value) const;
+  void SetVec3(const std::string &name, glm::vec3 value) const;
+
+  void SetMatrix4(const std::string &name, glm::mat4 value) const;
 
 private:
   unsigned int m_ID;
+
+  GLint getUniformLocation(const std::string &name) const;
 
   GLuint compileShader(GLenum shaderType, const std::string &source,
                        const std::string &label);

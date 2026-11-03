@@ -12,48 +12,48 @@ public:
              GL_TRIANGLES) {};
 
 private:
-  inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
+  static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
     // clang-format off
     return std::vector<LumiCore::Vertex>{
       // Forward side   // Position //
-      LumiCore::Vertex( 1.f,  1.f,  1.f), 
-      LumiCore::Vertex( 1.f,  1.f, -1.f), 
-      LumiCore::Vertex( 1.f, -1.f, -1.f), 
-      LumiCore::Vertex( 1.f, -1.f,  1.f), 
+      LumiCore::Vertex( .5f,  .5f,  .5f), 
+      LumiCore::Vertex( .5f,  .5f, -.5f), 
+      LumiCore::Vertex( .5f, -.5f, -.5f), 
+      LumiCore::Vertex( .5f, -.5f,  .5f), 
 
       // Back side
-      LumiCore::Vertex(-1.f,  1.f, -1.f),
-      LumiCore::Vertex(-1.f,  1.f,  1.f),
-      LumiCore::Vertex(-1.f, -1.f,  1.f),
-      LumiCore::Vertex(-1.f, -1.f, -1.f),
+      LumiCore::Vertex(-.5f,  .2f, -.2f),
+      LumiCore::Vertex(-.5f,  .2f,  .2f),
+      LumiCore::Vertex(-.5f, -.2f,  .2f),
+      LumiCore::Vertex(-.5f, -.2f, -.2f),
 
       // Right side
-      LumiCore::Vertex(-1.f,  1.f,  1.f),
-      LumiCore::Vertex( 1.f,  1.f,  1.f),
-      LumiCore::Vertex( 1.f, -1.f,  1.f),
-      LumiCore::Vertex(-1.f, -1.f,  1.f),
+      LumiCore::Vertex(-.5f,  .5f,  .5f),
+      LumiCore::Vertex( .5f,  .5f,  .5f),
+      LumiCore::Vertex( .5f, -.5f,  .5f),
+      LumiCore::Vertex(-.5f, -.5f,  .5f),
 
       // Left side
-      LumiCore::Vertex( 1.f,  1.f, -1.f), 
-      LumiCore::Vertex(-1.f,  1.f, -1.f),
-      LumiCore::Vertex(-1.f, -1.f, -1.f),
-      LumiCore::Vertex( 1.f, -1.f, -1.f),
+      LumiCore::Vertex( .5f,  .5f, -.5f), 
+      LumiCore::Vertex(-.5f,  .5f, -.5f),
+      LumiCore::Vertex(-.5f, -.5f, -.5f),
+      LumiCore::Vertex( .5f, -.5f, -.5f),
 
       // Top side
-      LumiCore::Vertex(-1.f, 1.f, -1.f),
-      LumiCore::Vertex( 1.f, 1.f, -1.f),
-      LumiCore::Vertex( 1.f, 1.f,  1.f),
-      LumiCore::Vertex(-1.f, 1.f,  1.f),
+      LumiCore::Vertex(-.5f, .5f, -.5f),
+      LumiCore::Vertex( .5f, .5f, -.5f),
+      LumiCore::Vertex( .5f, .5f,  .5f),
+      LumiCore::Vertex(-.5f, .5f,  .5f),
 
       // Bottom side
-      LumiCore::Vertex(-1.f, -1.f,  1.f),
-      LumiCore::Vertex( 1.f, -1.f,  1.f),
-      LumiCore::Vertex( 1.f, -1.f, -1.f),
-      LumiCore::Vertex(-1.f, -1.f, -1.f)
+      LumiCore::Vertex(-.5f, -.5f,  .5f),
+      LumiCore::Vertex( .5f, -.5f,  .5f),
+      LumiCore::Vertex( .5f, -.5f, -.5f),
+      LumiCore::Vertex(-.5f, -.5f, -.5f)
     };
     // clang-format on
   }
-  inline std::vector<unsigned int> GenerateIndicies() {
+  static inline std::vector<unsigned int> GenerateIndicies() {
     // clang-format off
     return std::vector<unsigned int>{
       // Front Side

@@ -22,15 +22,17 @@ public:
        GLenum renderType);
   ~Mesh();
 
+  bool IsValid() const;
+
   void SetTime(const float time) { m_time = time; }
   void SetAngle(const float angle) { m_angle = angle; }
   void SetOffset(const glm::vec2 offset) { m_xyOffsets = offset; }
   void SetScale(const glm::vec2 scale) { m_xyScale = scale; }
   void SetColor(const glm::vec3 color) { m_color = color; }
 
-  Mesh SetLocation(const glm::vec3 newLocation);
-  Mesh SetRotation(const glm::vec3 newRotation);
-  Mesh SetScale(const glm::vec3 newScale);
+  void SetLocation(const glm::vec3 newLocation);
+  void SetRotation(const glm::vec3 newRotation);
+  void SetScale(const glm::vec3 newScale);
 
   virtual void Render(Shader &shader);
   virtual void Release();

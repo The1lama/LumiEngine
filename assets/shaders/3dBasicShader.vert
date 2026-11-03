@@ -2,6 +2,8 @@
 
 layout (location = 0) in vec3 aPosition;
 
+uniform vec3 uColor;
+
 uniform mat4 u_Model;
 uniform mat4 u_Projection;
 uniform mat4 u_View;

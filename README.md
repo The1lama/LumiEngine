@@ -9,6 +9,7 @@ Generate **.sln** files with `xmake project -k vsxmake`
 To compile the program just run `xmake` and then to run the program `xmake run`
 Or run the `compile.sh` file to compile and run the program.
 
+---
 # Week 1
 **Tag Version:** `Week1/2dHouse` and `Week1/2dHouseRefactor`
 
@@ -21,6 +22,10 @@ This is the house progress.
 ![Week1Progress.](media/Week1House.png)
 
 ---
+# Week 2 
+**Tag Version:** 
 
+This week I implemented rendering of basic 3D Objects in world. 
 
+The Basic Objects is Cube.
 
