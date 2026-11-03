@@ -212,44 +212,23 @@ int main() {
   MeshData facadeData(glm::vec2(.00f, -.15f), glm::vec2(1.08f, .57f), .0f,
                       blackColor, 1);
 
-  // Quad facadeQuad;
-  // facadeQuad.SetOffset(glm::vec2(.00f, -.15f));
-  // facadeQuad.SetScale(glm::vec2(1.08f, .57f));
-  // facadeQuad.SetAngle(0);
-  // facadeQuad.SetColor(blackColor);
-
   // Door
   // Quad doorQuad;
   MeshData doorData(glm::vec2(.00f, -.285f), glm::vec2(.17f, .30f), .0f,
                     redColor, 1);
 
-  // doorQuad.SetOffset(glm::vec2(.00f, -.285f));
-  // doorQuad.SetScale(glm::vec2(.17f, .30f));
-  // doorQuad.SetAngle(0);
-  // doorQuad.SetColor(redColor);
-
   // Window Left
   MeshData leftWindowData(glm::vec2(-.33f, -.08f), glm::vec2(.20f, .20f), -2.0f,
                           blueColor, 1);
-  // Quad leftWindowQuad;
-  // leftWindowQuad.SetOffset(glm::vec2(-.33, -.08f));
-  // leftWindowQuad.SetScale(glm::vec2(.20f, .20f));
-  // leftWindowQuad.SetAngle(-2);
-  // leftWindowQuad.SetColor(blueColor);
 
   // Window Right
   MeshData rightWindowData(glm::vec2(.33f, -.15f), glm::vec2(.10f, .20f), .12f,
                            blueColor, 1);
-  // Quad rightWindowQuad;
-  // rightWindowQuad.SetOffset(glm::vec2(.33, -.15f));
-  // rightWindowQuad.SetScale(glm::vec2(.10f, .20f));
-  // rightWindowQuad.SetAngle(12);
-  // rightWindowQuad.SetColor(blueColor);
 
   ///////////////
 
-  Shader basicShader =
-      Shader("assets/shaders/basic.vert", "assets/shaders/basic.frag");
+  Shader basic2DShader =
+      Shader("assets/shaders/2dShader.vert", "assets/shaders/2dShader.frag");
 
   ///////////////
 
@@ -277,31 +256,31 @@ int main() {
     // model
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    basicShader.Use();
+    basic2DShader.Use();
 
     // Facade
     facadeData.time = runningTime;
-    DrawQuad(basicShader, quadMesh, facadeData);
+    DrawQuad(basic2DShader, quadMesh, facadeData);
 
     // Roof
     roofTriangle.SetColor(bToggleRoofColor ? redColor : blueColor);
-    DrawTriangle(basicShader, roofTriangle, runningTime + .3f);
+    DrawTriangle(basic2DShader, roofTriangle, runningTime + .3f);
 
     // Door
-    DrawQuad(basicShader, quadMesh, doorData);
+    DrawQuad(basic2DShader, quadMesh, doorData);
 
     // Window Left
-    DrawQuad(basicShader, quadMesh, leftWindowData);
+    DrawQuad(basic2DShader, quadMesh, leftWindowData);
 
     // Window Righ
     rightWindowData.time = runningTime + .4f;
-    DrawQuad(basicShader, quadMesh, rightWindowData);
+    DrawQuad(basic2DShader, quadMesh, rightWindowData);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 
-  basicShader.DeleteShader();
+  basic2DShader.DeleteShader();
   roofTriangle.Release();
   quadMesh.Release();
 

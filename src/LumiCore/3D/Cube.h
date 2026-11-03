@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../Mesh.h"
-#include <iostream>
 #include <vector>
 
 namespace LumiCore3D {
@@ -14,12 +13,69 @@ public:
 
 private:
   inline std::vector<float> GenerateVertexArray() {
-    return std::vector<float>{-1.f, -1.f, -1.f, 1.0f, 0.0f, 0.0f, -1.f, 1.f,
-                              -1.f, 0.0f, 1.0f, 0.0f, 1.f,  1.f,  -1.f, 0.0f,
-                              1.0f, 0.0f, 1.f,  -1.f, -1.f, 0.0f, 0.0f, 1.0f};
+    // clang-format off
+    return std::vector<float>{
+      // Forward side
+      1.f,  1.f,  1.f, 1.0f, 0.0f, 0.0f,
+      1.f,  1.f, -1.f, 0.0f, 1.0f, 0.0f,
+      1.f, -1.f, -1.f, 0.0f, 1.0f, 0.0f,
+      1.f, -1.f,  1.f, 0.0f, 0.0f, 1.0f,
+
+      // Back side
+      -1.f,  1.f, -1.f, 1.0f, 0.0f, 0.0f,
+      -1.f,  1.f,  1.f, 0.0f, 1.0f, 0.0f,
+      -1.f, -1.f,  1.f, 0.0f, 1.0f, 0.0f,
+      -1.f, -1.f, -1.f, 0.0f, 0.0f, 1.0f,
+
+      // Right side
+      -1.f,  1.f,  1.f, 1.0f, 0.0f, 0.0f,
+       1.f,  1.f,  1.f, 0.0f, 1.0f, 0.0f,
+       1.f, -1.f,  1.f, 0.0f, 1.0f, 0.0f,
+      -1.f, -1.f,  1.f, 0.0f, 0.0f, 1.0f,
+
+      // Left side
+       1.f,  1.f, -1.f, 1.0f, 0.0f, 0.0f, 
+      -1.f,  1.f, -1.f, 0.0f, 1.0f, 0.0f,
+      -1.f, -1.f, -1.f, 0.0f, 1.0f, 0.0f,
+       1.f, -1.f, -1.f, 0.0f, 0.0f, 1.0f,
+
+      // Top side
+      -1.f, 1.f, -1.f, 1.0f, 0.0f, 0.0f,
+       1.f, 1.f, -1.f, 0.0f, 1.0f, 0.0f,
+       1.f, 1.f,  1.f, 0.0f, 1.0f, 0.0f,
+      -1.f, 1.f,  1.f, 0.0f, 0.0f, 1.0f,
+
+      // Bottom side
+      -1.f, -1.f,  1.f, 1.0f, 0.0f, 0.0f,
+       1.f, -1.f,  1.f, 0.0f, 1.0f, 0.0f,
+       1.f, -1.f, -1.f, 0.0f, 1.0f, 0.0f,
+      -1.f, -1.f, -1.f, 0.0f, 0.0f, 1.0f
+    };
+    // clang-format on
   }
   inline std::vector<unsigned int> GenerateIndicies() {
-    return std::vector<unsigned int>{0, 1, 2, 0, 3, 2};
+    // clang-format off
+    return std::vector<unsigned int>{
+      // Front Side
+      0,1,2, 
+      0,3,2,
+      // Back Side
+      4,5,6,
+      4,7,6,
+      //Right Side
+      8,9,10,
+      8,11,10,
+      //Left Side
+      12,13,14,
+      12,15,14,
+      // Top Side
+      16,17,18,
+      16,19,18,
+      //Bottom Side
+      20,21,22,
+      20,23,22
+    };
+    // clang-format on
   }
 };
 
