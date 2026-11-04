@@ -5,6 +5,7 @@
 #include "LumiCore/2D/Triangle.h"
 #include "LumiCore/3D/Cube.h"
 #include "LumiCore/3D/Pyramid.h"
+#include "LumiCore/3D/Sphere.h"
 #include "LumiCore/Shader.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -188,6 +189,7 @@ int main() {
 
   /// Colors ///
   glm::vec3 redColor = glm::vec3(1.0f, 0.0f, 0.0f);
+  glm::vec3 greenColor = glm::vec3(0.0f, 1.0f, 0.0f);
   glm::vec3 blueColor = glm::vec3(0.0f, 0.0f, 1.0f);
   glm::vec3 blackColor = glm::vec3(0.0f, 0.0f, 0.0f);
 
@@ -210,7 +212,13 @@ int main() {
   LumiCore3D::Pyramid pyramidObject;
   if (!pyramidObject.IsValid()) {
     std::cout << "Mesh VAO could not do its thing" << '\n';
-    return -20;
+    return -22;
+  }
+
+  LumiCore3D::Sphere sphereObject;
+  if (!sphereObject.IsValid()) {
+    std::cout << "Mesh VAO could not do its thing" << '\n';
+    return -23;
   }
 
   /////////////// PROJECTION ///////////////
@@ -328,7 +336,18 @@ int main() {
     pyramidModel = glm::scale(pyramidModel, glm::vec3(0.3, 0.3, 0.3));
 
     basic3DShader.SetMatrix4("u_Model", pyramidModel);
+    basic2DShader.SetVec3("uColor", blueColor);
     pyramidObject.Render(basic3DShader);
+
+    glm::mat4 sphereModel = glm::mat4(1.0f);
+
+    sphereModel = glm::translate(sphereModel, glm::vec3(-0.8f, 1.1f, 0.0f));
+
+    sphereModel = glm::scale(sphereModel, glm::vec3(0.3, 0.3, 0.3));
+
+    basic3DShader.SetMatrix4("u_Model", sphereModel);
+    basic2DShader.SetVec3("uColor", greenColor);
+    sphereObject.Render(basic3DShader);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
