@@ -4,6 +4,7 @@
 #include "LumiCore/2D/Quad.h"
 #include "LumiCore/2D/Triangle.h"
 #include "LumiCore/3D/Cube.h"
+#include "LumiCore/3D/Pyramid.h"
 #include "LumiCore/Shader.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -206,9 +207,15 @@ int main() {
     return -20;
   }
 
+  LumiCore3D::Pyramid pyramidObject;
+  if (!pyramidObject.IsValid()) {
+    std::cout << "Mesh VAO could not do its thing" << '\n';
+    return -20;
+  }
+
   /////////////// PROJECTION ///////////////
 
-  glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+  glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 6.0f);
   glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
   glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
 
@@ -308,6 +315,20 @@ int main() {
     basic3DShader.SetMatrix4("u_View", viewMatix);
     basic3DShader.SetMatrix4("u_Model", cubeModel);
     cubeObject.Render(basic3DShader);
+
+    glm::mat4 pyramidModel = glm::mat4(1.0f);
+
+    pyramidModel = glm::translate(pyramidModel, glm::vec3(-0.8f, 1.1f, 0.0f));
+
+    pyramidModel = glm::rotate(pyramidModel, glm::radians(-73.0f),
+                               glm::vec3(1.0f, 0.0f, 0.0f));
+    pyramidModel = glm::rotate(pyramidModel, glm::radians(-35.0f),
+                               glm::vec3(0.0f, 0.0f, 1.0f));
+
+    pyramidModel = glm::scale(pyramidModel, glm::vec3(0.3, 0.3, 0.3));
+
+    basic3DShader.SetMatrix4("u_Model", pyramidModel);
+    pyramidObject.Render(basic3DShader);
 
     glfwSwapBuffers(window);
     glfwPollEvents();
