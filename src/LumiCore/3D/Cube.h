@@ -16,40 +16,40 @@ private:
     // clang-format off
     return std::vector<LumiCore::Vertex>{
       // Forward side   // Position //
-      LumiCore::Vertex( .5f,  .5f,  .5f), 
-      LumiCore::Vertex( .5f,  .5f, -.5f), 
-      LumiCore::Vertex( .5f, -.5f, -.5f), 
-      LumiCore::Vertex( .5f, -.5f,  .5f), 
+      LumiCore::Vertex( 1.f,  1.f,  1.f), 
+      LumiCore::Vertex( 1.f,  1.f, -1.f), 
+      LumiCore::Vertex( 1.f, -1.f, -1.f), 
+      LumiCore::Vertex( 1.f, -1.f,  1.f), 
 
       // Back side
-      LumiCore::Vertex(-.5f,  .2f, -.2f),
-      LumiCore::Vertex(-.5f,  .2f,  .2f),
-      LumiCore::Vertex(-.5f, -.2f,  .2f),
-      LumiCore::Vertex(-.5f, -.2f, -.2f),
+      LumiCore::Vertex(-1.f,  1.f, -1.f),
+      LumiCore::Vertex(-1.f,  1.f,  1.f),
+      LumiCore::Vertex(-1.f, -1.f,  1.f),
+      LumiCore::Vertex(-1.f, -1.f, -1.f),
 
       // Right side
-      LumiCore::Vertex(-.5f,  .5f,  .5f),
-      LumiCore::Vertex( .5f,  .5f,  .5f),
-      LumiCore::Vertex( .5f, -.5f,  .5f),
-      LumiCore::Vertex(-.5f, -.5f,  .5f),
+      LumiCore::Vertex(-1.f,  1.f,  1.f),
+      LumiCore::Vertex( 1.f,  1.f,  1.f),
+      LumiCore::Vertex( 1.f, -1.f,  1.f),
+      LumiCore::Vertex(-1.f, -1.f,  1.f),
 
       // Left side
-      LumiCore::Vertex( .5f,  .5f, -.5f), 
-      LumiCore::Vertex(-.5f,  .5f, -.5f),
-      LumiCore::Vertex(-.5f, -.5f, -.5f),
-      LumiCore::Vertex( .5f, -.5f, -.5f),
+      LumiCore::Vertex( 1.f,  1.f, -1.f), 
+      LumiCore::Vertex(-1.f,  1.f, -1.f),
+      LumiCore::Vertex(-1.f, -1.f, -1.f),
+      LumiCore::Vertex( 1.f, -1.f, -1.f),
 
       // Top side
-      LumiCore::Vertex(-.5f, .5f, -.5f),
-      LumiCore::Vertex( .5f, .5f, -.5f),
-      LumiCore::Vertex( .5f, .5f,  .5f),
-      LumiCore::Vertex(-.5f, .5f,  .5f),
+      LumiCore::Vertex(-1.f, 1.f, -1.f),
+      LumiCore::Vertex( 1.f, 1.f, -1.f),
+      LumiCore::Vertex( 1.f, 1.f,  1.f),
+      LumiCore::Vertex(-1.f, 1.f,  1.f),
 
       // Bottom side
-      LumiCore::Vertex(-.5f, -.5f,  .5f),
-      LumiCore::Vertex( .5f, -.5f,  .5f),
-      LumiCore::Vertex( .5f, -.5f, -.5f),
-      LumiCore::Vertex(-.5f, -.5f, -.5f)
+      LumiCore::Vertex(-1.f, -1.f,  1.f),
+      LumiCore::Vertex( 1.f, -1.f,  1.f),
+      LumiCore::Vertex( 1.f, -1.f, -1.f),
+      LumiCore::Vertex(-1.f, -1.f, -1.f)
     };
     // clang-format on
   }
