@@ -43,12 +43,28 @@ struct MeshData {
       : offset(Offset), scale(Scale), color(Color), angle(Angle), time(Time) {};
 };
 
-bool processInput(GLFWwindow *window, bool &bToggleColor) {
+void SwitchRenderingMode();
+
+bool processInput(GLFWwindow *window, bool &bToggleColor,
+                  bool &bSwitchDrawMode) {
   bool hasPressed = false;
   if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-    bToggleColor = !bToggleColor;
     hasPressed = true;
+    bToggleColor = false;
   }
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+    bToggleColor = true;
+  }
+  if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+    hasPressed = true;
+    if (bSwitchDrawMode == false)
+      SwitchRenderingMode();
+    bSwitchDrawMode = true;
+  }
+  if (glfwGetKey(window, GLFW_KEY_1) == GLFW_RELEASE) {
+    bSwitchDrawMode = false;
+  }
+
   return hasPressed;
 }
 
@@ -130,6 +146,18 @@ void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
   std::cout << '\n';
   std::cout << '\n';
 }
+
+static int renderingModeIndex;
+void SwitchRenderingMode() {
+  renderingModeIndex = renderingModeIndex + 1 < 3 ? renderingModeIndex + 1 : 0;
+
+  if (renderingModeIndex == 0)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // fill in the triangles
+  else if (renderingModeIndex == 1)
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draws in wireframe mode
+  else
+    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); // draws vertex points
+};
 
 int main() {
 
@@ -268,13 +296,9 @@ int main() {
 
   bool bToggleRoofColor = false;
   float lastInputTime;
-  float inputDeadTime = 0.4f;
+  bool bSwitchDrawingMode = false;
 
   glClearColor(.1f, .09f, .12f, 1.0f);
-
-  // glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // draws a wireframe of the
-  // model
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
   glEnable(GL_DEPTH_TEST);
 
@@ -282,10 +306,7 @@ int main() {
   while (!glfwWindowShouldClose(window)) {
     float runningTime = glfwGetTime();
 
-    if (runningTime - lastInputTime > inputDeadTime) {
-      if (processInput(window, bToggleRoofColor))
-        lastInputTime = runningTime;
-    }
+    processInput(window, bToggleRoofColor, bSwitchDrawingMode);
 
     /* Render here */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -300,7 +321,7 @@ int main() {
     model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
 
     basic2DShader.SetMatrix4("u_Model", model);
-    basic2DShader.SetVec3("uColor", blueColor);
+    basic2DShader.SetVec3("uColor", bToggleRoofColor ? blueColor : redColor);
     basic2DShader.SetMatrix4("u_Projection", projectionMatrix);
     basic2DShader.SetMatrix4("u_View", viewMatix);
     quadMesh.Render(basic2DShader);
