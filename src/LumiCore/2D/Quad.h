@@ -6,11 +6,18 @@ namespace LumiCore2D {
 
 class Quad : public LumiCore::Mesh {
 public:
-  Quad()
-      : Mesh(Quad::GenerateVertexArray(), Quad::GenerateIndicies(),
-             GL_TRIANGLES) {};
+  Quad() : Mesh(GenerateMeshData(), GL_TRIANGLES) {};
 
 private:
+  static inline LumiCore::MeshData GenerateMeshData() {
+    LumiCore::MeshData data;
+
+    data.vertecies = std::move(Quad::GenerateVertexArray());
+    data.indices = std::move(Quad::GenerateIndicies());
+
+    return data;
+  };
+
   static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
     // clang-format off
     return std::vector<LumiCore::Vertex>{

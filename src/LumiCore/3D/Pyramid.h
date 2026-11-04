@@ -7,11 +7,18 @@ namespace LumiCore3D {
 
 class Pyramid : public LumiCore::Mesh {
 public:
-  Pyramid()
-      : Mesh(Pyramid::GenerateVertexArray(), Pyramid::GenerateIndicies(),
-             GL_TRIANGLES) {};
+  Pyramid() : Mesh(GenerateMeshData(), GL_TRIANGLES) {};
 
 private:
+  static inline LumiCore::MeshData GenerateMeshData() {
+    LumiCore::MeshData data;
+
+    data.vertecies = std::move(Pyramid::GenerateVertexArray());
+    data.indices = std::move(Pyramid::GenerateIndicies());
+
+    return data;
+  };
+
   static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
     // clang-format off
     return std::vector<LumiCore::Vertex>{

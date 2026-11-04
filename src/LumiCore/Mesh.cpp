@@ -10,12 +10,12 @@
 
 namespace LumiCore {
 
-Mesh::Mesh(std::vector<Vertex> vertecies, std::vector<unsigned int> indicies,
-           GLenum renderType) {
-  m_verticies = vertecies;
+Mesh::Mesh(LumiCore::MeshData data, GLenum renderType) {
+
+  m_verticies = data.vertecies;
   m_verticies.shrink_to_fit();
 
-  m_indicies = indicies;
+  m_indicies = data.indices;
   m_indicies.shrink_to_fit();
 
   m_renderType = renderType;
@@ -71,6 +71,7 @@ void Mesh::CreateMesh(std::vector<Vertex> &vertecies,
   //                       reinterpret_cast<void *>(offsetof(Vertex,
   //                       position)));
   // glEnableVertexAttribArray(1);
+  std::cout << "Mesh Object VAO: " << m_VAO << '\n';
 
   glBindVertexArray(0);
 }

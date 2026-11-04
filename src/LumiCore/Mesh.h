@@ -15,11 +15,14 @@ struct Vertex {
   Vertex(float x, float y, float z) : position(glm::vec3(x, y, z)) {};
 };
 
+struct MeshData {
+  std::vector<Vertex> vertecies;
+  std::vector<unsigned int> indices;
+};
+
 class Mesh {
 public:
   Mesh() = default;
-  Mesh(std::vector<Vertex> vertecies, std::vector<unsigned int> indicies,
-       GLenum renderType);
   ~Mesh();
 
   bool IsValid() const;
@@ -38,6 +41,8 @@ public:
   virtual void Release();
 
 protected:
+  Mesh(LumiCore::MeshData data, GLenum renderType);
+
   std::vector<Vertex> m_verticies;
   std::vector<unsigned int> m_indicies;
 

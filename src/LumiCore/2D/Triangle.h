@@ -6,11 +6,18 @@ namespace LumiCore2D {
 
 class Triangle : public LumiCore::Mesh {
 public:
-  Triangle()
-      : Mesh(Triangle::GenerateVertexArray(), Triangle::GenerateIndicies(),
-             GL_TRIANGLES) {};
+  Triangle() : Mesh(GenerateMeshData(), GL_TRIANGLES) {};
 
 private:
+  static inline LumiCore::MeshData GenerateMeshData() {
+    LumiCore::MeshData data;
+
+    data.vertecies = std::move(Triangle::GenerateVertexArray());
+    data.indices = std::move(Triangle::GenerateIndicies());
+
+    return data;
+  };
+
   static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
     // clang-format off
     return std::vector<LumiCore::Vertex>{

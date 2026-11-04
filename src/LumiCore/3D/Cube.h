@@ -7,11 +7,18 @@ namespace LumiCore3D {
 
 class Cube : public LumiCore::Mesh {
 public:
-  Cube()
-      : Mesh(Cube::GenerateVertexArray(), Cube::GenerateIndicies(),
-             GL_TRIANGLES) {};
+  Cube() : LumiCore::Mesh(GenerateMeshData(), GL_TRIANGLES) {};
 
 private:
+  static inline LumiCore::MeshData GenerateMeshData() {
+    LumiCore::MeshData data;
+
+    data.vertecies = std::move(Cube::GenerateVertexArray());
+    data.indices = std::move(Cube::GenerateIndicies());
+
+    return data;
+  };
+
   static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
     // clang-format off
     return std::vector<LumiCore::Vertex>{
