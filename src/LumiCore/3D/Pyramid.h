@@ -53,15 +53,15 @@ private:
     // clang-format off
     return std::vector<unsigned int>{
       // Front Side
-      0,1,2,
+      0,2,1,
       // Back Side
-      0,3,4,
+      0,4,3,
       // Right Side
-      0,5,6,
+      0,6,5,
       // Left Side
-      0,7,8,
+      0,8,7,
       // Bottom Side
-      9,10,11,
+      9,11,10,
       9,12,11
     };
     // clang-format on

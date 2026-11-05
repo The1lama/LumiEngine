@@ -112,27 +112,28 @@ private:
           br_index = (i - 1) * slices + j + 1 + 1;
         }
 
+        // Winding order is now counter clock wise
         if (i == 0) { // First ring
 
           indices.push_back(top_most_index);
-          indices.push_back(br_index);
           indices.push_back(bl_index);
+          indices.push_back(br_index);
 
         } else if (i == rings - 2) { // Last ring
 
-          indices.push_back(tr_index);
-          indices.push_back(bottom_most_index);
           indices.push_back(tl_index);
+          indices.push_back(bottom_most_index);
+          indices.push_back(tr_index);
 
         } else {
 
           indices.push_back(tl_index);
-          indices.push_back(br_index);
           indices.push_back(bl_index);
+          indices.push_back(br_index);
 
           indices.push_back(tl_index);
-          indices.push_back(tr_index);
           indices.push_back(br_index);
+          indices.push_back(tr_index);
         }
       }
     }

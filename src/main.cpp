@@ -302,6 +302,10 @@ int main() {
 
   glEnable(GL_DEPTH_TEST);
 
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  glFrontFace(GL_CCW);
+
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window)) {
     float runningTime = glfwGetTime();
@@ -347,14 +351,14 @@ int main() {
 
     glm::mat4 pyramidModel = glm::mat4(1.0f);
 
-    pyramidModel = glm::translate(pyramidModel, glm::vec3(-0.8f, 1.1f, 0.0f));
+    pyramidModel = glm::translate(pyramidModel, glm::vec3(-0.8f, -1.1f, 0.0f));
 
-    pyramidModel = glm::rotate(pyramidModel, glm::radians(-73.0f),
-                               glm::vec3(1.0f, 0.0f, 0.0f));
-    pyramidModel = glm::rotate(pyramidModel, glm::radians(-35.0f),
-                               glm::vec3(0.0f, 0.0f, 1.0f));
+    // pyramidModel = glm::rotate(pyramidModel, glm::radians(-73.0f),
+    //                            glm::vec3(1.0f, 0.0f, 0.0f));
+    // pyramidModel = glm::rotate(pyramidModel, glm::radians(-35.0f),
+    //                            glm::vec3(0.0f, 0.0f, 1.0f));
 
-    pyramidModel = glm::scale(pyramidModel, glm::vec3(0.3, 0.3, 0.3));
+    // pyramidModel = glm::scale(pyramidModel, glm::vec3(0.3, 0.3, 0.3));
 
     basic3DShader.SetMatrix4("u_Model", pyramidModel);
     basic2DShader.SetVec3("uColor", blueColor);

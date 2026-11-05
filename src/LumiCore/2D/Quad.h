@@ -29,7 +29,12 @@ private:
     // clang-format on
   }
   static inline std::vector<unsigned int> GenerateIndicies() {
-    return std::vector<unsigned int>{0, 1, 2, 0, 3, 2};
+    // clang-format off
+    return std::vector<unsigned int>{
+      0, 2, 1, 
+      0, 3, 2
+    };
+    // clang-format on
   }
 };
 
