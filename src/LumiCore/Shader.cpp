@@ -12,6 +12,7 @@ Shader::Shader(const std::string &vertexPath, const std::string &fragmentPath) {
 Shader::~Shader() { DeleteShader(); }
 
 void Shader::Use() const { glUseProgram(m_ID); }
+void Shader::UnUse() const { glUseProgram(0); }
 
 bool Shader::IsValid() const {
   if (m_ID == 0 && !glIsProgram(m_ID))

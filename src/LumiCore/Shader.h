@@ -11,6 +11,7 @@ public:
   ~Shader();
 
   void Use() const;
+  void UnUse() const;
   bool IsValid() const;
   void DeleteShader() const;
 

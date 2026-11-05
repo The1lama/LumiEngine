@@ -1,8 +1,8 @@
 #include <GLFW/glfw3.h>
+#include <corecrt_math.h>
 #include <glad/glad.h>
 
 #include "LumiCore/2D/Quad.h"
-#include "LumiCore/2D/Triangle.h"
 #include "LumiCore/3D/Cube.h"
 #include "LumiCore/3D/Pyramid.h"
 #include "LumiCore/3D/Sphere.h"
@@ -159,8 +159,96 @@ void SwitchRenderingMode() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); // draws vertex points
 };
 
+void mat4_Rotation(glm::mat4 &matrix, const float radians, const int axis) {
+  // glm::rotate(cubeModel, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
+  // Precalculate the cos and sine values for references
+  const float cosValue = glm::cos(radians);
+  const float sinValue = glm::sin(radians);
+
+  // Why we are multiplying whole vectors instead of just the single digits
+  // is because will then store existing position and scale values. And
+  // because it will compute faster than doing individual single float
+  // multiplications and then changing the value one at a time.
+
+  // Why we are adding together two different columns is because when we rotate
+  // the object on the local axis the old "up" vector is not the same as before
+  // and would have moved into each other's spaces. And by adding the two
+  // different columns we are calculating the new local up direction vectors.
+
+  // x axis Rotation
+  // Take out the columns to reference when we do the multiplications
+  if (axis == 0) {
+    glm::vec4 col1 = matrix[1];
+    glm::vec4 col2 = matrix[2];
+    matrix[1] = col1 * cosValue + col2 * sinValue;
+    matrix[2] = col1 * -sinValue + col2 * cosValue;
+  }
+
+  // y axis Rotation
+  if (axis == 1) {
+    glm::vec4 col1 = matrix[0];
+    glm::vec4 col2 = matrix[2];
+    matrix[0] = col1 * cosValue + col2 * sinValue;
+    matrix[2] = col1 * -sinValue + col2 * cosValue;
+  }
+
+  // z axis Rotation
+  if (axis >= 2) {
+    glm::vec4 col1 = matrix[0];
+    glm::vec4 col2 = matrix[1];
+    matrix[0] = col1 * cosValue + col2 * sinValue;
+    matrix[1] = col1 * -sinValue + col2 * cosValue;
+  }
+
+  // matrix[1][1] = matrix[1][1] * cosValue;
+  // matrix[2][1] = matrix[2][1] * -sinValue;
+  // matrix[1][2] = matrix[1][2] * sinValue;
+  // matrix[2][2] = matrix[2][2] * cosValue;
+
+  // y axis Rotation
+  // matrix[0][0] = matrix[0][0] * cosValue;
+  // matrix[2][0] = matrix[2][0] * sinValue;
+  // matrix[0][2] = matrix[0][2] * -sinValue;
+  // matrix[2][2] = matrix[2][2] * cosValue;
+
+  //// z axis Rotation
+  // matrix[0][0] = matrix[0][0] * cosValue;
+  // matrix[0][1] = matrix[0][1] * -sinValue;
+  // matrix[0][1] = matrix[0][1] * sinValue;
+  // matrix[1][1] = matrix[1][1] * cosValue;
+}
+void mat4_Transform(glm::mat4 &matrix, const glm::vec3 newLocation) {
+  // glm::translate(cubeModel, glm::vec3(0.4f, 0.0f, 0.0f));
+
+  const float xLocation = matrix[3][0] + newLocation.x;
+  const float yLocation = matrix[3][1] + newLocation.y;
+  const float zLocation = matrix[3][2] + newLocation.z;
+
+  matrix[3][0] = xLocation;
+  matrix[3][1] = yLocation;
+  matrix[3][2] = zLocation;
+}
+void mat4_Scale(glm::mat4 &matrix, const glm::vec3 scaleValue) {
+  // glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
+
+  // NOTE: DO NOT run scale after we have rotated the matrix as
+  // the scale and roation matrix math uses the same indexes on
+  // both math functions.
+  // The transformation order should be Scale -> Rotation -> Transform
+
+  const float xScale = matrix[0][0] * scaleValue.x;
+  const float yScale = matrix[1][1] * scaleValue.y;
+  const float zScale = matrix[2][2] * scaleValue.z;
+
+  matrix[0][0] = xScale; // x scale value
+  matrix[1][1] = yScale; // y scale value
+  matrix[2][2] = zScale; // z scale value
+}
+
 int main() {
 
+#pragma region Init
   /* Initialize the library */
   if (!glfwInit()) {
     std::cout << "Failed to initialize GLFW.\n";
@@ -214,6 +302,7 @@ int main() {
   std::cout << "output" << '\n';
 
   ///////////////
+#pragma endregion Init
 
   /// Colors ///
   glm::vec3 redColor = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -221,6 +310,7 @@ int main() {
   glm::vec3 blueColor = glm::vec3(0.0f, 0.0f, 1.0f);
   glm::vec3 blackColor = glm::vec3(0.0f, 0.0f, 0.0f);
 
+#pragma region MeshObjects
   LumiCore2D::Quad quadMesh;
   if (!quadMesh.IsValid()) {
     std::cout << "Mesh VAO could not do its thing" << '\n';
@@ -248,8 +338,11 @@ int main() {
     std::cout << "Mesh VAO could not do its thing" << '\n';
     return -23;
   }
+#pragma endregion MeshObjects
 
   /////////////// PROJECTION ///////////////
+
+  // DO LOOK AT CROSS
 
   glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 6.0f);
   glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -275,19 +368,17 @@ int main() {
 
   ///////////////
 
-  Shader basic2DShader =
-      Shader("assets/shaders/2dShader.vert", "assets/shaders/2dShader.frag");
-  if (!basic2DShader.IsValid()) {
-    std::cout << "2D Shader could not compile" << '\n';
-    return -3;
-  }
-
   Shader basic3DShader = Shader("assets/shaders/3dBasicShader.vert",
                                 "assets/shaders/3dBasicShader.frag");
   if (!basic3DShader.IsValid()) {
     std::cout << "3D Shader could not compile" << '\n';
     return -2;
   }
+  basic3DShader.Use();
+  // these we only need to set one time as they are the same for now
+  basic3DShader.SetMatrix4("u_Projection", projectionMatrix);
+  basic3DShader.SetMatrix4("u_View", viewMatix);
+  basic3DShader.UnUse();
 
   ///////////////
 
@@ -315,70 +406,119 @@ int main() {
     /* Render here */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    basic2DShader.Use();
-
-    //// Facade
-    glm::mat4 model = glm::mat4(1.0f);
-    model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-    model =
-        glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-
-    basic2DShader.SetMatrix4("u_Model", model);
-    basic2DShader.SetVec3("uColor", bToggleRoofColor ? blueColor : redColor);
-    basic2DShader.SetMatrix4("u_Projection", projectionMatrix);
-    basic2DShader.SetMatrix4("u_View", viewMatix);
-    quadMesh.Render(basic2DShader);
-
     basic3DShader.Use();
 
-    glm::mat4 cubeModel = glm::mat4(1.0f);
+    { // Cube 1
+      glm::mat4 cubeModel = glm::mat4(1.0f);
 
-    cubeModel = glm::translate(cubeModel, glm::vec3(0.4f, 0.0f, 0.0f));
+      cubeModel = glm::translate(cubeModel, glm::vec3(0.4f, -0.4f, 0.0f));
 
-    cubeModel = glm::rotate(cubeModel, glm::radians(-55.0f),
-                            glm::vec3(1.0f, 0.0f, 0.0f));
-    cubeModel = glm::rotate(cubeModel, glm::radians(-55.0f),
-                            glm::vec3(0.0f, 0.0f, 1.0f));
+      const float rotationMovement = runningTime * 100;
+      cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
 
-    cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
+      mat4_Rotation(cubeModel, glm::radians(-rotationMovement), 1);
+      mat4_Rotation(cubeModel, glm::radians(rotationMovement + 5), 0);
 
-    basic2DShader.SetVec3("uColor", redColor);
-    basic3DShader.SetMatrix4("u_Projection", projectionMatrix);
-    basic3DShader.SetMatrix4("u_View", viewMatix);
-    basic3DShader.SetMatrix4("u_Model", cubeModel);
-    cubeObject.Render(basic3DShader);
+      basic3DShader.SetVec3("uColor", redColor);
+      basic3DShader.SetMatrix4("u_Model", cubeModel);
+      cubeObject.Render(basic3DShader);
+    }
 
-    glm::mat4 pyramidModel = glm::mat4(1.0f);
+    { // Cube 2
+      glm::mat4 cubeModel = glm::mat4(1.0f);
 
-    pyramidModel = glm::translate(pyramidModel, glm::vec3(-0.8f, -1.1f, 0.0f));
+      cubeModel = glm::translate(cubeModel, glm::vec3(-1.2f, 0.0f, 0.0f));
 
-    // pyramidModel = glm::rotate(pyramidModel, glm::radians(-73.0f),
-    //                            glm::vec3(1.0f, 0.0f, 0.0f));
-    // pyramidModel = glm::rotate(pyramidModel, glm::radians(-35.0f),
-    //                            glm::vec3(0.0f, 0.0f, 1.0f));
+      const float rotationMovement = runningTime * 100;
+      cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
 
-    // pyramidModel = glm::scale(pyramidModel, glm::vec3(0.3, 0.3, 0.3));
+      mat4_Rotation(cubeModel, glm::radians(-rotationMovement), 0);
+      mat4_Rotation(cubeModel, glm::radians(rotationMovement), 1);
+      mat4_Rotation(cubeModel, glm::radians(rotationMovement), 2);
 
-    basic3DShader.SetMatrix4("u_Model", pyramidModel);
-    basic2DShader.SetVec3("uColor", blueColor);
-    pyramidObject.Render(basic3DShader);
+      basic3DShader.SetVec3("uColor", redColor);
+      basic3DShader.SetMatrix4("u_Model", cubeModel);
+      cubeObject.Render(basic3DShader);
+    }
 
-    glm::mat4 sphereModel = glm::mat4(1.0f);
+    { // Pyramid 1
+      glm::mat4 pyramidModel = glm::mat4(1.0f);
 
-    sphereModel = glm::translate(sphereModel, glm::vec3(-0.8f, 1.1f, 0.0f));
+      mat4_Transform(pyramidModel, glm::vec3(-0.8f, -1.1f, 0.0f));
 
-    sphereModel = glm::scale(sphereModel, glm::vec3(0.3, 0.3, 0.3));
+      const float frequency = 5.0f;
+      const float amplitude = 0.35f;
+      const float heightOffset = 0.65f;
+      const float sinScale =
+          amplitude * glm::sin(frequency * runningTime) + heightOffset;
 
-    basic3DShader.SetMatrix4("u_Model", sphereModel);
-    basic2DShader.SetVec3("uColor", greenColor);
-    sphereObject.Render(basic3DShader);
+      mat4_Scale(pyramidModel, glm::vec3(sinScale));
+
+      basic3DShader.SetVec3("uColor", blueColor);
+      basic3DShader.SetMatrix4("u_Model", pyramidModel);
+      pyramidObject.Render(basic3DShader);
+    }
+
+    { // Pyramid 2
+      glm::mat4 pyramidModel = glm::mat4(1.0f);
+
+      mat4_Transform(pyramidModel, glm::vec3(1.8f, 2.1f, -2.0f));
+
+      const float frequency = 5.0f;
+      const float amplitude = 0.35f;
+      const float heightOffset = 0.0f;
+      const float sinScale =
+          amplitude * glm::sin(frequency * runningTime) + heightOffset;
+
+      mat4_Scale(pyramidModel, glm::vec3(sinScale));
+
+      basic3DShader.SetVec3("uColor", blueColor);
+      basic3DShader.SetMatrix4("u_Model", pyramidModel);
+      pyramidObject.Render(basic3DShader);
+    }
+
+    { // Sphere 1
+      glm::mat4 sphereModel = glm::mat4(1.0f);
+
+      const float frequency = 5.0f;
+      const float amplitude = 0.35f;
+      const float heightOffset = 0.0f;
+      const float sinScale =
+          amplitude * glm::sin(frequency * runningTime) + heightOffset;
+
+      sphereModel =
+          glm::translate(sphereModel, glm::vec3(-sinScale, 1.1f, 0.0f));
+
+      sphereModel = glm::scale(sphereModel, glm::vec3(0.3, 0.3, 0.3));
+
+      basic3DShader.SetVec3("uColor", greenColor);
+      basic3DShader.SetMatrix4("u_Model", sphereModel);
+      sphereObject.Render(basic3DShader);
+    }
+
+    { // Sphere 2
+      glm::mat4 sphereModel = glm::mat4(1.0f);
+
+      const float frequency = 5.0f;
+      const float amplitude = 0.35f;
+      const float heightOffset = 0.0f;
+      const float sinScale =
+          amplitude * glm::sin(frequency * runningTime) + heightOffset;
+
+      sphereModel = glm::translate(sphereModel,
+                                   glm::vec3(0, sinScale + 0.7f, sinScale - 4));
+
+      sphereModel = glm::scale(sphereModel, glm::vec3(0.3, 0.3, 0.3));
+
+      basic3DShader.SetVec3("uColor", greenColor);
+      basic3DShader.SetMatrix4("u_Model", sphereModel);
+      sphereObject.Render(basic3DShader);
+    }
 
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 
-  basic2DShader.DeleteShader();
   quadMesh.Release();
 
   glfwTerminate();
