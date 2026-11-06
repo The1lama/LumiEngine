@@ -45,9 +45,11 @@ struct MeshData {
 
 void SwitchRenderingMode();
 
-bool processInput(GLFWwindow *window, bool &bToggleColor,
-                  bool &bSwitchDrawMode) {
+bool processInput(GLFWwindow *window, bool &bToggleColor, bool &bSwitchDrawMode,
+                  bool &bSwitchProjectionMatrix) {
   bool hasPressed = false;
+
+  // Change color on object //
   if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
     hasPressed = true;
     bToggleColor = false;
@@ -55,6 +57,8 @@ bool processInput(GLFWwindow *window, bool &bToggleColor,
   if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
     bToggleColor = true;
   }
+
+  // Draw mode switch //
   if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
     hasPressed = true;
     if (bSwitchDrawMode == false)
@@ -63,6 +67,15 @@ bool processInput(GLFWwindow *window, bool &bToggleColor,
   }
   if (glfwGetKey(window, GLFW_KEY_1) == GLFW_RELEASE) {
     bSwitchDrawMode = false;
+  }
+
+  // Projection matrix switch //
+  if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+    hasPressed = true;
+    bSwitchProjectionMatrix = true;
+  }
+  if (glfwGetKey(window, GLFW_KEY_2) == GLFW_RELEASE) {
+    bSwitchProjectionMatrix = false;
   }
 
   return hasPressed;
@@ -246,6 +259,88 @@ void mat4_Scale(glm::mat4 &matrix, const glm::vec3 scaleValue) {
   matrix[2][2] = zScale; // z scale value
 }
 
+glm::mat4 CreateOrthographicProjection(const float left, const float right,
+                                       const float top, const float bottom,
+                                       const float nearPlane,
+                                       const float farPlane) {
+  glm::mat4 matrix(1.0f);
+
+  // Translation
+  // Why we are moving our projection matrix is because we need to
+  // center the viwing box so that the middle of the viwing box is
+  // between out left and right coordiantes
+
+  matrix[3][0] = -((right + left) / (right / left));                 // Moving X
+  matrix[3][1] = -((top + bottom) / (top - bottom));                 // Moving Y
+  matrix[3][2] = -((farPlane + nearPlane) / (farPlane - nearPlane)); // Moving Z
+
+  // Scaling
+  ////////////////
+  // and this we are doing only on the XY axies, and not the Z. This is because
+  // we are drawing the targets only on the XY axies and will ignore the Z space
+  // as we are not looking for depth in this projection matrix
+  ////////////////
+
+  // After translation we need to scale the boundaries to fill the
+  // Canonical View Volume (CVV)
+  // This is so we can map the target to values between -1,+1. on the screen,
+  //
+  // CVV
+  // Also called normalized viewing volume. It is where the viewing frustums or
+  // orthographic boxes are transformed, i.e. changes/warps the projection of
+  // the target to either orthographic or perspectives projection.
+
+  // Why we are doing 2 / original size is because ...
+  matrix[0][0] = 2 / (right - left); // Scaling X
+  matrix[1][1] = 2 / (top - bottom); // Scaling Y
+
+  // Z fliping
+  // Why we are Z fliping is because of how the camera has been setup together
+  // with how OpenGL handels NDC.
+  //
+  // The camera has been set up with a Right Handed system, where the positive Z
+  // is pointing outwards from the screen. i.e. the +Z is pointing towards the
+  // camera.
+  //
+  // This differs to how OpenGL expecs NDC values to be the left handed system
+  // for depth testing, so that the values goes from -1 for objects close to
+  // screen and +1 for objectes furthure away from screen.
+  //
+  // This is why we are filpping the Z axis from the right hand system to left
+  // hand.
+
+  matrix[2][2] = -(2 / (farPlane - nearPlane)); // Scaling Y
+
+  return matrix;
+}
+
+void GenerateProjectionMatrixValues(GLFWwindow *window,
+                                    glm::mat4 &perspectiveMat,
+                                    glm::mat4 &orthMat) {
+
+  const auto fov = glm::radians(45.0f);
+  int frameWidth, frameHeight;
+  glfwGetFramebufferSize(window, &frameWidth, &frameHeight);
+
+  const auto aspectRatio = (float)frameWidth / (float)frameHeight;
+  const float nearPlane = 0.1f;
+  const float farPlane = 100.0f;
+
+  // Perspective Matrix //
+  perspectiveMat = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
+
+  // Orthographic Matrix //
+  const float orthSize = 5 * aspectRatio;
+  orthMat = CreateOrthographicProjection(-orthSize, orthSize, orthSize,
+                                         -orthSize, nearPlane, farPlane);
+}
+
+void SwitchProjectionMatrix(Shader &inShader, glm::mat4 newProjectionMatrix) {
+  inShader.Use();
+  inShader.SetMatrix4("u_Projection", newProjectionMatrix);
+  inShader.UnUse();
+}
+
 int main() {
 
 #pragma region Init
@@ -342,8 +437,6 @@ int main() {
 
   /////////////// PROJECTION ///////////////
 
-  // DO LOOK AT CROSS
-
   glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 6.0f);
   glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
   glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
@@ -356,15 +449,10 @@ int main() {
   glm::mat4 viewMatix(1.0f);
   viewMatix = glm::lookAt(cameraPos, cameraTarget, worldUp);
 
-  const auto fov = glm::radians(45.0f);
-  int frameWidth, frameHeight;
-  glfwGetFramebufferSize(window, &frameWidth, &frameHeight);
-
-  const auto aspectRatio = (float)frameWidth / (float)frameHeight;
-  const float nearPlane = 0.1f;
-  const float farPlane = 100.0f;
-  glm::mat4 projectionMatrix =
-      glm::perspective(fov, aspectRatio, nearPlane, farPlane);
+  // Projection Matrix //
+  glm::mat4 perspectiveMatrix;
+  glm::mat4 orthographicMatrix;
+  GenerateProjectionMatrixValues(window, perspectiveMatrix, orthographicMatrix);
 
   ///////////////
 
@@ -376,9 +464,10 @@ int main() {
   }
   basic3DShader.Use();
   // these we only need to set one time as they are the same for now
-  basic3DShader.SetMatrix4("u_Projection", projectionMatrix);
   basic3DShader.SetMatrix4("u_View", viewMatix);
   basic3DShader.UnUse();
+
+  SwitchProjectionMatrix(basic3DShader, perspectiveMatrix);
 
   ///////////////
 
@@ -388,6 +477,8 @@ int main() {
   bool bToggleRoofColor = false;
   float lastInputTime;
   bool bSwitchDrawingMode = false;
+  bool bHasSwitchedProjectionMatrix = false;
+  int projectionIndex = 0;
 
   glClearColor(.1f, .09f, .12f, 1.0f);
 
@@ -401,7 +492,18 @@ int main() {
   while (!glfwWindowShouldClose(window)) {
     float runningTime = glfwGetTime();
 
-    processInput(window, bToggleRoofColor, bSwitchDrawingMode);
+    bool bSwitchProjectionMatrix = false;
+    processInput(window, bToggleRoofColor, bSwitchDrawingMode,
+                 bSwitchProjectionMatrix);
+
+    if (bSwitchProjectionMatrix && !bHasSwitchedProjectionMatrix) {
+      projectionIndex = ++projectionIndex % 2;
+      SwitchProjectionMatrix(basic3DShader, projectionIndex == 0
+                                                ? perspectiveMatrix
+                                                : orthographicMatrix);
+    }
+
+    bHasSwitchedProjectionMatrix = bSwitchProjectionMatrix;
 
     /* Render here */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
