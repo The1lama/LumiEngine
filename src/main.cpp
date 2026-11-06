@@ -200,47 +200,40 @@ void mat4_Rotation(glm::mat4 &matrix, const float radians, const int axis) {
 
   // y axis Rotation
   if (axis == 1) {
-    glm::vec4 col1 = matrix[0];
+    glm::vec4 col0 = matrix[0];
     glm::vec4 col2 = matrix[2];
-    matrix[0] = col1 * cosValue + col2 * sinValue;
-    matrix[2] = col1 * -sinValue + col2 * cosValue;
+    matrix[0] = col0 * cosValue - col2 * sinValue;
+    matrix[2] = col0 * sinValue + col2 * cosValue;
   }
 
   // z axis Rotation
   if (axis >= 2) {
-    glm::vec4 col1 = matrix[0];
-    glm::vec4 col2 = matrix[1];
-    matrix[0] = col1 * cosValue + col2 * sinValue;
-    matrix[1] = col1 * -sinValue + col2 * cosValue;
+    glm::vec4 col0 = matrix[0];
+    glm::vec4 col1 = matrix[1];
+    matrix[0] = col0 * cosValue + col1 * sinValue;
+    matrix[1] = col0 * -sinValue + col1 * cosValue;
   }
-
-  // matrix[1][1] = matrix[1][1] * cosValue;
-  // matrix[2][1] = matrix[2][1] * -sinValue;
-  // matrix[1][2] = matrix[1][2] * sinValue;
-  // matrix[2][2] = matrix[2][2] * cosValue;
-
-  // y axis Rotation
-  // matrix[0][0] = matrix[0][0] * cosValue;
-  // matrix[2][0] = matrix[2][0] * sinValue;
-  // matrix[0][2] = matrix[0][2] * -sinValue;
-  // matrix[2][2] = matrix[2][2] * cosValue;
-
-  //// z axis Rotation
-  // matrix[0][0] = matrix[0][0] * cosValue;
-  // matrix[0][1] = matrix[0][1] * -sinValue;
-  // matrix[0][1] = matrix[0][1] * sinValue;
-  // matrix[1][1] = matrix[1][1] * cosValue;
 }
 void mat4_Transform(glm::mat4 &matrix, const glm::vec3 newLocation) {
   // glm::translate(cubeModel, glm::vec3(0.4f, 0.0f, 0.0f));
 
-  const float xLocation = matrix[3][0] + newLocation.x;
-  const float yLocation = matrix[3][1] + newLocation.y;
-  const float zLocation = matrix[3][2] + newLocation.z;
+  // clang-format off
+  // What is happening in this line of code is that we are taking the matrix 
+  // scale and mulipy it with the new vector locations that we want to move towards,
+  // this is what we do for XYZ and in the end we add our old transform location and the sum
+  // of all the values becomes our new location in the world.
+  //
+  //                      Forward Vector                    Up Vector                         Right Vector
+  // new Position = (scaleX * direction amount X) + (scaleY * direction amount Y) + (scaleZ * direction amount Z)
+  //
+  // clang-format on
 
-  matrix[3][0] = xLocation;
-  matrix[3][1] = yLocation;
-  matrix[3][2] = zLocation;
+  // clang-format off
+  matrix[3] = matrix[0] * newLocation.x +
+              matrix[1] * newLocation.y + 
+              matrix[2] * newLocation.z +
+              matrix[3];
+  // clang-format on
 }
 void mat4_Scale(glm::mat4 &matrix, const glm::vec3 scaleValue) {
   // glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
@@ -250,13 +243,9 @@ void mat4_Scale(glm::mat4 &matrix, const glm::vec3 scaleValue) {
   // both math functions.
   // The transformation order should be Scale -> Rotation -> Transform
 
-  const float xScale = matrix[0][0] * scaleValue.x;
-  const float yScale = matrix[1][1] * scaleValue.y;
-  const float zScale = matrix[2][2] * scaleValue.z;
-
-  matrix[0][0] = xScale; // x scale value
-  matrix[1][1] = yScale; // y scale value
-  matrix[2][2] = zScale; // z scale value
+  matrix[0] = matrix[0] * scaleValue.x; // x scale value
+  matrix[1] = matrix[1] * scaleValue.y; // y scale value
+  matrix[2] = matrix[2] * scaleValue.z; // z scale value
 }
 
 glm::mat4 CreateOrthographicProjection(const float left, const float right,
@@ -330,9 +319,21 @@ void GenerateProjectionMatrixValues(GLFWwindow *window,
   perspectiveMat = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
 
   // Orthographic Matrix //
-  const float orthSize = 5 * aspectRatio;
-  orthMat = CreateOrthographicProjection(-orthSize, orthSize, orthSize,
-                                         -orthSize, nearPlane, farPlane);
+  // const float orthSize = 2 * aspectRatio;
+  //
+  // this is an own distance to how far a way an object would be for it to be
+  // the same size in both perspective and orthographic projection
+  const float targDis = 8.0f;
+  //
+  // the two is to scale the tan*0.5 back to full heigh of the orth
+  const float orthHeight = 2.0f * targDis * glm::tan(fov * 0.5f);
+  const float orthWidth = orthHeight * aspectRatio;
+
+  const float halfW = orthWidth * 0.5f;
+  const float halfH = orthHeight * 0.5f;
+
+  orthMat = CreateOrthographicProjection(-halfW, halfW, halfH, -halfH,
+                                         nearPlane, farPlane);
 }
 
 void SwitchProjectionMatrix(Shader &inShader, glm::mat4 newProjectionMatrix) {
@@ -477,6 +478,8 @@ int main() {
   bool bToggleRoofColor = false;
   float lastInputTime;
   bool bSwitchDrawingMode = false;
+  //
+  // Switch between projection matrixes
   bool bHasSwitchedProjectionMatrix = false;
   int projectionIndex = 0;
 
@@ -513,13 +516,17 @@ int main() {
     { // Cube 1
       glm::mat4 cubeModel = glm::mat4(1.0f);
 
-      cubeModel = glm::translate(cubeModel, glm::vec3(0.4f, -0.4f, 0.0f));
+      // cubeModel = glm::translate(cubeModel, glm::vec3(0.4f, -0.4f, 0.0f));
 
       const float rotationMovement = runningTime * 100;
-      cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
+      // cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
 
-      mat4_Rotation(cubeModel, glm::radians(-rotationMovement), 1);
-      mat4_Rotation(cubeModel, glm::radians(rotationMovement + 5), 0);
+      mat4_Transform(cubeModel, glm::vec3(0.4f, -0.4f, 0.0f));
+
+      mat4_Rotation(cubeModel, glm::radians(-rotationMovement), 0);
+      mat4_Rotation(cubeModel, glm::radians(rotationMovement + 5), 1);
+
+      mat4_Scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
 
       basic3DShader.SetVec3("uColor", redColor);
       basic3DShader.SetMatrix4("u_Model", cubeModel);
@@ -529,14 +536,17 @@ int main() {
     { // Cube 2
       glm::mat4 cubeModel = glm::mat4(1.0f);
 
-      cubeModel = glm::translate(cubeModel, glm::vec3(-1.2f, 0.0f, 0.0f));
+      // cubeModel = glm::translate(cubeModel, glm::vec3(-1.2f, 0.0f, 0.0f));
+      mat4_Transform(cubeModel, glm::vec3(-1.2f, 0.0f, 0.0f));
 
       const float rotationMovement = runningTime * 100;
-      cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
 
       mat4_Rotation(cubeModel, glm::radians(-rotationMovement), 0);
       mat4_Rotation(cubeModel, glm::radians(rotationMovement), 1);
       mat4_Rotation(cubeModel, glm::radians(rotationMovement), 2);
+
+      // cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
+      mat4_Scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
 
       basic3DShader.SetVec3("uColor", redColor);
       basic3DShader.SetMatrix4("u_Model", cubeModel);
