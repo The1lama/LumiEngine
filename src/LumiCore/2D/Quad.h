@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Mesh.h"
+#include "glm/ext/vector_float3.hpp"
 
 namespace LumiCore2D {
 
@@ -21,10 +22,11 @@ private:
   static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
     // clang-format off
     return std::vector<LumiCore::Vertex>{
-      glm::vec3(-0.5f, -0.5f, 0.0f),
-      glm::vec3(-0.5f,  0.5f, 0.0f),
-      glm::vec3( 0.5f,  0.5f, 0.0f),
-      glm::vec3( 0.5f, -0.5f, 0.0f)
+                          // Position //                      // Normal //
+      LumiCore::Vertex(glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+      LumiCore::Vertex(glm::vec3(-0.5f,  0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+      LumiCore::Vertex(glm::vec3( 0.5f,  0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
+      LumiCore::Vertex(glm::vec3( 0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f)),
     };
     // clang-format on
   }

@@ -22,30 +22,32 @@ private:
   static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
     // clang-format off
     return std::vector<LumiCore::Vertex>{
-      // TOP Vertex      // Position //
-      LumiCore::Vertex( 0.f,  1.f,  0.f), 
-
+      //                 // Position // // Normal //
       // Forward side
-      LumiCore::Vertex( 1.f, -1.f, -1.f), 
-      LumiCore::Vertex( 1.f, -1.f,  1.f), 
+      LumiCore::Vertex( 0.f,  1.f,  0.f, 1.0f, 0.5f, 0.0f), 
+      LumiCore::Vertex( 1.f, -1.f, -1.f, 1.0f, 0.5f, 0.0f), 
+      LumiCore::Vertex( 1.f, -1.f,  1.f, 1.0f, 0.5f, 0.0f), 
 
       // Back side
-      LumiCore::Vertex(-1.f, -1.f,  1.f),
-      LumiCore::Vertex(-1.f, -1.f, -1.f),
+      LumiCore::Vertex( 0.f,  1.f,  0.f, -1.0f, 0.5f, 0.0f), 
+      LumiCore::Vertex(-1.f, -1.f,  1.f, -1.0f, 0.5f, 0.0f),
+      LumiCore::Vertex(-1.f, -1.f, -1.f, -1.0f, 0.5f, 0.0f),
 
       // Right side
-      LumiCore::Vertex( 1.f, -1.f,  1.f),
-      LumiCore::Vertex(-1.f, -1.f,  1.f),
+      LumiCore::Vertex( 0.f,  1.f,  0.f, 0.0f, 0.5f, 1.0f), 
+      LumiCore::Vertex( 1.f, -1.f,  1.f, 0.0f, 0.5f, 1.0f),
+      LumiCore::Vertex(-1.f, -1.f,  1.f, 0.0f, 0.5f, 1.0f),
 
       // Left side
-      LumiCore::Vertex(-1.f, -1.f, -1.f), 
-      LumiCore::Vertex( 1.f, -1.f, -1.f),
+      LumiCore::Vertex( 0.f,  1.f,  0.f, 0.0f, 0.5f, -1.0f), 
+      LumiCore::Vertex(-1.f, -1.f, -1.f, 0.0f, 0.5f, -1.0f), 
+      LumiCore::Vertex( 1.f, -1.f, -1.f, 0.0f, 0.5f, -1.0f),
 
       // Bottom side
-      LumiCore::Vertex(-1.f, -1.f,  1.f),
-      LumiCore::Vertex( 1.f, -1.f,  1.f),
-      LumiCore::Vertex( 1.f, -1.f, -1.f),
-      LumiCore::Vertex(-1.f, -1.f, -1.f)
+      LumiCore::Vertex(-1.f, -1.f,  1.f, 0.0f, -1.0f, 0.0f),
+      LumiCore::Vertex( 1.f, -1.f,  1.f, 0.0f, -1.0f, 0.0f),
+      LumiCore::Vertex( 1.f, -1.f, -1.f, 0.0f, -1.0f, 0.0f),
+      LumiCore::Vertex(-1.f, -1.f, -1.f, 0.0f, -1.0f, 0.0f)
     };
     // clang-format on
   }
@@ -55,14 +57,14 @@ private:
       // Front Side
       0,2,1,
       // Back Side
-      0,4,3,
+      3,5,4,
       // Right Side
-      0,6,5,
+      6,8,7,
       // Left Side
-      0,8,7,
-      // Bottom Side
       9,11,10,
-      9,12,11
+      // Bottom Side
+      12,14,13,
+      12,15,14
     };
     // clang-format on
   }

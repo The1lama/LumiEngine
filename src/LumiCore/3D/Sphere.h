@@ -78,7 +78,12 @@ private:
         float x_pos = cosf(current_angle * PIE / 180) * radius;
         float z_pos = sinf(current_angle * PIE / 180) * radius;
 
-        vertices.push_back(LumiCore::Vertex(x_pos, y_pos, z_pos));
+        auto vertexPos = glm::vec3(x_pos, y_pos, z_pos);
+        auto centerPos = glm::vec3(0, 0, 0);
+        glm::vec3 vertexNormal =
+            CalculateSurfaceNormal(vertexPos, centerPos, radius);
+
+        vertices.push_back(LumiCore::Vertex(vertexPos, vertexNormal));
 
         current_angle += angle_step;
       }
@@ -89,7 +94,8 @@ private:
 
     // std::cout << "Sphere vertex count:" << vertices.size() / 3 << std::endl;
     return true;
-  };
+  }
+
   static inline bool
   GenerateIndicies(const std::vector<LumiCore::Vertex> vertices,
                    std::vector<unsigned int> &indices, const int rings,
@@ -142,6 +148,13 @@ private:
 
     return true;
   };
+
+  // calculate a surface normal vector of a sphere
+  static inline glm::vec3 CalculateSurfaceNormal(const glm::vec3 vertexPos,
+                                                 const glm::vec3 sphereCenter,
+                                                 const float radius) {
+    return (vertexPos - sphereCenter) / radius;
+  }
 
   // It's not the nicest sphere, nor the nicest code, but it sort of works.
 };

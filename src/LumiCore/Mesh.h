@@ -10,9 +10,12 @@ namespace LumiCore {
 
 struct Vertex {
   glm::vec3 position;
+  glm::vec3 normal;
 
-  Vertex(glm::vec3 VertexPosition) : position(VertexPosition) {};
-  Vertex(float x, float y, float z) : position(glm::vec3(x, y, z)) {};
+  Vertex(glm::vec3 VertexPosition, glm::vec3 VertexNormal)
+      : position(VertexPosition), normal(VertexNormal) {};
+  Vertex(float pX, float pY, float pZ, float nX, float nY, float nZ)
+      : position(glm::vec3(pX, pY, pZ)), normal(glm::vec3(nX, nY, nZ)) {};
 };
 
 struct MeshData {
