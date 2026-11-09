@@ -96,7 +96,7 @@ private:
                    const int slices) {
     // Indices
     unsigned int top_most_index = 0;
-    unsigned int bottom_most_index = vertices.size() / 3 - 1;
+    unsigned int bottom_most_index = vertices.size() - 1;
 
     for (int i = 0; i < rings - 1; i++) {
 
