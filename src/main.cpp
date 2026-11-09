@@ -221,7 +221,13 @@ void mat4_Transform(glm::mat4 &matrix, const glm::vec3 newLocation) {
   // What is happening in this line of code is that we are taking the matrix 
   // scale and mulipy it with the new vector locations that we want to move towards,
   // this is what we do for XYZ and in the end we add our old transform location and the sum
-  // of all the values becomes our new location in the world.
+  // of all the values becomes our new location in local space.
+  //
+  // Why we are multiplying scale and rotation is becuase we need to know in what direction 
+  // we are going to move the vertex location to. And why it does not clash with scale and
+  // rotation in the vertex shader is because they are doing different things, in the vertex shader 
+  // we are moving a single vertex point to its correct location while here we are moving the whole object 
+  // to its correct location.
   //
   //                      Forward Vector                    Up Vector                         Right Vector
   // new Position = (scaleX * direction amount X) + (scaleY * direction amount Y) + (scaleZ * direction amount Z)
