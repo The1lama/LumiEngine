@@ -34,7 +34,7 @@ target("LumiEngine")
 set_kind("binary")
 add_files("src/**.cpp")
 add_packages("glfw", "glad", "glm")
-set_languages("c++17")
+set_languages("c++20")
 
 after_build(function(target)
 	os.cp("assets", target:targetdir())
