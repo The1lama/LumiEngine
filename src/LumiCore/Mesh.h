@@ -8,12 +8,27 @@ class Shader;
 
 namespace LumiCore {
 
+struct Vertex {
+  glm::vec3 position;
+  glm::vec3 normal;
+
+  Vertex(glm::vec3 VertexPosition, glm::vec3 VertexNormal)
+      : position(VertexPosition), normal(VertexNormal) {};
+  Vertex(float pX, float pY, float pZ, float nX, float nY, float nZ)
+      : position(glm::vec3(pX, pY, pZ)), normal(glm::vec3(nX, nY, nZ)) {};
+};
+
+struct MeshData {
+  std::vector<Vertex> vertecies;
+  std::vector<unsigned int> indices;
+};
+
 class Mesh {
 public:
   Mesh() = default;
-  Mesh(std::vector<float> vertecies, std::vector<unsigned int> indicies,
-       GLenum renderType);
   ~Mesh();
+
+  bool IsValid() const;
 
   void SetTime(const float time) { m_time = time; }
   void SetAngle(const float angle) { m_angle = angle; }
@@ -21,14 +36,26 @@ public:
   void SetScale(const glm::vec2 scale) { m_xyScale = scale; }
   void SetColor(const glm::vec3 color) { m_color = color; }
 
+  void SetLocation(const glm::vec3 newLocation);
+  void SetRotation(const glm::vec3 newRotation);
+  void SetScale(const glm::vec3 newScale);
+
   virtual void Render(Shader &shader);
   virtual void Release();
 
 protected:
-  std::vector<float> m_verticies;
+  Mesh(LumiCore::MeshData data, GLenum renderType);
+
+  std::vector<Vertex> m_verticies;
   std::vector<unsigned int> m_indicies;
 
   GLenum m_renderType;
+
+  glm::vec3 m_location;
+  glm::vec3 m_rotation;
+  glm::vec3 m_scale;
+
+  glm::mat4 m_transformMatrix;
 
 private:
   float m_time = 1.f;
@@ -39,8 +66,10 @@ private:
 
   GLuint m_VBO, m_VAO, m_EBO;
 
-  void CreateMesh(std::vector<float> &vertecies,
+  void CreateMesh(std::vector<Vertex> &vertecies,
                   std::vector<unsigned int> &indicies);
+
+  void GenerateTransformationMatrix();
 
   inline bool IsFunctional() { return m_indicies.size() > 0 && m_VBO != 0; }
 };
