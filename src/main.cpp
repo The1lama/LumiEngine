@@ -7,6 +7,7 @@
 #include "LumiCore/3D/Pyramid.h"
 #include "LumiCore/3D/Sphere.h"
 #include "LumiCore/Shader.h"
+#include "LumiCore/logger/Logger.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float2.hpp"
@@ -349,11 +350,12 @@ void SwitchProjectionMatrix(Shader &inShader, glm::mat4 newProjectionMatrix) {
 }
 
 int main() {
+  LOG(LumiCoreLogger::LOGLEVEL::INFO, "Hello, Debugger");
 
 #pragma region Init
   /* Initialize the library */
   if (!glfwInit()) {
-    std::cout << "Failed to initialize GLFW.\n";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, "Failed to initialize GLFW");
     return -1;
   }
 
@@ -373,7 +375,8 @@ int main() {
                        settings.windowTitle, nullptr, nullptr);
 
   if (!window) {
-    std::cout << "Something on window initialize went wrong" << "\n";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR,
+        "Something on window initialize went wrong");
     glfwTerminate();
     return -1;
   }
@@ -385,7 +388,7 @@ int main() {
 
   const int loadedVersion = gladLoadGL();
   if (loadedVersion == 0) {
-    std::cout << "Failed to load OpenGL functions with GLAD.\n";
+    LOG_ERROR("Failed to load OpenGL functions with GLAD");
     glfwDestroyWindow(window);
     glfwTerminate();
     return 1;
@@ -394,14 +397,13 @@ int main() {
   int flags;
   glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
   if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
-    std::cout << "initialize debug output" << '\n';
+    LOG_DEBUG("initialize debug output");
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glDebugOutput, nullptr);
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr,
                           GL_TRUE);
   }
-  std::cout << "output" << '\n';
 
   ///////////////
 #pragma endregion Init
