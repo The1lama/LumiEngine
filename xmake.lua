@@ -4,6 +4,7 @@ add_rules("plugin.compile_commands.autoupdate", { outputdir = "." })
 add_rules("plugin.vsxmake.autoupdate")
 
 add_requires("glfw")
+add_requires("stb 2026.03.18")
 
 -- OpenGL Version
 local GL_MAJOR_VERSION = 4
@@ -33,8 +34,8 @@ add_requires("glm 1.0.3")
 target("LumiEngine")
 set_kind("binary")
 add_files("src/**.cpp")
-add_packages("glfw", "glad", "glm")
 set_languages("c++20")
+add_packages("glfw", "glad", "glm", "stb")
 
 after_build(function(target)
 	os.cp("assets", target:targetdir())

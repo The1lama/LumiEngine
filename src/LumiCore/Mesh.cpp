@@ -64,9 +64,23 @@ void Mesh::CreateMesh(std::vector<Vertex> &vertecies,
 
   constexpr GLsizei stride = sizeof(Vertex);
 
+  // Position Attribute //
   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride,
                         static_cast<void *>(0));
   glEnableVertexAttribArray(0);
+  // Position Attribute //
+
+  // Normal Attribute //
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
+                        reinterpret_cast<void *>(offsetof(Vertex, normal)));
+  glEnableVertexAttribArray(1);
+  // Normal Attribute //
+
+  // UV Attribute //
+  glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride,
+                        reinterpret_cast<void *>(offsetof(Vertex, uvCoord)));
+  glEnableVertexAttribArray(2);
+  // UV Attribute //
 
   glBindVertexArray(0);
 }

@@ -22,32 +22,32 @@ private:
   static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
     // clang-format off
     return std::vector<LumiCore::Vertex>{
-      //                 // Position // // Normal //
+      //                 // Position // // Normal // UV COORD //
       // Forward side
-      LumiCore::Vertex( 0.f,  1.f,  0.f, 1.0f, 0.5f, 0.0f), 
-      LumiCore::Vertex( 1.f, -1.f, -1.f, 1.0f, 0.5f, 0.0f), 
-      LumiCore::Vertex( 1.f, -1.f,  1.f, 1.0f, 0.5f, 0.0f), 
+      LumiCore::Vertex( 0.f,  1.f,  0.f, 1.0f, 0.5f, 0.0f, 0.5f, 0.5f), // TOP
+      LumiCore::Vertex( 1.f, -1.f, -1.f, 1.0f, 0.5f, 0.0f, 1.0f, 0.0f), // Bottom RIGHT
+      LumiCore::Vertex( 1.f, -1.f,  1.f, 1.0f, 0.5f, 0.0f, 0.0f, 0.0f), // BOTTOM LEFT
 
       // Back side
-      LumiCore::Vertex( 0.f,  1.f,  0.f, -1.0f, 0.5f, 0.0f), 
-      LumiCore::Vertex(-1.f, -1.f,  1.f, -1.0f, 0.5f, 0.0f),
-      LumiCore::Vertex(-1.f, -1.f, -1.f, -1.0f, 0.5f, 0.0f),
+      LumiCore::Vertex( 0.f,  1.f,  0.f, -1.0f, 0.5f, 0.0f, 0.5f, 0.5f), // TOP
+      LumiCore::Vertex(-1.f, -1.f,  1.f, -1.0f, 0.5f, 0.0f, 1.0f, 0.0f), // Bottom RIGHT
+      LumiCore::Vertex(-1.f, -1.f, -1.f, -1.0f, 0.5f, 0.0f, 0.0f, 0.0f), // BOTTOM LEFT
 
       // Right side
-      LumiCore::Vertex( 0.f,  1.f,  0.f, 0.0f, 0.5f, 1.0f), 
-      LumiCore::Vertex( 1.f, -1.f,  1.f, 0.0f, 0.5f, 1.0f),
-      LumiCore::Vertex(-1.f, -1.f,  1.f, 0.0f, 0.5f, 1.0f),
+      LumiCore::Vertex( 0.f,  1.f,  0.f, 0.0f, 0.5f, 1.0f, 0.5f, 0.5f), // TOP
+      LumiCore::Vertex( 1.f, -1.f,  1.f, 0.0f, 0.5f, 1.0f, 1.0f, 0.0f), // Bottom RIGHT
+      LumiCore::Vertex(-1.f, -1.f,  1.f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f), // BOTTOM LEFT
 
       // Left side
-      LumiCore::Vertex( 0.f,  1.f,  0.f, 0.0f, 0.5f, -1.0f), 
-      LumiCore::Vertex(-1.f, -1.f, -1.f, 0.0f, 0.5f, -1.0f), 
-      LumiCore::Vertex( 1.f, -1.f, -1.f, 0.0f, 0.5f, -1.0f),
+      LumiCore::Vertex( 0.f,  1.f,  0.f, 0.0f, 0.5f, -1.0f, 0.5f, 0.5f), // TOP
+      LumiCore::Vertex(-1.f, -1.f, -1.f, 0.0f, 0.5f, -1.0f, 1.0f, 0.0f), // Bottom RIGHT
+      LumiCore::Vertex( 1.f, -1.f, -1.f, 0.0f, 0.5f, -1.0f, 0.0f, 0.0f), // BOTTOM LEFT
 
       // Bottom side
-      LumiCore::Vertex(-1.f, -1.f,  1.f, 0.0f, -1.0f, 0.0f),
-      LumiCore::Vertex( 1.f, -1.f,  1.f, 0.0f, -1.0f, 0.0f),
-      LumiCore::Vertex( 1.f, -1.f, -1.f, 0.0f, -1.0f, 0.0f),
-      LumiCore::Vertex(-1.f, -1.f, -1.f, 0.0f, -1.0f, 0.0f)
+      LumiCore::Vertex(-1.f, -1.f,  1.f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f), // TOP LEFT
+      LumiCore::Vertex( 1.f, -1.f,  1.f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f), // TOP RIGHT
+      LumiCore::Vertex( 1.f, -1.f, -1.f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f), // BOTTOM RIGHT
+      LumiCore::Vertex(-1.f, -1.f, -1.f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f)  // BOTTOM LEFT
     };
     // clang-format on
   }

@@ -11,11 +11,14 @@ namespace LumiCore {
 struct Vertex {
   glm::vec3 position;
   glm::vec3 normal;
+  glm::vec2 uvCoord;
 
-  Vertex(glm::vec3 VertexPosition, glm::vec3 VertexNormal)
-      : position(VertexPosition), normal(VertexNormal) {};
-  Vertex(float pX, float pY, float pZ, float nX, float nY, float nZ)
-      : position(glm::vec3(pX, pY, pZ)), normal(glm::vec3(nX, nY, nZ)) {};
+  Vertex(glm::vec3 VertexPosition, glm::vec3 VertexNormal, glm::vec2 UvCoord)
+      : position(VertexPosition), normal(VertexNormal), uvCoord(UvCoord) {};
+  Vertex(float pX, float pY, float pZ, float nX, float nY, float nZ, float uX,
+         float uY)
+      : position(glm::vec3(pX, pY, pZ)), normal(glm::vec3(nX, nY, nZ)),
+        uvCoord(glm::vec2(uX, uY)) {};
 };
 
 struct MeshData {

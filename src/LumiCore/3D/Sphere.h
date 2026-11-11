@@ -2,6 +2,10 @@
 
 #include "../Mesh.h"
 #include "../logger/Logger.h"
+#include "glm/ext/quaternion_geometric.hpp"
+#include "glm/ext/scalar_constants.hpp"
+#include "glm/matrix.hpp"
+#include "glm/trigonometric.hpp"
 #include <math.h>
 
 namespace LumiCore3D {
@@ -67,12 +71,17 @@ private:
         float x_pos = cosf(current_angle * PIE / 180) * radius;
         float z_pos = sinf(current_angle * PIE / 180) * radius;
 
-        auto vertexPos = glm::vec3(x_pos, y_pos, z_pos);
-        auto centerPos = glm::vec3(0, 0, 0);
-        glm::vec3 vertexNormal =
+        const auto vertexPos = glm::vec3(x_pos, y_pos, z_pos);
+        const auto centerPos = glm::vec3(0, 0, 0);
+
+        const glm::vec3 vertexNormal =
             CalculateSurfaceNormal(vertexPos, centerPos, radius);
 
-        vertices.push_back(LumiCore::Vertex(vertexPos, vertexNormal));
+        const glm::vec2 vertexUvCoord =
+            CalculateUvPosition(vertexPos, centerPos, radius);
+
+        vertices.push_back(
+            LumiCore::Vertex(vertexPos, vertexNormal, vertexUvCoord));
 
         current_angle += angle_step;
       }
@@ -133,12 +142,26 @@ private:
     return true;
   };
 
-  // calculate a surface normal vector of a sphere
+  // Calculate a surface normal vector of a sphere
   static inline glm::vec3 CalculateSurfaceNormal(const glm::vec3 vertexPos,
                                                  const glm::vec3 sphereCenter,
                                                  const float radius) {
-    return (vertexPos - sphereCenter) / radius;
+    return glm::normalize(vertexPos - sphereCenter);
   }
+
+  static inline glm::vec2 CalculateUvPosition(const glm::vec3 vertexPos,
+                                              const glm::vec3 sphereCenter,
+                                              const float radius) {
+    // normalize the vertex position
+    const auto normPos =
+        CalculateSurfaceNormal(vertexPos, sphereCenter, radius);
+
+    // Calculate the projection mapping using a standard spherical function
+    const float u =
+        0.5f + (glm::atan(normPos.z, normPos.x)) / (2 * glm::pi<float>());
+    const float v = 0.5f + (glm::asin(normPos.y) / glm::pi<float>());
+    return glm::vec2(u, v);
+  };
 
   // It's not the nicest sphere, nor the nicest code, but it sort of works.
 };

@@ -3,6 +3,7 @@
 #include <format>
 #include <glad/glad.h>
 
+#define STB_IMAGE_IMPLEMENTATION
 #include "LumiCore/2D/Quad.h"
 #include "LumiCore/3D/Cube.h"
 #include "LumiCore/3D/Pyramid.h"
@@ -17,6 +18,7 @@
 #include "glm/trigonometric.hpp"
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <stb_image.h>
 
 void glfwErrorCallback(int error, const char *description) {
   LOG(LumiCoreLogger::LOGLEVEL::ERROR,
@@ -351,6 +353,43 @@ void SwitchProjectionMatrix(Shader &inShader, glm::mat4 newProjectionMatrix) {
   inShader.UnUse();
 }
 
+bool CreateTexture(const char *pathToTexture, unsigned int &textureId) {
+  stbi_set_flip_vertically_on_load(true);
+  // generate texture object
+  unsigned int texture;
+  glGenTextures(1, &texture);
+  glBindTexture(GL_TEXTURE_2D, texture);
+
+  // set texture options
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+  // load the texture data
+  int width, height, nrChannels;
+  unsigned char *data =
+      stbi_load(pathToTexture, &width, &height, &nrChannels, 0);
+
+  if (data) {
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
+                 GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+  } else {
+    LOG_WARNING(std::format("Could not load in texture: {}", pathToTexture));
+    return false;
+  }
+
+  // Once we have called `glTexImage2D`, we have bound the texture object and
+  // attached an image to it. We can generate a Mipmap with `glGenerateMipmap`,
+  // and after that has been done it is good practice to free the image memory
+  stbi_image_free(data);
+
+  textureId = texture;
+  return true;
+}
+
 int main() {
   LOG(LumiCoreLogger::LOGLEVEL::INFO, "Debugger initialized");
 
@@ -467,6 +506,12 @@ int main() {
 
   ///////////////
 
+  const char *texturePath = "assets/textures/uvTest.png";
+  unsigned int texId;
+  CreateTexture(texturePath, texId);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_2D, texId);
+
   Shader basic3DShader = Shader("assets/shaders/3dBasicShader.vert",
                                 "assets/shaders/3dBasicShader.frag");
   if (!basic3DShader.IsValid()) {
@@ -525,22 +570,21 @@ int main() {
 
     basic3DShader.Use();
 
+    const glm::vec3 forward(1.0f, 0.0f, 0.0f);
+    const glm::vec3 up(0.0f, 1.0f, 0.0f);
+    const glm::vec3 right(0.0f, 0.0f, 1.0f);
+
     { // Cube 1
       glm::mat4 cubeModel = glm::mat4(1.0f);
 
-      // cubeModel = glm::translate(cubeModel, glm::vec3(0.4f, -0.4f, 0.0f));
+      cubeModel = glm::translate(cubeModel, glm::vec3(-2.0f, 1.5f, 0.0f));
 
-      const float rotationMovement = runningTime * 100;
-      // cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
-
-      mat4_Transform(cubeModel, glm::vec3(0.4f, -0.4f, 0.0f));
-
-      mat4_Rotation(cubeModel, glm::radians(-rotationMovement), 0);
-      mat4_Rotation(cubeModel, glm::radians(rotationMovement + 5), 1);
+      cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), up);
+      cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), forward);
 
       mat4_Scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
 
-      basic3DShader.SetVec3("uColor", redColor);
+      basic3DShader.SetVec3("u_Color", redColor);
       basic3DShader.SetMatrix4("u_Model", cubeModel);
       cubeObject.Render(basic3DShader);
     }
@@ -548,19 +592,15 @@ int main() {
     { // Cube 2
       glm::mat4 cubeModel = glm::mat4(1.0f);
 
-      // cubeModel = glm::translate(cubeModel, glm::vec3(-1.2f, 0.0f, 0.0f));
-      mat4_Transform(cubeModel, glm::vec3(-1.2f, 0.0f, 0.0f));
+      cubeModel = glm::translate(cubeModel, glm::vec3(-2.0f, -1.5f, 0.0f));
 
-      const float rotationMovement = runningTime * 100;
-
-      mat4_Rotation(cubeModel, glm::radians(-rotationMovement), 0);
-      mat4_Rotation(cubeModel, glm::radians(rotationMovement), 1);
-      mat4_Rotation(cubeModel, glm::radians(rotationMovement), 2);
+      cubeModel = glm::rotate(cubeModel, glm::radians(-90.0f), up);
+      cubeModel = glm::rotate(cubeModel, glm::radians(-90.0f), forward);
 
       // cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
       mat4_Scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
 
-      basic3DShader.SetVec3("uColor", redColor);
+      basic3DShader.SetVec3("u_Color", redColor);
       basic3DShader.SetMatrix4("u_Model", cubeModel);
       cubeObject.Render(basic3DShader);
     }
@@ -568,17 +608,13 @@ int main() {
     { // Pyramid 1
       glm::mat4 pyramidModel = glm::mat4(1.0f);
 
-      mat4_Transform(pyramidModel, glm::vec3(-0.8f, -1.1f, 0.0f));
+      pyramidModel = glm::translate(pyramidModel, glm::vec3(0.0f, 1.5f, 0.0f));
 
-      const float frequency = 5.0f;
-      const float amplitude = 0.35f;
-      const float heightOffset = 0.65f;
-      const float sinScale =
-          amplitude * glm::sin(frequency * runningTime) + heightOffset;
+      pyramidModel = glm::rotate(pyramidModel, glm::radians(90.0f), up);
 
-      mat4_Scale(pyramidModel, glm::vec3(sinScale));
+      mat4_Scale(pyramidModel, glm::vec3(0.5, 0.5, 0.5));
 
-      basic3DShader.SetVec3("uColor", blueColor);
+      basic3DShader.SetVec3("u_Color", blueColor);
       basic3DShader.SetMatrix4("u_Model", pyramidModel);
       pyramidObject.Render(basic3DShader);
     }
@@ -586,17 +622,13 @@ int main() {
     { // Pyramid 2
       glm::mat4 pyramidModel = glm::mat4(1.0f);
 
-      mat4_Transform(pyramidModel, glm::vec3(1.8f, 2.1f, -2.0f));
+      pyramidModel = glm::translate(pyramidModel, glm::vec3(0.0f, -1.5f, 0.0f));
 
-      const float frequency = 5.0f;
-      const float amplitude = 0.35f;
-      const float heightOffset = 0.0f;
-      const float sinScale =
-          amplitude * glm::sin(frequency * runningTime) + heightOffset;
+      pyramidModel = glm::rotate(pyramidModel, glm::radians(-90.0f), up);
 
-      mat4_Scale(pyramidModel, glm::vec3(sinScale));
+      mat4_Scale(pyramidModel, glm::vec3(0.5, 0.5, 0.5));
 
-      basic3DShader.SetVec3("uColor", blueColor);
+      basic3DShader.SetVec3("u_Color", blueColor);
       basic3DShader.SetMatrix4("u_Model", pyramidModel);
       pyramidObject.Render(basic3DShader);
     }
@@ -604,18 +636,13 @@ int main() {
     { // Sphere 1
       glm::mat4 sphereModel = glm::mat4(1.0f);
 
-      const float frequency = 5.0f;
-      const float amplitude = 0.35f;
-      const float heightOffset = 0.0f;
-      const float sinScale =
-          amplitude * glm::sin(frequency * runningTime) + heightOffset;
+      sphereModel = glm::translate(sphereModel, glm::vec3(2.0, 1.5f, 0.0f));
 
-      sphereModel =
-          glm::translate(sphereModel, glm::vec3(-sinScale, 1.1f, 0.0f));
+      sphereModel = glm::rotate(sphereModel, glm::radians(0.0f), up);
 
-      sphereModel = glm::scale(sphereModel, glm::vec3(0.3, 0.3, 0.3));
+      sphereModel = glm::scale(sphereModel, glm::vec3(0.5, 0.5, 0.5));
 
-      basic3DShader.SetVec3("uColor", greenColor);
+      basic3DShader.SetVec3("u_Color", greenColor);
       basic3DShader.SetMatrix4("u_Model", sphereModel);
       sphereObject.Render(basic3DShader);
     }
@@ -623,18 +650,14 @@ int main() {
     { // Sphere 2
       glm::mat4 sphereModel = glm::mat4(1.0f);
 
-      const float frequency = 5.0f;
-      const float amplitude = 0.35f;
-      const float heightOffset = 0.0f;
-      const float sinScale =
-          amplitude * glm::sin(frequency * runningTime) + heightOffset;
+      sphereModel = glm::translate(sphereModel, glm::vec3(2.0, -1.5f, 0.0f));
 
-      sphereModel = glm::translate(sphereModel,
-                                   glm::vec3(0, sinScale + 0.7f, sinScale - 4));
+      sphereModel = glm::rotate(sphereModel, glm::radians(-180.0f), up);
+      sphereModel = glm::rotate(sphereModel, glm::radians(-90.0f), right);
 
-      sphereModel = glm::scale(sphereModel, glm::vec3(0.3, 0.3, 0.3));
+      sphereModel = glm::scale(sphereModel, glm::vec3(0.5, 0.5, 0.5));
 
-      basic3DShader.SetVec3("uColor", greenColor);
+      basic3DShader.SetVec3("u_Color", greenColor);
       basic3DShader.SetMatrix4("u_Model", sphereModel);
       sphereObject.Render(basic3DShader);
     }
