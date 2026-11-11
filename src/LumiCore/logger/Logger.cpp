@@ -27,7 +27,7 @@ Logger *Logger::GetInstance() {
   // the lock will be released when going out of scope
   std::lock_guard<std::mutex> lock(s_instanceMutexLock);
 
-  // create a new instance of the Logger class if the current instace is null
+  // Create a new instance of the Logger class if the current instace is null
   if (!s_instance) {
     s_instance = std::make_unique<Logger>();
   }
@@ -40,14 +40,8 @@ Logger *Logger::GetInstance() {
 void Logger::Log(const std::string &message, const LOGLEVEL logLevel,
                  const std::string &executionFile, const int lineNumber) {
 
-  // Get current time stamp
-  const auto localTime = std::chrono::zoned_time{
-      std::chrono::current_zone(), std::chrono::system_clock::now()};
-  const std::string formatedTime = std::format("{:%Y-%m-%d %T}", localTime);
-
-  const std::string logInfo(std::format("[{}][{}][{}:{}] {}\n", formatedTime,
-                                        EnumToString(logLevel), executionFile,
-                                        lineNumber, message));
+  const std::string logInfo =
+      LogFormat(message, logLevel, executionFile, lineNumber);
 
   LogToConsole(logInfo);
 
@@ -56,31 +50,38 @@ void Logger::Log(const std::string &message, const LOGLEVEL logLevel,
   }
 };
 
+std::string Logger::LogFormat(const std::string &message, const LOGLEVEL level,
+                              const std::string executionFile,
+                              const int lineNumber) {
+  // Get current timestamp
+  const auto localTime = std::chrono::zoned_time{
+      std::chrono::current_zone(), std::chrono::system_clock::now()};
+  const std::string formatedTime = std::format("{:%Y-%m-%d %T}", localTime);
+
+  return std::string(std::format("[{}][{}][{}:{}] {}\n", formatedTime,
+                                 EnumToString(level), executionFile, lineNumber,
+                                 message));
+}
+
 void Logger::LogToConsole(const std::string &logInfo) { std::cout << logInfo; };
 void Logger::LogToFile(const std::string &logInfo) {
+  if (!m_currentFile && !m_currentFile.is_open()) {
+
+    const std::string message =
+        "Could not log to file, as it is not opened, OR there is no log file "
+        "to write to";
+    std::string logInfo =
+        LogFormat(message, LOGLEVEL::CRITICAL, __FILE__, __LINE__);
+    LogToConsole(logInfo);
+
+    return;
+  }
   // the lock will be released when going out of scope
   std::lock_guard<std::mutex> lock(s_instanceMutexLock);
 
   // Append to file with the log info
   m_currentFile << logInfo;
 };
-
-std::string Logger::EnumToString(const LOGLEVEL level) const {
-  switch (level) {
-  case LOGLEVEL::DEBUG:
-    return std::string("DEBUG");
-  case LOGLEVEL::INFO:
-    return std::string("INFO");
-  case LOGLEVEL::WARNING:
-    return std::string("WARNING");
-  case LOGLEVEL::CRITICAL:
-    return std::string("CRITICAL");
-  case LOGLEVEL::ERROR:
-    return std::string("ERROR");
-  default:
-    return std::string("NONE");
-  }
-}
 
 void Logger::ChangeLogFile(std::string filePath) {
   auto workingDir = std::filesystem::current_path();
@@ -100,7 +101,6 @@ void Logger::ChangeLogFile(std::string filePath) {
   // Check if there is already a file with name
   // if: Rename the old file
   if (FileExist(newFilePath)) {
-    std::cout << std::format("FileExisted \n");
     RenameOldFile(newFilePath);
   }
 
@@ -109,10 +109,15 @@ void Logger::ChangeLogFile(std::string filePath) {
   m_currentFile.open(newFilePath, std::ios::app);
 
   if (!m_currentFile.is_open()) {
-    std::cout << std::format("ERROR: Courld not open log file \n");
+    const std::string message(
+        std::format("Could not open log file: {}", newFilePath));
+    auto logInfo = LogFormat(message, LOGLEVEL::CRITICAL, __FILE__, __LINE__);
+    LogToConsole(logInfo);
   } else {
-    std::cout << std::format("Current Debug file location is at {} \n",
-                             newFilePath);
+    const std::string message(
+        std::format("Switched log file to: {}", newFilePath));
+    auto logInfo = LogFormat(message, LOGLEVEL::INFO, __FILE__, __LINE__);
+    LogToConsole(logInfo);
   }
 }
 
@@ -130,7 +135,9 @@ bool Logger::RenameOldFile(const std::string &oldFile) {
                                         std::to_string(fileAmount));
   std::rename(oldFile.c_str(), bakFilePath.c_str());
 
-  std::cout << std::format("Renamed file to {} \n", bakFilePath);
+  const std::string message(
+      std::format("Renamed old log file to: {}", bakFilePath));
+  auto logInfo = LogFormat(message, LOGLEVEL::INFO, __FILE__, __LINE__);
   return true;
 }
 
@@ -141,5 +148,23 @@ int Logger::GetFileAmountInDirectory(const std::string &filePath) {
   }
   return fileAmount;
 }
+
+std::string Logger::EnumToString(const LOGLEVEL level) const {
+  switch (level) {
+  case LOGLEVEL::DEBUG:
+    return std::string("DEBUG");
+  case LOGLEVEL::INFO:
+    return std::string("INFO");
+  case LOGLEVEL::WARNING:
+    return std::string("WARNING");
+  case LOGLEVEL::CRITICAL:
+    return std::string("CRITICAL");
+  case LOGLEVEL::ERROR:
+    return std::string("ERROR");
+  default:
+    return std::string("NONE");
+  }
+}
+
 #pragma endregion Log
 } // namespace LumiCoreLogger

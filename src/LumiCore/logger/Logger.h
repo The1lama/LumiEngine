@@ -10,7 +10,7 @@ enum class LOGLEVEL { DEBUG, INFO, WARNING, CRITICAL, ERROR };
 
 /*
  * This is logger class is a singleton design pattern, this is so we can access
- * this class from virtualy anywhere in the code.
+ * this class from virtually anywhere in the code.
  *
  * Works by just calling GetInstance();
  *
@@ -26,7 +26,7 @@ private:
   std::ofstream m_currentFile;
 
 protected:
-  const std::string m_logFile = "debug\\log";
+  const std::string m_logFile = "debug/log";
 
   bool FileExist(const std::string filePath);
   bool RenameOldFile(const std::string &oldFile);
@@ -36,6 +36,8 @@ protected:
   void LogToFile(const std::string &logInfo);
 
   std::string EnumToString(const LOGLEVEL level) const;
+  std::string LogFormat(const std::string &message, const LOGLEVEL level,
+                        const std::string executionFile, const int lineNumber);
 
 public:
   Logger();
