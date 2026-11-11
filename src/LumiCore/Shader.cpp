@@ -1,8 +1,9 @@
 #include "Shader.h"
 
 #include "glm/gtc/type_ptr.hpp"
+#include "logger/Logger.h"
+#include <format>
 #include <fstream>
-#include <iostream>
 #include <sstream>
 #include <stdexcept>
 
@@ -23,8 +24,8 @@ bool Shader::IsValid() const {
   if (!success) {
     char infolog[1024];
     glGetProgramInfoLog(m_ID, 1024, NULL, infolog);
-    std::cout << "The program failed to compile with the error:" << std::endl
-              << infolog << std::endl;
+    LOG_CRITICAL(std::format(
+        "A Shader program failed to compile with error: {}", infolog));
     return false;
   }
   return true;
@@ -107,7 +108,7 @@ GLuint Shader::createShaderProgram(const std::string &vertexPath,
   glGetProgramiv(program, GL_LINK_STATUS, &success);
   if (!success) {
     glGetProgramInfoLog(program, 512, nullptr, infoLog);
-    std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << "\n";
+    LOG_ERROR(std::format("SHADER::PROGRAM::LINKING_FAILED: {}", infoLog));
   }
 
   glDeleteShader(vertexShader);

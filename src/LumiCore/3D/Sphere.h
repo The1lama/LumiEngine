@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Mesh.h"
-#include <iostream>
+#include "../logger/Logger.h"
 #include <math.h>
 
 namespace LumiCore3D {
@@ -19,11 +19,11 @@ private:
     LumiCore::MeshData data;
 
     if (rings < 3) {
-      std::cout << "no sphere generated. rings value < 3" << std::endl;
+      LOG_CRITICAL("No sphere generated. Rings value < 3");
       return data;
     }
     if (slices < 4) {
-      std::cout << "no sphere generated. slices value < 4" << std::endl;
+      LOG_CRITICAL("No sphere generated. Rings value < 4");
       return data;
     }
 
@@ -36,23 +36,12 @@ private:
     data.vertecies = std::move(vertices);
     data.indices = std::move(indices);
 
-    std::cout << "Generated Sphere mesh data" << '\n';
-
     return data;
   };
 
   static inline bool
   GenerateVertexArray(std::vector<LumiCore::Vertex> &vertices, const int rings,
                       const int slices) {
-    if (rings < 3) {
-      std::cout << "no sphere generated. rings value < 3" << std::endl;
-      return false;
-    }
-    if (slices < 4) {
-      std::cout << "no sphere generated. slices value < 4" << std::endl;
-      return false;
-    }
-
     constexpr float PIE = 3.1415f;
 
     // Creates how many sides the sphere should have in a circle
@@ -91,8 +80,6 @@ private:
       y_pos -= y_step;
       current_angle = 0.0f;
     }
-
-    // std::cout << "Sphere vertex count:" << vertices.size() / 3 << std::endl;
     return true;
   }
 
@@ -143,9 +130,6 @@ private:
         }
       }
     }
-
-    // std::cout << "Sphere triangle count:" << indices.size() / 3 << std::endl;
-
     return true;
   };
 
