@@ -17,6 +17,9 @@ vsxmake2026/
 .idea/
 .vscode/
 
+# NVIM Stuff and its plugins
+.harper-dictionary.txt
+
 # Xmake cache
 .xmake/
 build/

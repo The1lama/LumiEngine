@@ -4,8 +4,9 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float3.hpp"
-#include "iostream"
+#include "logger/Logger.h"
 #include <cstddef>
+#include <format>
 #include <utility>
 
 namespace LumiCore {
@@ -67,12 +68,6 @@ void Mesh::CreateMesh(std::vector<Vertex> &vertecies,
                         static_cast<void *>(0));
   glEnableVertexAttribArray(0);
 
-  // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, stride,
-  //                       reinterpret_cast<void *>(offsetof(Vertex,
-  //                       position)));
-  // glEnableVertexAttribArray(1);
-  std::cout << "Mesh Object VAO: " << m_VAO << '\n';
-
   glBindVertexArray(0);
 }
 
@@ -105,7 +100,7 @@ float CalculateAngleFromVector3(const glm::vec3 vectorAngles) { return 0; }
 
 void Mesh::Render(Shader &shader) {
   if (!IsFunctional()) {
-    std::cout << "Could not load a mesh" << '\n';
+    LOG_CRITICAL(std::format("Could not load in mesh: {}", m_VAO));
     return;
   }
 

@@ -22,7 +22,7 @@ private:
   static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
     // clang-format off
     return std::vector<LumiCore::Vertex>{
-      // Forward side   // Position //  // Normal //
+      // Forward side // Position // // Normal //
       LumiCore::Vertex( 1.f,  1.f,  1.f, 1.0f, 0.0f, 0.0f), 
       LumiCore::Vertex( 1.f,  1.f, -1.f, 1.0f, 0.0f, 0.0f), 
       LumiCore::Vertex( 1.f, -1.f, -1.f, 1.0f, 0.0f, 0.0f), 

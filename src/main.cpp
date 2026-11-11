@@ -1,5 +1,6 @@
 #include <GLFW/glfw3.h>
 #include <corecrt_math.h>
+#include <format>
 #include <glad/glad.h>
 
 #include "LumiCore/2D/Quad.h"
@@ -7,6 +8,7 @@
 #include "LumiCore/3D/Pyramid.h"
 #include "LumiCore/3D/Sphere.h"
 #include "LumiCore/Shader.h"
+#include "LumiCore/logger/Logger.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float2.hpp"
@@ -15,10 +17,10 @@
 #include "glm/trigonometric.hpp"
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <iostream>
 
 void glfwErrorCallback(int error, const char *description) {
-  std::cout << "GLFW error (" << error << "): " << description << "\n";
+  LOG(LumiCoreLogger::LOGLEVEL::ERROR,
+      std::format("GLFW error ({}): {}", error, description));
 }
 
 void framebufferSizeCallback(GLFWwindow *, int width, int height) {
@@ -86,78 +88,79 @@ void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204)
     return;
 
-  std::cout << "---------------" << '\n';
-  std::cout << "Debug Message (" << id << "): " << message << '\n';
+  LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("---------------"));
+  LOG(LumiCoreLogger::LOGLEVEL::ERROR,
+      std::format("Debug Message ({}): {}", id, message));
 
   switch (source) {
   case GL_DEBUG_SOURCE_API:
-    std::cout << "Source: API";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: API"));
     break;
   case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-    std::cout << "Source: Window System";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Window System"));
     break;
   case GL_DEBUG_SOURCE_SHADER_COMPILER:
-    std::cout << "Source: Shader Compiler";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR,
+        std::format("Source: Shader Compiler"));
     break;
   case GL_DEBUG_SOURCE_THIRD_PARTY:
-    std::cout << "Source: Third Party";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Third Party"));
     break;
   case GL_DEBUG_SOURCE_APPLICATION:
-    std::cout << "Source: Application";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Application"));
     break;
   case GL_DEBUG_SOURCE_OTHER:
-    std::cout << "Source: Other";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Other"));
     break;
   }
-  std::cout << '\n';
 
   switch (type) {
   case GL_DEBUG_TYPE_ERROR:
-    std::cout << "Type: Error";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Error"));
     break;
   case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-    std::cout << "Type: Error";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR,
+        std::format("Type: Deprecated Behavior"));
     break;
   case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-    std::cout << "Type: Behavior";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR,
+        std::format("Type: Undefined Behavior"));
     break;
   case GL_DEBUG_TYPE_PORTABILITY:
-    std::cout << "Type: Portability";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Portability"));
     break;
   case GL_DEBUG_TYPE_PERFORMANCE:
-    std::cout << "Type: Performance";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Performance"));
     break;
   case GL_DEBUG_TYPE_MARKER:
-    std::cout << "Type: Marker";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Marker"));
     break;
   case GL_DEBUG_TYPE_PUSH_GROUP:
-    std::cout << "Type: Push Group";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Push Group"));
     break;
   case GL_DEBUG_TYPE_POP_GROUP:
-    std::cout << "Type: Pop Group";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Pop Group"));
     break;
   case GL_DEBUG_TYPE_OTHER:
-    std::cout << "Type: Other";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Other"));
     break;
   }
-  std::cout << '\n';
 
   switch (severity) {
   case GL_DEBUG_SEVERITY_HIGH:
-    std::cout << "Severity: high";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Serverity: High"));
     break;
   case GL_DEBUG_SEVERITY_MEDIUM:
-    std::cout << "Severity: Medium";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Serverity: Medium"));
     break;
   case GL_DEBUG_SEVERITY_LOW:
-    std::cout << "Severity: Low";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Serverity: Low"));
     break;
   case GL_DEBUG_SEVERITY_NOTIFICATION:
-    std::cout << "Severity: Notification";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR,
+        std::format("Serverity: Notification"));
     break;
   }
-  std::cout << '\n';
-  std::cout << '\n';
 }
 
 static int renderingModeIndex;
@@ -349,11 +352,12 @@ void SwitchProjectionMatrix(Shader &inShader, glm::mat4 newProjectionMatrix) {
 }
 
 int main() {
+  LOG(LumiCoreLogger::LOGLEVEL::INFO, "Debugger initialized");
 
 #pragma region Init
   /* Initialize the library */
   if (!glfwInit()) {
-    std::cout << "Failed to initialize GLFW.\n";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, "Failed to initialize GLFW");
     return -1;
   }
 
@@ -373,7 +377,8 @@ int main() {
                        settings.windowTitle, nullptr, nullptr);
 
   if (!window) {
-    std::cout << "Something on window initialize went wrong" << "\n";
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR,
+        "Something on window initialize went wrong");
     glfwTerminate();
     return -1;
   }
@@ -385,7 +390,7 @@ int main() {
 
   const int loadedVersion = gladLoadGL();
   if (loadedVersion == 0) {
-    std::cout << "Failed to load OpenGL functions with GLAD.\n";
+    LOG_ERROR("Failed to load OpenGL functions with GLAD");
     glfwDestroyWindow(window);
     glfwTerminate();
     return 1;
@@ -394,14 +399,13 @@ int main() {
   int flags;
   glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
   if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
-    std::cout << "initialize debug output" << '\n';
+    LOG_DEBUG("initialize debug output");
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glDebugOutput, nullptr);
     glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr,
                           GL_TRUE);
   }
-  std::cout << "output" << '\n';
 
   ///////////////
 #pragma endregion Init
@@ -415,7 +419,7 @@ int main() {
 #pragma region MeshObjects
   LumiCore2D::Quad quadMesh;
   if (!quadMesh.IsValid()) {
-    std::cout << "Mesh VAO could not do its thing" << '\n';
+    LOG_WARNING("Mesh VAO coud not be initialized for quad mesh");
     return -10;
   }
 
@@ -425,19 +429,19 @@ int main() {
 
   LumiCore3D::Cube cubeObject;
   if (!cubeObject.IsValid()) {
-    std::cout << "Mesh VAO could not do its thing" << '\n';
+    LOG_WARNING("Mesh VAO coud not be initialized for cube mesh");
     return -20;
   }
 
   LumiCore3D::Pyramid pyramidObject;
   if (!pyramidObject.IsValid()) {
-    std::cout << "Mesh VAO could not do its thing" << '\n';
+    LOG_WARNING("Mesh VAO coud not be initialized for pyramid mesh");
     return -22;
   }
 
   LumiCore3D::Sphere sphereObject;
   if (!sphereObject.IsValid()) {
-    std::cout << "Mesh VAO could not do its thing" << '\n';
+    LOG_WARNING("Mesh VAO coud not be initialized for sphere mesh");
     return -23;
   }
 #pragma endregion MeshObjects
@@ -466,7 +470,7 @@ int main() {
   Shader basic3DShader = Shader("assets/shaders/3dBasicShader.vert",
                                 "assets/shaders/3dBasicShader.frag");
   if (!basic3DShader.IsValid()) {
-    std::cout << "3D Shader could not compile" << '\n';
+    LOG_ERROR("3D shader could not compile");
     return -2;
   }
   basic3DShader.Use();
@@ -478,8 +482,10 @@ int main() {
 
   ///////////////
 
-  std::cout << "OpenGL: " << glGetString(GL_VERSION) << "\n";
-  std::cout << "Renderer: " << glGetString(GL_RENDERER) << "\n";
+  LOG_INFO(std::format(
+      "OpenGL: {}", reinterpret_cast<const char *>(glGetString(GL_VERSION))));
+  LOG_INFO(std::format("Renderer: {}", reinterpret_cast<const char *>(
+                                           glGetString(GL_RENDERER))));
 
   bool bToggleRoofColor = false;
   float lastInputTime;
