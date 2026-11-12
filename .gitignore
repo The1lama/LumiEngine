@@ -1,10 +1,13 @@
 # CMake
+debug/**
 /build/
 /out/
 CMakeUserPresetes.json
 CmakeLists.txt.DotSettings.user
 compile_commands.json
 vsxmake2026/
+CMakeLists.txt
+CMakeLists.txt.DotSettings.user
 
 # Visual Studio
 .vs/
@@ -12,6 +15,7 @@ vsxmake2026/
 *.vcxproj
 *.vcxproj.filters
 *.vcxproj.user
+
 
 # JetBrains / VS Code local settings
 .idea/
