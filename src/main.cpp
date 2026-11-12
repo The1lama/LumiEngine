@@ -1,4 +1,5 @@
 #include "LumiCore/3D/GeneratedMesh.h"
+#include "LumiCore/Camera.h"
 #include "LumiCore/Mesh.h"
 #include <GLFW/glfw3.h>
 #include <corecrt_math.h>
@@ -172,94 +173,6 @@ void SwitchRenderingMode() {
   else
     glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); // draws vertex points
 };
-
-glm::mat4 CreateOrthographicProjection(const float left, const float right,
-                                       const float top, const float bottom,
-                                       const float nearPlane,
-                                       const float farPlane) {
-  glm::mat4 matrix(1.0f);
-
-  // Translation
-  // Why we are moving our projection matrix is because we need to
-  // center the viwing box so that the middle of the viwing box is
-  // between out left and right coordiantes
-
-  matrix[3][0] = -((right + left) / (right / left));                 // Moving X
-  matrix[3][1] = -((top + bottom) / (top - bottom));                 // Moving Y
-  matrix[3][2] = -((farPlane + nearPlane) / (farPlane - nearPlane)); // Moving Z
-
-  // Scaling
-  ////////////////
-  // and this we are doing only on the XY axies, and not the Z. This is because
-  // we are drawing the targets only on the XY axies and will ignore the Z space
-  // as we are not looking for depth in this projection matrix
-  ////////////////
-
-  // After translation we need to scale the boundaries to fill the
-  // Canonical View Volume (CVV)
-  // This is so we can map the target to values between -1,+1. on the screen,
-  //
-  // CVV
-  // Also called normalized viewing volume. It is where the viewing frustums or
-  // orthographic boxes are transformed, i.e. changes/warps the projection of
-  // the target to either orthographic or perspectives projection.
-
-  // Why we are doing 2 / original size is because ...
-  matrix[0][0] = 2 / (right - left); // Scaling X
-  matrix[1][1] = 2 / (top - bottom); // Scaling Y
-
-  // Z fliping
-  // Why we are Z fliping is because of how the camera has been setup together
-  // with how OpenGL handels NDC.
-  //
-  // The camera has been set up with a Right Handed system, where the positive Z
-  // is pointing outwards from the screen. i.e. the +Z is pointing towards the
-  // camera.
-  //
-  // This differs to how OpenGL expecs NDC values to be the left handed system
-  // for depth testing, so that the values goes from -1 for objects close to
-  // screen and +1 for objectes furthure away from screen.
-  //
-  // This is why we are filpping the Z axis from the right hand system to left
-  // hand.
-
-  matrix[2][2] = -(2 / (farPlane - nearPlane)); // Scaling Y
-
-  return matrix;
-}
-
-void GenerateProjectionMatrixValues(GLFWwindow *window,
-                                    glm::mat4 &perspectiveMat,
-                                    glm::mat4 &orthMat) {
-
-  const auto fov = glm::radians(45.0f);
-  int frameWidth, frameHeight;
-  glfwGetFramebufferSize(window, &frameWidth, &frameHeight);
-
-  const auto aspectRatio = (float)frameWidth / (float)frameHeight;
-  const float nearPlane = 0.1f;
-  const float farPlane = 100.0f;
-
-  // Perspective Matrix //
-  perspectiveMat = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
-
-  // Orthographic Matrix //
-  // const float orthSize = 2 * aspectRatio;
-  //
-  // this is an own distance to how far a way an object would be for it to be
-  // the same size in both perspective and orthographic projection
-  const float targDis = 8.0f;
-  //
-  // the two is to scale the tan*0.5 back to full heigh of the orth
-  const float orthHeight = 2.0f * targDis * glm::tan(fov * 0.5f);
-  const float orthWidth = orthHeight * aspectRatio;
-
-  const float halfW = orthWidth * 0.5f;
-  const float halfH = orthHeight * 0.5f;
-
-  orthMat = CreateOrthographicProjection(-halfW, halfW, halfH, -halfH,
-                                         nearPlane, farPlane);
-}
 
 void SwitchProjectionMatrix(Shader &inShader, glm::mat4 newProjectionMatrix) {
   inShader.Use();
@@ -536,21 +449,13 @@ int main() {
   /////////////// PROJECTION ///////////////
 
   glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 6.0f);
-  glm::vec3 cameraTarget = glm::vec3(0.0f, 0.0f, 0.0f);
-  glm::vec3 cameraDirection = glm::normalize(cameraPos - cameraTarget);
 
-  glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
-  glm::vec3 cameraRight = glm::normalize(glm::cross(worldUp, cameraDirection));
-
-  glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
-
-  glm::mat4 viewMatix(1.0f);
-  viewMatix = glm::lookAt(cameraPos, cameraTarget, worldUp);
-
-  // Projection Matrix //
-  glm::mat4 perspectiveMatrix;
-  glm::mat4 orthographicMatrix;
-  GenerateProjectionMatrixValues(window, perspectiveMatrix, orthographicMatrix);
+  const auto fov = glm::radians(45.0f);
+  int frameWidth, frameHeight;
+  glfwGetFramebufferSize(window, &frameWidth, &frameHeight);
+  float aspectRatio = (float)frameWidth / (float)frameHeight;
+  LumiCore::Camera camera(cameraPos, fov, aspectRatio,
+                          glm::vec2(0.01f, 100.0f));
 
   ///////////////
 
@@ -568,7 +473,7 @@ int main() {
   }
   basic3DShader.Use();
   // these we only need to set one time as they are the same for now
-  basic3DShader.SetMatrix4("u_View", viewMatix);
+  basic3DShader.SetMatrix4("u_View", camera.GetViewMatrix());
   basic3DShader.UnUse();
 
   SwitchProjectionMatrix(basic3DShader, perspectiveMatrix);
@@ -605,8 +510,9 @@ int main() {
     glfwGetFramebufferSize(window, &currentWindowWidth, &currentWindowHeight);
     if (cacheWindowWitdh != currentWindowWidth ||
         cacheWindowHeigh != currentWindowHeight) {
-      GenerateProjectionMatrixValues(window, perspectiveMatrix,
-                                     orthographicMatrix);
+
+      camera.GenerateProjectionMatixes();
+
       cacheWindowHeigh = currentWindowHeight;
       cacheWindowWitdh = currentWindowWidth;
     }
