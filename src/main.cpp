@@ -5,19 +5,19 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
-#include <functional>
 #include <glad/glad.h>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 
-#define STB_IMAGE_IMPLEMENTATION
 #include "LumiCore/2D/Quad.h"
 #include "LumiCore/3D/Cube.h"
 #include "LumiCore/3D/Pyramid.h"
 #include "LumiCore/3D/Sphere.h"
 #include "LumiCore/Shader.h"
+#include "LumiCore/Texture.h"
+#include "LumiCore/Utility.h"
 #include "LumiCore/logger/Logger.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
@@ -27,7 +27,6 @@
 #include "glm/trigonometric.hpp"
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <stb_image.h>
 
 void glfwErrorCallback(int error, const char *description) {
   LOG(LumiCoreLogger::LOGLEVEL::ERROR,
@@ -42,18 +41,6 @@ struct EditorSettings {
   int windowWidth = 640;
   int windowHeight = 480;
   const char *windowTitle = "LumiEngine";
-};
-
-struct MeshData {
-  glm::vec2 offset;
-  glm::vec2 scale;
-  glm::vec3 color;
-  float angle;
-  float time;
-
-  MeshData(glm::vec2 Offset, glm::vec2 Scale, float Angle, glm::vec3 Color,
-           float Time)
-      : offset(Offset), scale(Scale), color(Color), angle(Angle), time(Time) {};
 };
 
 void SwitchRenderingMode();
@@ -280,43 +267,6 @@ void SwitchProjectionMatrix(Shader &inShader, glm::mat4 newProjectionMatrix) {
   inShader.UnUse();
 }
 
-bool CreateTexture(const char *pathToTexture, unsigned int &textureId) {
-  stbi_set_flip_vertically_on_load(true);
-  // generate texture object
-  unsigned int texture;
-  glGenTextures(1, &texture);
-  glBindTexture(GL_TEXTURE_2D, texture);
-
-  // set texture options
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR_MIPMAP_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  // load the texture data
-  int width, height, nrChannels;
-  unsigned char *data =
-      stbi_load(pathToTexture, &width, &height, &nrChannels, 0);
-
-  if (data) {
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA,
-                 GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-  } else {
-    LOG_WARNING(std::format("Could not load in texture: {}", pathToTexture));
-    return false;
-  }
-
-  // Once we have called `glTexImage2D`, we have bound the texture object and
-  // attached an image to it. We can generate a Mipmap with `glGenerateMipmap`,
-  // and after that has been done it is good practice to free the image memory
-  stbi_image_free(data);
-
-  textureId = texture;
-  return true;
-}
-
 bool IsValidFile(const std::filesystem::path &filePath) {
   const std::string validExtentions[] = {".obj"};
   const bool isValidExtention =
@@ -327,50 +277,18 @@ bool IsValidFile(const std::filesystem::path &filePath) {
   return fileExist && isValidExtention;
 }
 
-std::vector<std::string> SplitString(std::string s,
-                                     const std::string &delimiter) {
-  std::vector<std::string> tokens;
-
-  size_t pos{0};
-  std::string token;
-  // - std::string::npos when used with len or this function .find, means "until
-  // - the end of the string" .find(delimiter) searches for the first occurrence
-  // in a string with the delimiter
-  // - .substr() creates a new string string object from 0 to pos. pos is the
-  // position until we find the delimiter
-  // - .erase() we remove the newly copied string from the original string + the
-  // delimiter
-  while ((pos = s.find(delimiter)) != std::string::npos) {
-    token = s.substr(0, pos);
-    tokens.push_back(token);
-    s.erase(0, pos + delimiter.length());
-  }
-  tokens.push_back(s);
-
-  return tokens;
-}
-
-std::unique_ptr<LumiCore::Mesh>
-GenerateObject(const std::filesystem::path &objectPath, const int loaderType) {
-
-  // Validate check if the file extention is correct and if file exist
-  if (!IsValidFile(objectPath)) {
-    LOG_WARNING(
-        std::format("File {} is not valid", objectPath.filename().string()));
-  };
-
+void CustomObjectLoader(const std::filesystem::path &objectPath,
+                        std::vector<LumiCore::Vertex> &vertices,
+                        std::vector<unsigned int> &indices) {
   std::vector<glm::vec3> temp_positions;
   std::vector<glm::vec3> temp_normals;
   std::vector<glm::vec2> temp_uvs;
-
-  std::vector<LumiCore::Vertex> vertices;
-  std::vector<unsigned int> indices;
 
   std::ifstream file(objectPath);
   if (!file.is_open()) {
     LOG_CRITICAL(
         std::format("Failed to open OBJ file: {}", objectPath.string()));
-    return nullptr;
+    return;
   }
 
   // this will read the line in the file, line by line
@@ -438,7 +356,7 @@ GenerateObject(const std::filesystem::path &objectPath, const int loaderType) {
 
       // assemble vertex data
       for (int i = 0; i < faces.size(); ++i) {
-        std::vector<std::string> values = SplitString(faces[i], "/");
+        std::vector<std::string> values = Utility::SplitString(faces[i], "/");
 
         const int posIndex = std::stoi(values[0]) - 1;
         const int uvIndex = std::stoi(values[1]) - 1;
@@ -483,10 +401,30 @@ GenerateObject(const std::filesystem::path &objectPath, const int loaderType) {
     }
 
   } // while
-
   LOG_INFO(std::format("Position   amount: {}", temp_positions.size()));
   LOG_INFO(std::format("Normal     amount: {}", temp_normals.size()));
   LOG_INFO(std::format("UVs        amount: {}", temp_uvs.size()));
+}
+
+std::unique_ptr<LumiCore::Mesh>
+GenerateObject(const std::filesystem::path &objectPath) {
+  constexpr bool useCustomObjectLoader = true;
+  //
+  // Validate check if the file extention is correct and if file exist
+  if (!IsValidFile(objectPath)) {
+    LOG_WARNING(
+        std::format("File {} is not valid", objectPath.filename().string()));
+  };
+
+  std::vector<LumiCore::Vertex> vertices;
+  std::vector<unsigned int> indices;
+
+  if (useCustomObjectLoader) {
+    CustomObjectLoader(objectPath, vertices, indices);
+  } else {
+    (objectPath, vertices, indices);
+  }
+
   LOG_INFO(std::format("Vertexes   amount: {}", vertices.size()));
   LOG_INFO(std::format("Indices    amount: {}", indices.size()));
 
@@ -570,10 +508,6 @@ int main() {
     return -10;
   }
 
-  // Facade
-  MeshData facadeData(glm::vec2(.00f, -.15f), glm::vec2(1.08f, .57f), .0f,
-                      blackColor, 1);
-
   LumiCore3D::Cube cubeObject;
   if (!cubeObject.IsValid()) {
     LOG_WARNING("Mesh VAO coud not be initialized for cube mesh");
@@ -593,7 +527,7 @@ int main() {
   }
 
   std::unique_ptr<LumiCore::Mesh> ape =
-      GenerateObject("assets/objects/monkeyHat.obj", 0);
+      GenerateObject("assets/objects/monkeyHat.obj");
   // GenerateObject("assets/objects/monkey.obx", 0);
   // GenerateObject("assets/objects/thing.obj", 0);
 
@@ -620,12 +554,9 @@ int main() {
 
   ///////////////
 
-  const char *texturePath = "assets/textures/uvTest.png";
-  unsigned int texId;
-
-  CreateTexture(texturePath, texId);
+  LumiCore::Texture uvTexture = LumiCore::Texture("assets/textures/uvTest.png");
   glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, texId);
+  glBindTexture(GL_TEXTURE_2D, uvTexture.GetId());
 
   ///////////////
 
@@ -793,9 +724,7 @@ int main() {
     { // ape
       glm::mat4 apeModel = glm::mat4(1.0f);
 
-      apeModel = glm::translate(apeModel, glm::vec3(0.0, 0.0f, 3.0f));
-      apeModel = glm::rotate(apeModel, glm::radians(45.0f), up);
-      apeModel = glm::rotate(apeModel, glm::radians(25.0f), right);
+      apeModel = glm::translate(apeModel, glm::vec3(0.0, -0.2f, 3.0f));
       apeModel *=
           glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
       apeModel = glm::scale(apeModel, glm::vec3(0.5, 0.5, 0.5));
