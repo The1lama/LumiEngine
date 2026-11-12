@@ -1,8 +1,4 @@
-#include "LumiCore/3D/GeneratedMesh.h"
-#include "LumiCore/Camera.h"
-#include "LumiCore/Mesh.h"
 #include <GLFW/glfw3.h>
-#include <corecrt_math.h>
 #include <filesystem>
 #include <format>
 #include <fstream>
@@ -11,7 +7,12 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include "LumiCore/3D/GeneratedMesh.h"
+#include "LumiCore/Camera.h"
+#include "LumiCore/Mesh.h"
 
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 #include "LumiCore/2D/Quad.h"
 #include "LumiCore/3D/Cube.h"
 #include "LumiCore/3D/Pyramid.h"
@@ -20,78 +21,80 @@
 #include "LumiCore/Texture.h"
 #include "LumiCore/Utility.h"
 #include "LumiCore/logger/Logger.h"
-#include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float2.hpp"
 #include "glm/ext/vector_float3.hpp"
-#include "glm/geometric.hpp"
 #include "glm/trigonometric.hpp"
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
 
-void glfwErrorCallback(int error, const char *description) {
-  LOG(LumiCoreLogger::LOGLEVEL::ERROR,
-      std::format("GLFW error ({}): {}", error, description));
+void glfwErrorCallback(int error, const char* description)
+{
+  LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("GLFW error ({}): {}", error, description));
 }
 
-void framebufferSizeCallback(GLFWwindow *, int width, int height) {
-  glViewport(0, 0, width, height);
-}
+void framebufferSizeCallback(GLFWwindow*, int width, int height) { glViewport(0, 0, width, height); }
 
-struct EditorSettings {
+struct EditorSettings
+{
   int windowWidth = 640;
   int windowHeight = 480;
-  const char *windowTitle = "LumiEngine";
+  const char* windowTitle = "LumiEngine";
 };
 
 void SwitchRenderingMode();
 
-bool processInput(GLFWwindow *window, bool &bToggleColor, bool &bSwitchDrawMode,
-                  bool &bSwitchProjectionMatrix) {
+bool processInput(GLFWwindow* window, bool& bToggleColor, bool& bSwitchDrawMode, bool& bSwitchProjectionMatrix)
+{
   bool hasPressed = false;
 
   // Change color on object //
-  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+  {
     hasPressed = true;
     bToggleColor = false;
   }
-  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) {
+  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
+  {
     bToggleColor = true;
   }
 
   // Draw mode switch //
-  if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+  if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
+  {
     hasPressed = true;
     if (bSwitchDrawMode == false)
       SwitchRenderingMode();
     bSwitchDrawMode = true;
   }
-  if (glfwGetKey(window, GLFW_KEY_1) == GLFW_RELEASE) {
+  if (glfwGetKey(window, GLFW_KEY_1) == GLFW_RELEASE)
+  {
     bSwitchDrawMode = false;
   }
 
   // Projection matrix switch //
-  if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+  if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
+  {
     hasPressed = true;
     bSwitchProjectionMatrix = true;
   }
-  if (glfwGetKey(window, GLFW_KEY_2) == GLFW_RELEASE) {
+  if (glfwGetKey(window, GLFW_KEY_2) == GLFW_RELEASE)
+  {
     bSwitchProjectionMatrix = false;
   }
 
   return hasPressed;
 }
 
-void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
-                   GLsizei lenght, const char *message, const void *userParam) {
+void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei lenght, const char* message,
+                   const void* userParam)
+{
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204)
     return;
 
   LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("---------------"));
-  LOG(LumiCoreLogger::LOGLEVEL::ERROR,
-      std::format("Debug Message ({}): {}", id, message));
+  LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Debug Message ({}): {}", id, message));
 
-  switch (source) {
+  switch (source)
+  {
   case GL_DEBUG_SOURCE_API:
     LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: API"));
     break;
@@ -99,8 +102,7 @@ void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
     LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Window System"));
     break;
   case GL_DEBUG_SOURCE_SHADER_COMPILER:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR,
-        std::format("Source: Shader Compiler"));
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Shader Compiler"));
     break;
   case GL_DEBUG_SOURCE_THIRD_PARTY:
     LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Third Party"));
@@ -113,17 +115,16 @@ void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
     break;
   }
 
-  switch (type) {
+  switch (type)
+  {
   case GL_DEBUG_TYPE_ERROR:
     LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Error"));
     break;
   case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR,
-        std::format("Type: Deprecated Behavior"));
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Deprecated Behavior"));
     break;
   case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR,
-        std::format("Type: Undefined Behavior"));
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Undefined Behavior"));
     break;
   case GL_DEBUG_TYPE_PORTABILITY:
     LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Portability"));
@@ -145,7 +146,8 @@ void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
     break;
   }
 
-  switch (severity) {
+  switch (severity)
+  {
   case GL_DEBUG_SEVERITY_HIGH:
     LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Serverity: High"));
     break;
@@ -156,14 +158,14 @@ void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
     LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Serverity: Low"));
     break;
   case GL_DEBUG_SEVERITY_NOTIFICATION:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR,
-        std::format("Serverity: Notification"));
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Serverity: Notification"));
     break;
   }
 }
 
 static int renderingModeIndex;
-void SwitchRenderingMode() {
+void SwitchRenderingMode()
+{
   renderingModeIndex = renderingModeIndex + 1 < 3 ? renderingModeIndex + 1 : 0;
 
   if (renderingModeIndex == 0)
@@ -174,39 +176,34 @@ void SwitchRenderingMode() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); // draws vertex points
 };
 
-void SwitchProjectionMatrix(Shader &inShader, glm::mat4 newProjectionMatrix) {
-  inShader.Use();
-  inShader.SetMatrix4("u_Projection", newProjectionMatrix);
-  inShader.UnUse();
-}
-
-bool IsValidFile(const std::filesystem::path &filePath) {
+bool IsValidFile(const std::filesystem::path& filePath)
+{
   const std::string validExtentions[] = {".obj"};
-  const bool isValidExtention =
-      std::find(std::begin(validExtentions), std::end(validExtentions),
-                filePath.extension().string()) != std::end(validExtentions);
-  const bool fileExist = std::filesystem::exists(filePath);
+  const bool isValidExtention = std::find(std::begin(validExtentions), std::end(validExtentions),
+                                          filePath.extension().string()) != std::end(validExtentions);
+  const bool fileExist = Utility::IsValidFile(filePath.string());
 
   return fileExist && isValidExtention;
 }
 
-void CustomObjectLoader(const std::filesystem::path &objectPath,
-                        std::vector<LumiCore::Vertex> &vertices,
-                        std::vector<unsigned int> &indices) {
+void CustomObjectLoader(const std::filesystem::path& objectPath, std::vector<LumiCore::Vertex>& vertices,
+                        std::vector<unsigned int>& indices)
+{
   std::vector<glm::vec3> temp_positions;
   std::vector<glm::vec3> temp_normals;
   std::vector<glm::vec2> temp_uvs;
 
   std::ifstream file(objectPath);
-  if (!file.is_open()) {
-    LOG_CRITICAL(
-        std::format("Failed to open OBJ file: {}", objectPath.string()));
+  if (!file.is_open())
+  {
+    LOG_CRITICAL(std::format("Failed to open OBJ file: {}", objectPath.string()));
     return;
   }
 
   // this will read the line in the file, line by line
   std::string line;
-  while (std::getline(file, line)) {
+  while (std::getline(file, line))
+  {
 
     // we get the current line and save it to the ss variable
     std::stringstream ss(line);
@@ -216,7 +213,8 @@ void CustomObjectLoader(const std::filesystem::path &objectPath,
     // gone and save the string to the prefix variable.
     ss >> prefix;
 
-    if (prefix == std::string("v")) {
+    if (prefix == std::string("v"))
+    {
       std::string x;
       std::string y;
       std::string z;
@@ -224,9 +222,10 @@ void CustomObjectLoader(const std::filesystem::path &objectPath,
       ss >> y;
       ss >> z;
 
-      temp_positions.push_back(
-          glm::vec3(std::stof(x), std::stof(y), std::stof(z)));
-    } else if (prefix == std::string("vn")) {
+      temp_positions.push_back(glm::vec3(std::stof(x), std::stof(y), std::stof(z)));
+    }
+    else if (prefix == std::string("vn"))
+    {
       std::string x;
       std::string y;
       std::string z;
@@ -234,11 +233,11 @@ void CustomObjectLoader(const std::filesystem::path &objectPath,
       ss >> y;
       ss >> z;
 
-      temp_normals.push_back(
-          glm::vec3(std::stof(x), std::stof(y), std::stof(z)));
+      temp_normals.push_back(glm::vec3(std::stof(x), std::stof(y), std::stof(z)));
     }
 
-    else if (prefix == std::string("vt")) {
+    else if (prefix == std::string("vt"))
+    {
       std::string x;
       std::string y;
       ss >> x;
@@ -247,16 +246,19 @@ void CustomObjectLoader(const std::filesystem::path &objectPath,
       temp_uvs.push_back(glm::vec2(std::stof(x), std::stof(y)));
     }
     // Create vertexes and indicies
-    else if (prefix == std::string("f")) {
+    else if (prefix == std::string("f"))
+    {
 
       std::vector<std::string> faces;
       std::string faceLine;
-      while (ss >> faceLine) {
+      while (ss >> faceLine)
+      {
         faces.push_back(faceLine);
       }
 
       // only proccess if we have more than 3 faces
-      if (faces.size() < 3 || faces.size() > 4) {
+      if (faces.size() < 3 || faces.size() > 4)
+      {
         continue;
       }
       // assemble the faces
@@ -268,21 +270,21 @@ void CustomObjectLoader(const std::filesystem::path &objectPath,
       // 4. create the indecies for the face
 
       // assemble vertex data
-      for (int i = 0; i < faces.size(); ++i) {
+      for (int i = 0; i < faces.size(); ++i)
+      {
         std::vector<std::string> values = Utility::SplitString(faces[i], "/");
 
         const int posIndex = std::stoi(values[0]) - 1;
         const int uvIndex = std::stoi(values[1]) - 1;
         const int normIndex = std::stoi(values[2]) - 1;
 
-        const LumiCore::Vertex vertex{temp_positions[posIndex],
-                                      temp_normals[normIndex],
-                                      temp_uvs[uvIndex]};
+        const LumiCore::Vertex vertex{temp_positions[posIndex], temp_normals[normIndex], temp_uvs[uvIndex]};
         vertices.push_back(vertex);
       }
 
       // assemble indecies order
-      if (faces.size() == 3) {
+      if (faces.size() == 3)
+      {
         const int first = vertices.size() - 3;
         const int second = vertices.size() - 2;
         const int third = vertices.size() - 1;
@@ -290,7 +292,8 @@ void CustomObjectLoader(const std::filesystem::path &objectPath,
         indices.push_back(second);
         indices.push_back(third);
       }
-      if (faces.size() == 4) {
+      if (faces.size() == 4)
+      {
         const int first = vertices.size() - 4;
         const int second = vertices.size() - 3;
         const int third = vertices.size() - 2;
@@ -306,7 +309,9 @@ void CustomObjectLoader(const std::filesystem::path &objectPath,
         indices.push_back(first);
         indices.push_back(third);
       }
-    } else if (prefix == std::string("o")) {
+    }
+    else if (prefix == std::string("o"))
+    {
       //
       std::string name;
       ss >> name;
@@ -319,22 +324,25 @@ void CustomObjectLoader(const std::filesystem::path &objectPath,
   LOG_INFO(std::format("UVs        amount: {}", temp_uvs.size()));
 }
 
-std::unique_ptr<LumiCore::Mesh>
-GenerateObject(const std::filesystem::path &objectPath) {
+std::unique_ptr<LumiCore::Mesh> GenerateObject(const std::filesystem::path& objectPath)
+{
   constexpr bool useCustomObjectLoader = true;
   //
   // Validate check if the file extention is correct and if file exist
-  if (!IsValidFile(objectPath)) {
-    LOG_WARNING(
-        std::format("File {} is not valid", objectPath.filename().string()));
+  if (!IsValidFile(objectPath))
+  {
+    LOG_WARNING(std::format("File {} is not valid", objectPath.filename().string()));
   };
 
   std::vector<LumiCore::Vertex> vertices;
   std::vector<unsigned int> indices;
 
-  if (useCustomObjectLoader) {
+  if (useCustomObjectLoader)
+  {
     CustomObjectLoader(objectPath, vertices, indices);
-  } else {
+  }
+  else
+  {
     (objectPath, vertices, indices);
   }
 
@@ -344,12 +352,14 @@ GenerateObject(const std::filesystem::path &objectPath) {
   return std::make_unique<LumiCore3D::GenMesh>(vertices, indices);
 }
 
-int main() {
+int main()
+{
   LOG(LumiCoreLogger::LOGLEVEL::INFO, "Debugger initialized");
 
 #pragma region Init
   /* Initialize the library */
-  if (!glfwInit()) {
+  if (!glfwInit())
+  {
     LOG(LumiCoreLogger::LOGLEVEL::ERROR, "Failed to initialize GLFW");
     return -1;
   }
@@ -365,13 +375,12 @@ int main() {
   glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 
   /* Create a windowed mode window and its OpenGL context */
-  GLFWwindow *window =
-      glfwCreateWindow(settings.windowWidth, settings.windowHeight,
-                       settings.windowTitle, nullptr, nullptr);
+  GLFWwindow* window =
+      glfwCreateWindow(settings.windowWidth, settings.windowHeight, settings.windowTitle, nullptr, nullptr);
 
-  if (!window) {
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR,
-        "Something on window initialize went wrong");
+  if (!window)
+  {
+    LOG(LumiCoreLogger::LOGLEVEL::ERROR, "Something on window initialize went wrong");
     glfwTerminate();
     return -1;
   }
@@ -387,7 +396,8 @@ int main() {
   glfwGetFramebufferSize(window, &cacheWindowWitdh, &cacheWindowHeigh);
 
   const int loadedVersion = gladLoadGL();
-  if (loadedVersion == 0) {
+  if (loadedVersion == 0)
+  {
     LOG_ERROR("Failed to load OpenGL functions with GLAD");
     glfwDestroyWindow(window);
     glfwTerminate();
@@ -396,13 +406,13 @@ int main() {
 
   int flags;
   glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-  if (flags & GL_CONTEXT_FLAG_DEBUG_BIT) {
+  if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
+  {
     LOG_DEBUG("initialize debug output");
     glEnable(GL_DEBUG_OUTPUT);
     glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
     glDebugMessageCallback(glDebugOutput, nullptr);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr,
-                          GL_TRUE);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
   }
 
   ///////////////
@@ -416,32 +426,35 @@ int main() {
 
 #pragma region MeshObjects
   LumiCore2D::Quad quadMesh;
-  if (!quadMesh.IsValid()) {
+  if (!quadMesh.IsValid())
+  {
     LOG_WARNING("Mesh VAO coud not be initialized for quad mesh");
     return -10;
   }
 
   LumiCore3D::Cube cubeObject;
-  if (!cubeObject.IsValid()) {
+  if (!cubeObject.IsValid())
+  {
     LOG_WARNING("Mesh VAO coud not be initialized for cube mesh");
     return -20;
   }
 
   LumiCore3D::Pyramid pyramidObject;
-  if (!pyramidObject.IsValid()) {
+  if (!pyramidObject.IsValid())
+  {
     LOG_WARNING("Mesh VAO coud not be initialized for pyramid mesh");
     return -22;
   }
 
   LumiCore3D::Sphere sphereObject;
-  if (!sphereObject.IsValid()) {
+  if (!sphereObject.IsValid())
+  {
     LOG_WARNING("Mesh VAO coud not be initialized for sphere mesh");
     return -23;
   }
 
-  std::unique_ptr<LumiCore::Mesh> ape =
-      GenerateObject("assets/objects/monkeyHat.obj");
-  // GenerateObject("assets/objects/monkey.obx", 0);
+  std::unique_ptr<LumiCore::Mesh> ape = GenerateObject("assets/objects/MonkeyHat.obj");
+  // GenerateObject("assets/objects/Monkey.obx", 0);
   // GenerateObject("assets/objects/thing.obj", 0);
 
 #pragma endregion MeshObjects
@@ -454,8 +467,10 @@ int main() {
   int frameWidth, frameHeight;
   glfwGetFramebufferSize(window, &frameWidth, &frameHeight);
   float aspectRatio = (float)frameWidth / (float)frameHeight;
-  LumiCore::Camera camera(cameraPos, fov, aspectRatio,
-                          glm::vec2(0.01f, 100.0f));
+
+  constexpr float nearPlane = 0.01f;
+  constexpr float farPlane = 100.0f;
+  LumiCore::Camera camera(cameraPos, fov, aspectRatio, nearPlane, farPlane);
 
   ///////////////
 
@@ -465,25 +480,23 @@ int main() {
 
   ///////////////
 
-  Shader basic3DShader = Shader("assets/shaders/3dBasicShader.vert",
-                                "assets/shaders/3dBasicShader.frag");
-  if (!basic3DShader.IsValid()) {
+  Shader basic3DShader = Shader("assets/shaders/3dBasicShader.vert", "assets/shaders/3dBasicShader.frag");
+  if (!basic3DShader.IsValid())
+  {
     LOG_ERROR("3D shader could not compile");
     return -2;
   }
   basic3DShader.Use();
   // these we only need to set one time as they are the same for now
   basic3DShader.SetMatrix4("u_View", camera.GetViewMatrix());
-  basic3DShader.UnUse();
+  basic3DShader.SetMatrix4("u_Projection", camera.GetProjectionMatrix());
 
-  SwitchProjectionMatrix(basic3DShader, perspectiveMatrix);
+  basic3DShader.UnUse();
 
   ///////////////
 
-  LOG_INFO(std::format(
-      "OpenGL: {}", reinterpret_cast<const char *>(glGetString(GL_VERSION))));
-  LOG_INFO(std::format("Renderer: {}", reinterpret_cast<const char *>(
-                                           glGetString(GL_RENDERER))));
+  LOG_INFO(std::format("OpenGL: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION))));
+  LOG_INFO(std::format("Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER))));
 
   bool bToggleRoofColor = false;
   float lastInputTime;
@@ -502,30 +515,36 @@ int main() {
   glFrontFace(GL_CCW);
 
   /* Loop until the user closes the window */
-  while (!glfwWindowShouldClose(window)) {
+  while (!glfwWindowShouldClose(window))
+  {
     float runningTime = glfwGetTime();
 
     int currentWindowWidth;
     int currentWindowHeight;
     glfwGetFramebufferSize(window, &currentWindowWidth, &currentWindowHeight);
-    if (cacheWindowWitdh != currentWindowWidth ||
-        cacheWindowHeigh != currentWindowHeight) {
 
-      camera.GenerateProjectionMatixes();
+    if (cacheWindowWitdh != currentWindowWidth || cacheWindowHeigh != currentWindowHeight)
+    {
 
+      camera.SetAspectRatio((float)currentWindowWidth / (float)currentWindowHeight);
+
+      basic3DShader.Use();
+      basic3DShader.SetMatrix4("u_View", camera.GetViewMatrix());
+      basic3DShader.UnUse();
       cacheWindowHeigh = currentWindowHeight;
       cacheWindowWitdh = currentWindowWidth;
     }
 
     bool bSwitchProjectionMatrix = false;
-    processInput(window, bToggleRoofColor, bSwitchDrawingMode,
-                 bSwitchProjectionMatrix);
+    processInput(window, bToggleRoofColor, bSwitchDrawingMode, bSwitchProjectionMatrix);
 
-    if (bSwitchProjectionMatrix && !bHasSwitchedProjectionMatrix) {
-      projectionIndex = ++projectionIndex % 2;
-      SwitchProjectionMatrix(basic3DShader, projectionIndex == 0
-                                                ? perspectiveMatrix
-                                                : orthographicMatrix);
+    if (bSwitchProjectionMatrix && !bHasSwitchedProjectionMatrix)
+    {
+      camera.SwitchProjectionMatrix();
+
+      basic3DShader.Use();
+      basic3DShader.SetMatrix4("u_Projection", camera.GetProjectionMatrix());
+      basic3DShader.UnUse();
     }
 
     bHasSwitchedProjectionMatrix = bSwitchProjectionMatrix;
@@ -539,7 +558,6 @@ int main() {
     const glm::vec3 up(0.0f, 1.0f, 0.0f);
     const glm::vec3 right(0.0f, 0.0f, 1.0f);
 
-    /*
     { // Cube 1
       glm::mat4 cubeModel = glm::mat4(1.0f);
 
@@ -626,13 +644,11 @@ int main() {
       basic3DShader.SetMatrix4("u_Model", sphereModel);
       sphereObject.Render(basic3DShader);
     }
-    */
     { // ape
       glm::mat4 apeModel = glm::mat4(1.0f);
 
       apeModel = glm::translate(apeModel, glm::vec3(0.0, -0.2f, 3.0f));
-      apeModel *=
-          glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
+      apeModel *= glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
       apeModel = glm::scale(apeModel, glm::vec3(0.5, 0.5, 0.5));
 
       basic3DShader.SetVec3("u_Color", greenColor);

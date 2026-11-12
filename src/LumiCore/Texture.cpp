@@ -11,7 +11,7 @@ namespace LumiCore {
 
 Texture::Texture(const std::string &path) {
   // Check if the file is valid
-  if (Utility::IsValidPath(path)) {
+  if (!Utility::IsValidFile(path)) {
     LOG_WARNING(std::format("File path is not valid: {}", path));
     return;
   }
@@ -51,9 +51,13 @@ void Texture::Generate(const std::string &path) {
   stbi_image_free(data);
 }
 
-const unsigned int Texture::GetId() const { return m_Id; }
 bool Texture::IsValid() const { return m_Id != 0; }
+
+#pragma region Getters
+const unsigned int Texture::GetId() const { return m_Id; }
 int Texture::GetWidth() const { return m_width; }
 int Texture::GetHeight() const { return m_height; }
+int Texture::GetChannels() const { return m_channels; }
+#pragma endregion
 
 } // namespace LumiCore

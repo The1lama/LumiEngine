@@ -18,8 +18,10 @@ public:
 
   const unsigned int GetId() const;
   bool IsValid() const;
+
   int GetWidth() const;
   int GetHeight() const;
+  int GetChannels() const;
 };
 
 } // namespace LumiCore

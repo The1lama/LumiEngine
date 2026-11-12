@@ -6,7 +6,7 @@
 
 namespace Utility {
 
-inline bool IsValidPath(const std::string path) {
+inline bool IsValidFile(const std::string path) {
   std::ifstream file(path);
   return file.good();
 }

@@ -1,16 +1,19 @@
 #pragma once
 
-#include "../Mesh.h"
 #include <vector>
+#include "../Mesh.h"
 
-namespace LumiCore3D {
+namespace LumiCore3D
+{
 
-class Pyramid : public LumiCore::Mesh {
-public:
+class Pyramid : public LumiCore::Mesh
+{
+  public:
   Pyramid() : Mesh(GenerateMeshData(), GL_TRIANGLES) {};
 
-private:
-  static inline LumiCore::MeshData GenerateMeshData() {
+  private:
+  static inline LumiCore::MeshData GenerateMeshData()
+  {
     LumiCore::MeshData data;
 
     data.vertecies = std::move(Pyramid::GenerateVertexArray());
@@ -19,7 +22,8 @@ private:
     return data;
   };
 
-  static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
+  static inline std::vector<LumiCore::Vertex> GenerateVertexArray()
+  {
     // clang-format off
     return std::vector<LumiCore::Vertex>{
       //                 // Position // // Normal // UV COORD //
@@ -51,7 +55,8 @@ private:
     };
     // clang-format on
   }
-  static inline std::vector<unsigned int> GenerateIndicies() {
+  static inline std::vector<unsigned int> GenerateIndicies()
+  {
     // clang-format off
     return std::vector<unsigned int>{
       // Front Side
