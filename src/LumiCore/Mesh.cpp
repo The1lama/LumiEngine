@@ -30,7 +30,10 @@ Mesh::Mesh(LumiCore::MeshData data, GLenum renderType) {
   CreateMesh(m_verticies, m_indicies);
 }
 
-Mesh::~Mesh() { Release(); }
+Mesh::~Mesh() {
+  Release();
+  LOG_WARNING("Mesh has been destroyed");
+}
 
 void Mesh::Release() {
   if (m_VBO)

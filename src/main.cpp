@@ -1,7 +1,16 @@
+#include "LumiCore/3D/GeneratedMesh.h"
+#include "LumiCore/Mesh.h"
 #include <GLFW/glfw3.h>
 #include <corecrt_math.h>
+#include <filesystem>
 #include <format>
+#include <fstream>
+#include <functional>
 #include <glad/glad.h>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "LumiCore/2D/Quad.h"
@@ -177,88 +186,6 @@ void SwitchRenderingMode() {
     glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); // draws vertex points
 };
 
-void mat4_Rotation(glm::mat4 &matrix, const float radians, const int axis) {
-  // glm::rotate(cubeModel, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-
-  // Precalculate the cos and sine values for references
-  const float cosValue = glm::cos(radians);
-  const float sinValue = glm::sin(radians);
-
-  // Why we are multiplying whole vectors instead of just the single digits
-  // is because will then store existing position and scale values. And
-  // because it will compute faster than doing individual single float
-  // multiplications and then changing the value one at a time.
-
-  // Why we are adding together two different columns is because when we rotate
-  // the object on the local axis the old "up" vector is not the same as before
-  // and would have moved into each other's spaces. And by adding the two
-  // different columns we are calculating the new local up direction vectors.
-
-  // x axis Rotation
-  // Take out the columns to reference when we do the multiplications
-  if (axis == 0) {
-    glm::vec4 col1 = matrix[1];
-    glm::vec4 col2 = matrix[2];
-    matrix[1] = col1 * cosValue + col2 * sinValue;
-    matrix[2] = col1 * -sinValue + col2 * cosValue;
-  }
-
-  // y axis Rotation
-  if (axis == 1) {
-    glm::vec4 col0 = matrix[0];
-    glm::vec4 col2 = matrix[2];
-    matrix[0] = col0 * cosValue - col2 * sinValue;
-    matrix[2] = col0 * sinValue + col2 * cosValue;
-  }
-
-  // z axis Rotation
-  if (axis >= 2) {
-    glm::vec4 col0 = matrix[0];
-    glm::vec4 col1 = matrix[1];
-    matrix[0] = col0 * cosValue + col1 * sinValue;
-    matrix[1] = col0 * -sinValue + col1 * cosValue;
-  }
-}
-void mat4_Transform(glm::mat4 &matrix, const glm::vec3 newLocation) {
-  // glm::translate(cubeModel, glm::vec3(0.4f, 0.0f, 0.0f));
-
-  // clang-format off
-  // What is happening in this line of code is that we are taking the matrix 
-  // scale and mulipy it with the new vector locations that we want to move towards,
-  // this is what we do for XYZ and in the end we add our old transform location and the sum
-  // of all the values becomes our new location in local space.
-  //
-  // Why we are multiplying scale and rotation is becuase we need to know in what direction 
-  // we are going to move the vertex location to. And why it does not clash with scale and
-  // rotation in the vertex shader is because they are doing different things, in the vertex shader 
-  // we are moving a single vertex point to its correct location while here we are moving the whole object 
-  // to its correct location.
-  //
-  //                      Forward Vector                    Up Vector                         Right Vector
-  // new Position = (scaleX * direction amount X) + (scaleY * direction amount Y) + (scaleZ * direction amount Z)
-  //
-  // clang-format on
-
-  // clang-format off
-  matrix[3] = matrix[0] * newLocation.x +
-              matrix[1] * newLocation.y + 
-              matrix[2] * newLocation.z +
-              matrix[3];
-  // clang-format on
-}
-void mat4_Scale(glm::mat4 &matrix, const glm::vec3 scaleValue) {
-  // glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
-
-  // NOTE: DO NOT run scale after we have rotated the matrix as
-  // the scale and roation matrix math uses the same indexes on
-  // both math functions.
-  // The transformation order should be Scale -> Rotation -> Transform
-
-  matrix[0] = matrix[0] * scaleValue.x; // x scale value
-  matrix[1] = matrix[1] * scaleValue.y; // y scale value
-  matrix[2] = matrix[2] * scaleValue.z; // z scale value
-}
-
 glm::mat4 CreateOrthographicProjection(const float left, const float right,
                                        const float top, const float bottom,
                                        const float nearPlane,
@@ -390,6 +317,182 @@ bool CreateTexture(const char *pathToTexture, unsigned int &textureId) {
   return true;
 }
 
+bool IsValidFile(const std::filesystem::path &filePath) {
+  const std::string validExtentions[] = {".obj"};
+  const bool isValidExtention =
+      std::find(std::begin(validExtentions), std::end(validExtentions),
+                filePath.extension().string()) != std::end(validExtentions);
+  const bool fileExist = std::filesystem::exists(filePath);
+
+  return fileExist && isValidExtention;
+}
+
+std::vector<std::string> SplitString(std::string s,
+                                     const std::string &delimiter) {
+  std::vector<std::string> tokens;
+
+  size_t pos{0};
+  std::string token;
+  // - std::string::npos when used with len or this function .find, means "until
+  // - the end of the string" .find(delimiter) searches for the first occurrence
+  // in a string with the delimiter
+  // - .substr() creates a new string string object from 0 to pos. pos is the
+  // position until we find the delimiter
+  // - .erase() we remove the newly copied string from the original string + the
+  // delimiter
+  while ((pos = s.find(delimiter)) != std::string::npos) {
+    token = s.substr(0, pos);
+    tokens.push_back(token);
+    s.erase(0, pos + delimiter.length());
+  }
+  tokens.push_back(s);
+
+  return tokens;
+}
+
+std::unique_ptr<LumiCore::Mesh>
+GenerateObject(const std::filesystem::path &objectPath, const int loaderType) {
+
+  // Validate check if the file extention is correct and if file exist
+  if (!IsValidFile(objectPath)) {
+    LOG_WARNING(
+        std::format("File {} is not valid", objectPath.filename().string()));
+  };
+
+  std::vector<glm::vec3> temp_positions;
+  std::vector<glm::vec3> temp_normals;
+  std::vector<glm::vec2> temp_uvs;
+
+  std::vector<LumiCore::Vertex> vertices;
+  std::vector<unsigned int> indices;
+
+  std::ifstream file(objectPath);
+  if (!file.is_open()) {
+    LOG_CRITICAL(
+        std::format("Failed to open OBJ file: {}", objectPath.string()));
+    return nullptr;
+  }
+
+  // this will read the line in the file, line by line
+  std::string line;
+  while (std::getline(file, line)) {
+
+    // we get the current line and save it to the ss variable
+    std::stringstream ss(line);
+    std::string prefix;
+    // we skip leading spaces and will read directly into a string until we hit
+    // white spaces on the row. we then extrat said string with the >> to it is
+    // gone and save the string to the prefix variable.
+    ss >> prefix;
+
+    if (prefix == std::string("v")) {
+      std::string x;
+      std::string y;
+      std::string z;
+      ss >> x;
+      ss >> y;
+      ss >> z;
+
+      temp_positions.push_back(
+          glm::vec3(std::stof(x), std::stof(y), std::stof(z)));
+    } else if (prefix == std::string("vn")) {
+      std::string x;
+      std::string y;
+      std::string z;
+      ss >> x;
+      ss >> y;
+      ss >> z;
+
+      temp_normals.push_back(
+          glm::vec3(std::stof(x), std::stof(y), std::stof(z)));
+    }
+
+    else if (prefix == std::string("vt")) {
+      std::string x;
+      std::string y;
+      ss >> x;
+      ss >> y;
+
+      temp_uvs.push_back(glm::vec2(std::stof(x), std::stof(y)));
+    }
+    // Create vertexes and indicies
+    else if (prefix == std::string("f")) {
+
+      std::vector<std::string> faces;
+      std::string faceLine;
+      while (ss >> faceLine) {
+        faces.push_back(faceLine);
+      }
+
+      // only proccess if we have more than 3 faces
+      if (faces.size() < 3 || faces.size() > 4) {
+        continue;
+      }
+      // assemble the faces
+
+      // 1. Loop through the faces vector
+      // 2. Split up the string by /
+      // 3. each value goes from vertex position/uv/normal index: remeber that
+      // .OBJ starts from 1 so we need to do -1
+      // 4. create the indecies for the face
+
+      // assemble vertex data
+      for (int i = 0; i < faces.size(); ++i) {
+        std::vector<std::string> values = SplitString(faces[i], "/");
+
+        const int posIndex = std::stoi(values[0]) - 1;
+        const int uvIndex = std::stoi(values[1]) - 1;
+        const int normIndex = std::stoi(values[2]) - 1;
+
+        const LumiCore::Vertex vertex{temp_positions[posIndex],
+                                      temp_normals[normIndex],
+                                      temp_uvs[uvIndex]};
+        vertices.push_back(vertex);
+      }
+
+      // assemble indecies order
+      if (faces.size() == 3) {
+        const int first = vertices.size() - 3;
+        const int second = vertices.size() - 2;
+        const int third = vertices.size() - 1;
+        indices.push_back(first);
+        indices.push_back(second);
+        indices.push_back(third);
+      }
+      if (faces.size() == 4) {
+        const int first = vertices.size() - 4;
+        const int second = vertices.size() - 3;
+        const int third = vertices.size() - 2;
+        const int fourth = vertices.size() - 1;
+
+        // first triangle
+        indices.push_back(first);
+        indices.push_back(second);
+        indices.push_back(third);
+
+        // second triangle
+        indices.push_back(fourth);
+        indices.push_back(first);
+        indices.push_back(third);
+      }
+    } else if (prefix == std::string("o")) {
+      //
+      std::string name;
+      ss >> name;
+      LOG_INFO(std::format("Object name: {}", name));
+    }
+
+  } // while
+
+  LOG_INFO(std::format("Position   amount: {}", temp_positions.size()));
+  LOG_INFO(std::format("Normal     amount: {}", temp_normals.size()));
+  LOG_INFO(std::format("UVs        amount: {}", temp_uvs.size()));
+  LOG_INFO(std::format("Vertexes   amount: {}", vertices.size()));
+  LOG_INFO(std::format("Indices    amount: {}", indices.size()));
+
+  return std::make_unique<LumiCore3D::GenMesh>(vertices, indices);
+}
+
 int main() {
   LOG(LumiCoreLogger::LOGLEVEL::INFO, "Debugger initialized");
 
@@ -426,6 +529,11 @@ int main() {
   glfwMakeContextCurrent(window);
   glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
   glfwSwapInterval(1);
+
+  // window cache size
+  int cacheWindowWitdh;
+  int cacheWindowHeigh;
+  glfwGetFramebufferSize(window, &cacheWindowWitdh, &cacheWindowHeigh);
 
   const int loadedVersion = gladLoadGL();
   if (loadedVersion == 0) {
@@ -483,6 +591,12 @@ int main() {
     LOG_WARNING("Mesh VAO coud not be initialized for sphere mesh");
     return -23;
   }
+
+  std::unique_ptr<LumiCore::Mesh> ape =
+      GenerateObject("assets/objects/monkeyHat.obj", 0);
+  // GenerateObject("assets/objects/monkey.obx", 0);
+  // GenerateObject("assets/objects/thing.obj", 0);
+
 #pragma endregion MeshObjects
 
   /////////////// PROJECTION ///////////////
@@ -508,9 +622,12 @@ int main() {
 
   const char *texturePath = "assets/textures/uvTest.png";
   unsigned int texId;
+
   CreateTexture(texturePath, texId);
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, texId);
+
+  ///////////////
 
   Shader basic3DShader = Shader("assets/shaders/3dBasicShader.vert",
                                 "assets/shaders/3dBasicShader.frag");
@@ -552,6 +669,17 @@ int main() {
   while (!glfwWindowShouldClose(window)) {
     float runningTime = glfwGetTime();
 
+    int currentWindowWidth;
+    int currentWindowHeight;
+    glfwGetFramebufferSize(window, &currentWindowWidth, &currentWindowHeight);
+    if (cacheWindowWitdh != currentWindowWidth ||
+        cacheWindowHeigh != currentWindowHeight) {
+      GenerateProjectionMatrixValues(window, perspectiveMatrix,
+                                     orthographicMatrix);
+      cacheWindowHeigh = currentWindowHeight;
+      cacheWindowWitdh = currentWindowWidth;
+    }
+
     bool bSwitchProjectionMatrix = false;
     processInput(window, bToggleRoofColor, bSwitchDrawingMode,
                  bSwitchProjectionMatrix);
@@ -574,6 +702,7 @@ int main() {
     const glm::vec3 up(0.0f, 1.0f, 0.0f);
     const glm::vec3 right(0.0f, 0.0f, 1.0f);
 
+    /*
     { // Cube 1
       glm::mat4 cubeModel = glm::mat4(1.0f);
 
@@ -582,7 +711,7 @@ int main() {
       cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), up);
       cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), forward);
 
-      mat4_Scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
+      cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
 
       basic3DShader.SetVec3("u_Color", redColor);
       basic3DShader.SetMatrix4("u_Model", cubeModel);
@@ -597,8 +726,7 @@ int main() {
       cubeModel = glm::rotate(cubeModel, glm::radians(-90.0f), up);
       cubeModel = glm::rotate(cubeModel, glm::radians(-90.0f), forward);
 
-      // cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
-      mat4_Scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
+      cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
 
       basic3DShader.SetVec3("u_Color", redColor);
       basic3DShader.SetMatrix4("u_Model", cubeModel);
@@ -612,7 +740,7 @@ int main() {
 
       pyramidModel = glm::rotate(pyramidModel, glm::radians(90.0f), up);
 
-      mat4_Scale(pyramidModel, glm::vec3(0.5, 0.5, 0.5));
+      pyramidModel = glm::scale(pyramidModel, glm::vec3(0.5, 0.5, 0.5));
 
       basic3DShader.SetVec3("u_Color", blueColor);
       basic3DShader.SetMatrix4("u_Model", pyramidModel);
@@ -626,7 +754,7 @@ int main() {
 
       pyramidModel = glm::rotate(pyramidModel, glm::radians(-90.0f), up);
 
-      mat4_Scale(pyramidModel, glm::vec3(0.5, 0.5, 0.5));
+      pyramidModel = glm::scale(pyramidModel, glm::vec3(0.5, 0.5, 0.5));
 
       basic3DShader.SetVec3("u_Color", blueColor);
       basic3DShader.SetMatrix4("u_Model", pyramidModel);
@@ -661,12 +789,28 @@ int main() {
       basic3DShader.SetMatrix4("u_Model", sphereModel);
       sphereObject.Render(basic3DShader);
     }
+    */
+    { // ape
+      glm::mat4 apeModel = glm::mat4(1.0f);
+
+      apeModel = glm::translate(apeModel, glm::vec3(0.0, 0.0f, 3.0f));
+      apeModel = glm::rotate(apeModel, glm::radians(45.0f), up);
+      apeModel = glm::rotate(apeModel, glm::radians(25.0f), right);
+      apeModel *=
+          glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
+      apeModel = glm::scale(apeModel, glm::vec3(0.5, 0.5, 0.5));
+
+      basic3DShader.SetVec3("u_Color", greenColor);
+      basic3DShader.SetMatrix4("u_Model", apeModel);
+      ape->Render(basic3DShader);
+    }
 
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 
   quadMesh.Release();
+  ape.reset();
 
   glfwTerminate();
   return 0;
