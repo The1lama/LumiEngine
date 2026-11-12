@@ -7,11 +7,14 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
-namespace LumiCore {
+namespace LumiCore
+{
 
-Texture::Texture(const std::string &path) {
+Texture::Texture(const std::string& path)
+{
   // Check if the file is valid
-  if (!Utility::IsValidFile(path)) {
+  if (!Utility::IsValidFile(path))
+  {
     LOG_WARNING(std::format("File path is not valid: {}", path));
     return;
   }
@@ -19,7 +22,8 @@ Texture::Texture(const std::string &path) {
   Generate(path);
 }
 
-void Texture::Generate(const std::string &path) {
+void Texture::Generate(const std::string& path)
+{
   stbi_set_flip_vertically_on_load(true);
   // generate texture object
   glGenTextures(1, &m_Id);
@@ -28,21 +32,19 @@ void Texture::Generate(const std::string &path) {
   // set texture options
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                  GL_LINEAR_MIPMAP_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   // load the texture data
-  unsigned char *data =
-      stbi_load(path.c_str(), &m_width, &m_height, &m_channels, 0);
+  unsigned char* data = stbi_load(path.c_str(), &m_width, &m_height, &m_channels, 0);
 
-  if (!data) {
+  if (!data)
+  {
     LOG_WARNING(std::format("Could not load in texture: {}", path));
     return;
   }
 
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA,
-               GL_UNSIGNED_BYTE, data);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
   glGenerateMipmap(GL_TEXTURE_2D);
 
   // Once we have called `glTexImage2D`, we have bound the texture object and

@@ -28,7 +28,7 @@
 
 void glfwErrorCallback(int error, const char* description)
 {
-  LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("GLFW error ({}): {}", error, description));
+  LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("GLFW error ({}): {}", error, description));
 }
 
 void framebufferSizeCallback(GLFWwindow*, int width, int height) { glViewport(0, 0, width, height); }
@@ -90,75 +90,75 @@ void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
   if (id == 131169 || id == 131185 || id == 131218 || id == 131204)
     return;
 
-  LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("---------------"));
-  LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Debug Message ({}): {}", id, message));
+  LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("---------------"));
+  LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Debug Message ({}): {}", id, message));
 
   switch (source)
   {
   case GL_DEBUG_SOURCE_API:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: API"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Source: API"));
     break;
   case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Window System"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Source: Window System"));
     break;
   case GL_DEBUG_SOURCE_SHADER_COMPILER:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Shader Compiler"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Source: Shader Compiler"));
     break;
   case GL_DEBUG_SOURCE_THIRD_PARTY:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Third Party"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Source: Third Party"));
     break;
   case GL_DEBUG_SOURCE_APPLICATION:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Application"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Source: Application"));
     break;
   case GL_DEBUG_SOURCE_OTHER:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Source: Other"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Source: Other"));
     break;
   }
 
   switch (type)
   {
   case GL_DEBUG_TYPE_ERROR:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Error"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Type: Error"));
     break;
   case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Deprecated Behavior"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Type: Deprecated Behavior"));
     break;
   case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Undefined Behavior"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Type: Undefined Behavior"));
     break;
   case GL_DEBUG_TYPE_PORTABILITY:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Portability"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Type: Portability"));
     break;
   case GL_DEBUG_TYPE_PERFORMANCE:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Performance"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Type: Performance"));
     break;
   case GL_DEBUG_TYPE_MARKER:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Marker"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Type: Marker"));
     break;
   case GL_DEBUG_TYPE_PUSH_GROUP:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Push Group"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Type: Push Group"));
     break;
   case GL_DEBUG_TYPE_POP_GROUP:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Pop Group"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Type: Pop Group"));
     break;
   case GL_DEBUG_TYPE_OTHER:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Type: Other"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Type: Other"));
     break;
   }
 
   switch (severity)
   {
   case GL_DEBUG_SEVERITY_HIGH:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Serverity: High"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Serverity: High"));
     break;
   case GL_DEBUG_SEVERITY_MEDIUM:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Serverity: Medium"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Serverity: Medium"));
     break;
   case GL_DEBUG_SEVERITY_LOW:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Serverity: Low"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Serverity: Low"));
     break;
   case GL_DEBUG_SEVERITY_NOTIFICATION:
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, std::format("Serverity: Notification"));
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, std::format("Serverity: Notification"));
     break;
   }
 }
@@ -354,13 +354,13 @@ std::unique_ptr<LumiCore::Mesh> GenerateObject(const std::filesystem::path& obje
 
 int main()
 {
-  LOG(LumiCoreLogger::LOGLEVEL::INFO, "Debugger initialized");
+  LOG(LumiCoreLogger::ELogVerbose::INFO, "Debugger initialized");
 
 #pragma region Init
   /* Initialize the library */
   if (!glfwInit())
   {
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, "Failed to initialize GLFW");
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, "Failed to initialize GLFW");
     return -1;
   }
 
@@ -380,7 +380,7 @@ int main()
 
   if (!window)
   {
-    LOG(LumiCoreLogger::LOGLEVEL::ERROR, "Something on window initialize went wrong");
+    LOG(LumiCoreLogger::ELogVerbose::ERROR, "Something on window initialize went wrong");
     glfwTerminate();
     return -1;
   }

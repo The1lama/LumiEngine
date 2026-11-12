@@ -2,14 +2,17 @@
 
 #include "../Mesh.h"
 
-namespace LumiCore2D {
+namespace LumiCore2D
+{
 
-class Triangle : public LumiCore::Mesh {
-public:
+class Triangle : public LumiCore::Mesh
+{
+  public:
   Triangle() : Mesh(GenerateMeshData(), GL_TRIANGLES) {};
 
-private:
-  static inline LumiCore::MeshData GenerateMeshData() {
+  private:
+  static inline LumiCore::MeshData GenerateMeshData()
+  {
     LumiCore::MeshData data;
 
     data.vertecies = std::move(Triangle::GenerateVertexArray());
@@ -18,19 +21,16 @@ private:
     return data;
   };
 
-  static inline std::vector<LumiCore::Vertex> GenerateVertexArray() {
-    // clang-format off
+  static inline std::vector<LumiCore::Vertex> GenerateVertexArray()
+  {
     return std::vector<LumiCore::Vertex>{
-                          // Position //                      // Normal //              // UV Coord //
-      LumiCore::Vertex(glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f, 0.0f)),
-      LumiCore::Vertex(glm::vec3( 0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 0.0f)),
-      LumiCore::Vertex(glm::vec3(-0.5f,  0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.5f, 0.5f)),
+        // Position //                      // Normal //              // UV Coord //
+        LumiCore::Vertex(glm::vec3(-0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.0f, 0.0f)),
+        LumiCore::Vertex(glm::vec3(0.5f, -0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(1.0f, 0.0f)),
+        LumiCore::Vertex(glm::vec3(-0.5f, 0.5f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec2(0.5f, 0.5f)),
     };
-    // clang-format on
   }
-  static inline std::vector<unsigned int> GenerateIndicies() {
-    return std::vector<unsigned int>{0, 1, 2};
-  }
+  static inline std::vector<unsigned int> GenerateIndicies() { return std::vector<unsigned int>{0, 1, 2}; }
 };
 
 } // namespace LumiCore2D

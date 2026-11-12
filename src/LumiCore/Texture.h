@@ -2,18 +2,19 @@
 
 #include <string>
 
-namespace LumiCore {
+namespace LumiCore
+{
 
-class Texture {
-private:
+class Texture
+{
+  private:
   unsigned int m_Id;
   int m_width, m_height, m_channels;
 
-  void Generate(const std::string &path);
+  void Generate(const std::string& path);
 
-protected:
-public:
-  Texture(const std::string &path);
+  public:
+  Texture(const std::string& path);
   ~Texture() = default;
 
   const unsigned int GetId() const;

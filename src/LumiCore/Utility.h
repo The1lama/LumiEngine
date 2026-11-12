@@ -4,15 +4,17 @@
 #include <string>
 #include <vector>
 
-namespace Utility {
+namespace Utility
+{
 
-inline bool IsValidFile(const std::string path) {
+inline bool IsValidFile(const std::string path)
+{
   std::ifstream file(path);
   return file.good();
 }
 
-inline std::vector<std::string> SplitString(std::string s,
-                                            const std::string &delimiter) {
+inline std::vector<std::string> SplitString(std::string s, const std::string& delimiter)
+{
   std::vector<std::string> tokens;
 
   size_t pos{0};
@@ -24,7 +26,8 @@ inline std::vector<std::string> SplitString(std::string s,
   // position until we find the delimiter
   // - .erase() we remove the newly copied string from the original string + the
   // delimiter
-  while ((pos = s.find(delimiter)) != std::string::npos) {
+  while ((pos = s.find(delimiter)) != std::string::npos)
+  {
     token = s.substr(0, pos);
     tokens.push_back(token);
     s.erase(0, pos + delimiter.length());

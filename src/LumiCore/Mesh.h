@@ -6,28 +6,30 @@
 
 class Shader;
 
-namespace LumiCore {
+namespace LumiCore
+{
 
-struct Vertex {
+struct Vertex
+{
   glm::vec3 position;
   glm::vec3 normal;
   glm::vec2 uvCoord;
 
-  Vertex(glm::vec3 VertexPosition, glm::vec3 VertexNormal, glm::vec2 UvCoord)
-      : position(VertexPosition), normal(VertexNormal), uvCoord(UvCoord) {};
-  Vertex(float pX, float pY, float pZ, float nX, float nY, float nZ, float uX,
-         float uY)
-      : position(glm::vec3(pX, pY, pZ)), normal(glm::vec3(nX, nY, nZ)),
-        uvCoord(glm::vec2(uX, uY)) {};
+  Vertex(glm::vec3 VertexPosition, glm::vec3 VertexNormal, glm::vec2 UvCoord) :
+      position(VertexPosition), normal(VertexNormal), uvCoord(UvCoord) {};
+  Vertex(float pX, float pY, float pZ, float nX, float nY, float nZ, float uX, float uY) :
+      position(glm::vec3(pX, pY, pZ)), normal(glm::vec3(nX, nY, nZ)), uvCoord(glm::vec2(uX, uY)) {};
 };
 
-struct MeshData {
+struct MeshData
+{
   std::vector<Vertex> vertecies;
   std::vector<unsigned int> indices;
 };
 
-class Mesh {
-public:
+class Mesh
+{
+  public:
   Mesh() = default;
   ~Mesh();
 
@@ -43,10 +45,10 @@ public:
   void SetRotation(const glm::vec3 newRotation);
   void SetScale(const glm::vec3 newScale);
 
-  virtual void Render(Shader &shader);
+  virtual void Render(Shader& shader);
   virtual void Release();
 
-protected:
+  protected:
   Mesh(LumiCore::MeshData data, GLenum renderType);
 
   std::vector<Vertex> m_verticies;
@@ -60,7 +62,7 @@ protected:
 
   glm::mat4 m_transformMatrix;
 
-private:
+  private:
   float m_time = 1.f;
   float m_angle = .0f;
   glm::vec2 m_xyOffsets = glm::vec2(0, 0);
@@ -69,8 +71,7 @@ private:
 
   GLuint m_VBO, m_VAO, m_EBO;
 
-  void CreateMesh(std::vector<Vertex> &vertecies,
-                  std::vector<unsigned int> &indicies);
+  void CreateMesh(std::vector<Vertex>& vertecies, std::vector<unsigned int>& indicies);
 
   void GenerateTransformationMatrix();
 
