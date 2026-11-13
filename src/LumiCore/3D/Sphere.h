@@ -12,12 +12,15 @@ namespace LumiCore3D
 class Sphere : public LumiCore::Mesh
 {
   public:
-  Sphere(const int rings, const int slices) : LumiCore::Mesh(GenerateMeshData(rings, slices), GL_TRIANGLES) {};
+  Sphere(const int rings, const int slices, const std::vector<LumiCore::Texture> textures) :
+      LumiCore::Mesh(GenerateMeshData(rings, slices, textures), GL_TRIANGLES) {};
 
-  Sphere() : LumiCore::Mesh(GenerateMeshData(50, 55), GL_TRIANGLES) {};
+  Sphere(const std::vector<LumiCore::Texture> textures) :
+      LumiCore::Mesh(GenerateMeshData(50, 55, textures), GL_TRIANGLES) {};
 
   private:
-  static inline LumiCore::MeshData GenerateMeshData(const int rings, const int slices)
+  static inline LumiCore::MeshData GenerateMeshData(const int rings, const int slices,
+                                                    const std::vector<LumiCore::Texture> textures)
   {
     LumiCore::MeshData data;
 
@@ -40,6 +43,7 @@ class Sphere : public LumiCore::Mesh
 
     data.vertecies = std::move(vertices);
     data.indices = std::move(indices);
+    data.textures = std::move(textures);
 
     return data;
   };

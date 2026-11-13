@@ -9,15 +9,16 @@ namespace LumiCore3D
 class Pyramid : public LumiCore::Mesh
 {
   public:
-  Pyramid() : Mesh(GenerateMeshData(), GL_TRIANGLES) {};
+  Pyramid(const std::vector<LumiCore::Texture> textures) : Mesh(GenerateMeshData(textures), GL_TRIANGLES) {};
 
   private:
-  static inline LumiCore::MeshData GenerateMeshData()
+  static inline LumiCore::MeshData GenerateMeshData(const std::vector<LumiCore::Texture> textures)
   {
     LumiCore::MeshData data;
 
     data.vertecies = std::move(Pyramid::GenerateVertexArray());
     data.indices = std::move(Pyramid::GenerateIndicies());
+    data.textures = std::move(textures);
 
     return data;
   };

@@ -8,17 +8,20 @@ class GenMesh : public LumiCore::Mesh
 {
 
   public:
-  GenMesh(std::vector<LumiCore::Vertex> vertecies, std::vector<unsigned int> indices) :
-      Mesh(GenerateMeshData(vertecies, indices), GL_TRIANGLES) {};
+  GenMesh(const std::vector<LumiCore::Vertex>& vertecies, const std::vector<unsigned int> &indices,
+          const std::vector<LumiCore::Texture>& textures) :
+      Mesh(GenerateMeshData(vertecies, indices, textures), GL_TRIANGLES) {};
 
   private:
-  static inline LumiCore::MeshData GenerateMeshData(std::vector<LumiCore::Vertex> vert,
-                                                    std::vector<unsigned int> indeces)
+  static inline LumiCore::MeshData GenerateMeshData(const std::vector<LumiCore::Vertex> &vert,
+                                                    const std::vector<unsigned int> &indeces,
+                                                    const std::vector<LumiCore::Texture> &textures)
   {
     LumiCore::MeshData data;
 
     data.vertecies = std::move(vert);
     data.indices = std::move(indeces);
+    data.textures = std::move(textures);
 
     return data;
   };

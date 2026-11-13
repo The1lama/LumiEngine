@@ -5,6 +5,7 @@ add_rules("plugin.vsxmake.autoupdate")
 
 add_requires("glfw")
 add_requires("stb 2026.03.18")
+add_requires("assimp 6.0.5", {debug = is_mode("debug")})
 
 -- OpenGL Version
 local GL_MAJOR_VERSION = 4
@@ -35,7 +36,7 @@ target("LumiEngine")
 set_kind("binary")
 add_files("src/**.cpp")
 set_languages("c++20")
-add_packages("glfw", "glad", "glm", "stb")
+add_packages("glfw", "glad", "glm", "stb", "assimp")
 
 after_build(function(target)
 	os.cp("assets", target:targetdir())

@@ -3,22 +3,22 @@
 #include <format>
 #include <fstream>
 #include <glad/glad.h>
+#include <glm/vec2.hpp>
+#include <glm/vec3.hpp>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
-#include "LumiCore/3D/GeneratedMesh.h"
-#include "LumiCore/Camera.h"
-#include "LumiCore/Mesh.h"
+#include "LumiCore/Model.h"
 
-#include <glm/vec2.hpp>
-#include <glm/vec3.hpp>
-#include "LumiCore/2D/Quad.h"
+#define STB_IMAGE_IMPLEMENTATION
 #include "LumiCore/3D/Cube.h"
+#include "LumiCore/3D/GeneratedMesh.h"
 #include "LumiCore/3D/Pyramid.h"
 #include "LumiCore/3D/Sphere.h"
+#include "LumiCore/Camera.h"
+#include "LumiCore/Mesh.h"
 #include "LumiCore/Shader.h"
-#include "LumiCore/Texture.h"
 #include "LumiCore/Utility.h"
 #include "LumiCore/logger/Logger.h"
 #include "glm/ext/matrix_transform.hpp"
@@ -181,13 +181,15 @@ bool IsValidFile(const std::filesystem::path& filePath)
   const std::string validExtentions[] = {".obj"};
   const bool isValidExtention = std::find(std::begin(validExtentions), std::end(validExtentions),
                                           filePath.extension().string()) != std::end(validExtentions);
-  const bool fileExist = Utility::IsValidFile(filePath.string());
+  const bool fileExist = LumiCore::Utility::IsValidFile(filePath.string());
 
   return fileExist && isValidExtention;
 }
 
-void CustomObjectLoader(const std::filesystem::path& objectPath, std::vector<LumiCore::Vertex>& vertices,
-                        std::vector<unsigned int>& indices)
+std::unique_ptr<LumiCore::Model> CustomObjectLoader(const std::filesystem::path& objectPath,
+                                                    std::vector<LumiCore::Vertex>& vertices,
+                                                    std::vector<unsigned int>& indices,
+                                                    const std::vector<LumiCore::Texture> textures)
 {
   std::vector<glm::vec3> temp_positions;
   std::vector<glm::vec3> temp_normals;
@@ -197,7 +199,7 @@ void CustomObjectLoader(const std::filesystem::path& objectPath, std::vector<Lum
   if (!file.is_open())
   {
     LOG_CRITICAL(std::format("Failed to open OBJ file: {}", objectPath.string()));
-    return;
+    return nullptr;
   }
 
   // this will read the line in the file, line by line
@@ -272,7 +274,7 @@ void CustomObjectLoader(const std::filesystem::path& objectPath, std::vector<Lum
       // assemble vertex data
       for (int i = 0; i < faces.size(); ++i)
       {
-        std::vector<std::string> values = Utility::SplitString(faces[i], "/");
+        std::vector<std::string> values = LumiCore::Utility::SplitString(faces[i], "/");
 
         const int posIndex = std::stoi(values[0]) - 1;
         const int uvIndex = std::stoi(values[1]) - 1;
@@ -322,11 +324,22 @@ void CustomObjectLoader(const std::filesystem::path& objectPath, std::vector<Lum
   LOG_INFO(std::format("Position   amount: {}", temp_positions.size()));
   LOG_INFO(std::format("Normal     amount: {}", temp_normals.size()));
   LOG_INFO(std::format("UVs        amount: {}", temp_uvs.size()));
+
+  LOG_INFO(std::format("Vertexes   amount: {}", vertices.size()));
+  LOG_INFO(std::format("Indices    amount: {}", indices.size()));
+
+  return std::make_unique<LumiCore::Model>(vertices, indices, textures);
 }
 
-std::unique_ptr<LumiCore::Mesh> GenerateObject(const std::filesystem::path& objectPath)
+std::unique_ptr<LumiCore::Model> GenerateModel(const std::string& path)
 {
-  constexpr bool useCustomObjectLoader = true;
+  return std::make_unique<LumiCore::Model>(path.c_str());
+}
+
+std::unique_ptr<LumiCore::Model> GenerateObject(const std::filesystem::path& objectPath,
+                                                const std::vector<LumiCore::Texture> textures)
+{
+  constexpr bool useCustomObjectLoader = false;
   //
   // Validate check if the file extention is correct and if file exist
   if (!IsValidFile(objectPath))
@@ -334,23 +347,21 @@ std::unique_ptr<LumiCore::Mesh> GenerateObject(const std::filesystem::path& obje
     LOG_WARNING(std::format("File {} is not valid", objectPath.filename().string()));
   };
 
-  std::vector<LumiCore::Vertex> vertices;
-  std::vector<unsigned int> indices;
 
+  std::unique_ptr<LumiCore::Model> returnModel;
   if (useCustomObjectLoader)
   {
-    CustomObjectLoader(objectPath, vertices, indices);
+    std::vector<LumiCore::Vertex> vertices;
+    std::vector<unsigned int> indices;
+
+    return CustomObjectLoader(objectPath, vertices, indices, textures);
   }
   else
   {
-    (objectPath, vertices, indices);
+    return GenerateModel(objectPath.string());
   }
-
-  LOG_INFO(std::format("Vertexes   amount: {}", vertices.size()));
-  LOG_INFO(std::format("Indices    amount: {}", indices.size()));
-
-  return std::make_unique<LumiCore3D::GenMesh>(vertices, indices);
 }
+
 
 int main()
 {
@@ -424,36 +435,43 @@ int main()
   glm::vec3 blueColor = glm::vec3(0.0f, 0.0f, 1.0f);
   glm::vec3 blackColor = glm::vec3(0.0f, 0.0f, 0.0f);
 
-#pragma region MeshObjects
-  LumiCore2D::Quad quadMesh;
-  if (!quadMesh.IsValid())
-  {
-    LOG_WARNING("Mesh VAO coud not be initialized for quad mesh");
-    return -10;
-  }
+  LumiCore::Texture uvTexture;
+  uvTexture.id = LumiCore::Utility::GenerateTexture("uvTest.png", "assets/textures");
+  uvTexture.type = "material";
 
-  LumiCore3D::Cube cubeObject;
+  LumiCore::Texture noiseTexture;
+  noiseTexture.id = LumiCore::Utility::GenerateTexture("noise.jpg", "assets/textures");
+  noiseTexture.type = "material";
+
+#pragma region MeshObjects
+  std::vector<LumiCore::Texture> textures{uvTexture};
+
+  LumiCore3D::Cube cubeObject(textures);
   if (!cubeObject.IsValid())
   {
     LOG_WARNING("Mesh VAO coud not be initialized for cube mesh");
     return -20;
   }
 
-  LumiCore3D::Pyramid pyramidObject;
+  LumiCore3D::Pyramid pyramidObject(textures);
   if (!pyramidObject.IsValid())
   {
     LOG_WARNING("Mesh VAO coud not be initialized for pyramid mesh");
     return -22;
   }
 
-  LumiCore3D::Sphere sphereObject;
+  textures[0] = noiseTexture;
+
+  LumiCore3D::Sphere sphereObject(textures);
   if (!sphereObject.IsValid())
   {
     LOG_WARNING("Mesh VAO coud not be initialized for sphere mesh");
     return -23;
   }
 
-  std::unique_ptr<LumiCore::Mesh> ape = GenerateObject("assets/objects/MonkeyHat.obj");
+  // std::unique_ptr<LumiCore::Model> ape = GenerateObject("assets/objects/MonkeyHat.obj", textures);
+  std::unique_ptr<LumiCore::Model> backpack =
+      GenerateObject("assets/objects/smallBuilding/SmallBuilding02.obj", textures);
   // GenerateObject("assets/objects/Monkey.obx", 0);
   // GenerateObject("assets/objects/thing.obj", 0);
 
@@ -473,10 +491,6 @@ int main()
   LumiCore::Camera camera(cameraPos, fov, aspectRatio, nearPlane, farPlane);
 
   ///////////////
-
-  LumiCore::Texture uvTexture = LumiCore::Texture("assets/textures/uvTest.png");
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, uvTexture.GetId());
 
   ///////////////
 
@@ -653,15 +667,15 @@ int main()
 
       basic3DShader.SetVec3("u_Color", greenColor);
       basic3DShader.SetMatrix4("u_Model", apeModel);
-      ape->Render(basic3DShader);
+      // ape->Draw(basic3DShader);
+      backpack->Draw(basic3DShader);
     }
 
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
 
-  quadMesh.Release();
-  ape.reset();
+  // ape.reset();
 
   glfwTerminate();
   return 0;

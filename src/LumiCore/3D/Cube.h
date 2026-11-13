@@ -9,15 +9,16 @@ namespace LumiCore3D
 class Cube : public LumiCore::Mesh
 {
   public:
-  Cube() : LumiCore::Mesh(GenerateMeshData(), GL_TRIANGLES) {};
+  Cube(const std::vector<LumiCore::Texture> textures) : LumiCore::Mesh(GenerateMeshData(textures), GL_TRIANGLES) {};
 
   private:
-  static inline LumiCore::MeshData GenerateMeshData()
+  static inline LumiCore::MeshData GenerateMeshData(const std::vector<LumiCore::Texture> textures)
   {
     LumiCore::MeshData data;
 
     data.vertecies = std::move(Cube::GenerateVertexArray());
     data.indices = std::move(Cube::GenerateIndicies());
+    data.textures = std::move(textures);
 
     return data;
   };
