@@ -1,6 +1,16 @@
 # Lumi Engine
 ------
 
+# Dependencies
+- xmake
+- c++ 20
+- glfw
+- glad
+- glm
+- stb
+- minizip
+- assimp
+
 # Install
 Add **compile_commands.json** file with command `xmake project -k compile_commands`
 
