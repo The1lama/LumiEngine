@@ -1,9 +1,9 @@
 #pragma once
 
 #include <fstream>
-#include <memory>
-#include <mutex>
-namespace LumiCoreLogger
+#include "../Utility/Singleton.h"
+
+namespace LumiCore::Logger
 {
 
 // Log level enums
@@ -16,25 +16,14 @@ enum class ELogVerbose
   ERROR
 };
 
-/*
- * This is logger class is a singleton design pattern, this is so we can access
- * this class from virtually anywhere in the code.
- *
- * Works by just calling GetInstance();
- *
- */
-
-class Logger
+class Logger : public Utility::Template::Singleton<Logger>
 {
-  private:
+private:
   ELogVerbose m_minLogLevel = ELogVerbose::DEBUG;
-
-  static std::unique_ptr<Logger> s_instance;
-  static std::mutex s_instanceMutexLock;
 
   std::ofstream m_currentFile;
 
-  protected:
+protected:
   const std::string m_logFile = "debug/log";
 
   bool FileExist(const std::string filePath);
@@ -48,19 +37,9 @@ class Logger
   std::string LogFormat(const std::string& message, const ELogVerbose level, const std::string executionFile,
                         const int lineNumber);
 
-  public:
+public:
   Logger();
   ~Logger();
-  // Delete copy/move constructors and assignment operator
-  // This is so we only have once instance off the logger class
-  // Logger(const Logger &other) = delete;
-  // Logger &operator=(const Logger &other) = delete;
-  // Logger(Logger &&other) = delete;
-  // Logger &operator=(Logger &&) = delete;
-
-  // We call this function to get access to the logger, we check first if there
-  // is already a singleton, if there is non we create it
-  static Logger* GetInstance();
 
   // Send out a log that prints out on console and writes to file
   void Log(const std::string& message, const ELogVerbose logLevel, const std::string& executionFile,
@@ -70,16 +49,16 @@ class Logger
   void ChangeLogFile(std::string filePath);
 };
 
-} // namespace LumiCoreLogger
+} // namespace LumiCore::Logger
 
-#define LOG(verbosity, message) LumiCoreLogger::Logger::GetInstance()->Log(message, verbosity, __FILE__, __LINE__)
+#define LOG(verbosity, message) LumiCore::Logger::Logger::GetInstance()->Log(message, verbosity, __FILE__, __LINE__)
 #define LOG_DEBUG(message)                                                                                             \
-  LumiCoreLogger::Logger::GetInstance()->Log(message, LumiCoreLogger::ELogVerbose::DEBUG, __FILE__, __LINE__)
+  LumiCore::Logger::Logger::GetInstance()->Log(message, LumiCore::Logger::ELogVerbose::DEBUG, __FILE__, __LINE__)
 #define LOG_INFO(message)                                                                                              \
-  LumiCoreLogger::Logger::GetInstance()->Log(message, LumiCoreLogger::ELogVerbose::INFO, __FILE__, __LINE__)
+  LumiCore::Logger::Logger::GetInstance()->Log(message, LumiCore::Logger::ELogVerbose::INFO, __FILE__, __LINE__)
 #define LOG_WARNING(message)                                                                                           \
-  LumiCoreLogger::Logger::GetInstance()->Log(message, LumiCoreLogger::ELogVerbose::WARNING, __FILE__, __LINE__)
+  LumiCore::Logger::Logger::GetInstance()->Log(message, LumiCore::Logger::ELogVerbose::WARNING, __FILE__, __LINE__)
 #define LOG_CRITICAL(message)                                                                                          \
-  LumiCoreLogger::Logger::GetInstance()->Log(message, LumiCoreLogger::ELogVerbose::CRITICAL, __FILE__, __LINE__)
+  LumiCore::Logger::Logger::GetInstance()->Log(message, LumiCore::Logger::ELogVerbose::CRITICAL, __FILE__, __LINE__)
 #define LOG_ERROR(message)                                                                                             \
-  LumiCoreLogger::Logger::GetInstance()->Log(message, LumiCoreLogger::ELogVerbose::ERROR, __FILE__, __LINE__)
+  LumiCore::Logger::Logger::GetInstance()->Log(message, LumiCore::Logger::ELogVerbose::ERROR, __FILE__, __LINE__)

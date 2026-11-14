@@ -5,17 +5,12 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <memory>
-#include <mutex>
 #include <string>
 
-namespace LumiCoreLogger
+namespace LumiCore::Logger
 {
 
-std::unique_ptr<Logger> Logger::s_instance{nullptr};
-std::mutex Logger::s_instanceMutexLock;
 
-#pragma region Singleton
 Logger::Logger() { ChangeLogFile(m_logFile); };
 Logger::~Logger()
 {
@@ -24,20 +19,6 @@ Logger::~Logger()
     m_currentFile.close();
   }
 };
-
-Logger* Logger::GetInstance()
-{
-  // the lock will be released when going out of scope
-  std::lock_guard<std::mutex> lock(s_instanceMutexLock);
-
-  // Create a new instance of the Logger class if the current instace is null
-  if (!s_instance)
-  {
-    s_instance = std::make_unique<Logger>();
-  }
-  return s_instance.get();
-};
-#pragma endregion Singletion
 
 #pragma region Log
 
@@ -79,8 +60,6 @@ void Logger::LogToFile(const std::string& logInfo)
 
     return;
   }
-  // the lock will be released when going out of scope
-  std::lock_guard<std::mutex> lock(s_instanceMutexLock);
 
   // Append to file with the log info
   m_currentFile << logInfo;
@@ -179,4 +158,4 @@ std::string Logger::EnumToString(const ELogVerbose level) const
 }
 
 #pragma endregion Log
-} // namespace LumiCoreLogger
+} // namespace LumiCore::Logger
