@@ -4,7 +4,6 @@
 #include "Mesh.h"
 #include "Shader.h"
 #include "Utility.h"
-#include "assimp/material.h"
 #include "glm/ext/vector_float2.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "logger/Logger.h"
@@ -40,13 +39,14 @@ void Model::SaveInputedMesh(const std::vector<Vertex>& vertecies, const std::vec
   // Returns a finished created mesh for the model
   m_Meshes.push_back(LumiCore3D::GenMesh(vertecies, indices, textures));
 }
-void Model::LoadModel(const std::string &path)
+void Model::LoadModel(const std::string& path)
 {
   Assimp::Importer importer;
 
   // This generates and fixes up the model that we want to import, we can extract out the data it generated to and move
   // the data to fit our formatting
-  const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_JoinIdenticalVertices | aiProcessPreset_TargetRealtime_Fast);
+  const aiScene* scene = importer.ReadFile(
+      path, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcessPreset_TargetRealtime_Fast);
 
   // check if error occurred
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -56,7 +56,7 @@ void Model::LoadModel(const std::string &path)
   }
 
   m_Directory = path.substr(0, path.find_last_of('/'));
-  
+
   m_Meshes.reserve(scene->mNumMeshes);
 
   ProccessNode(scene->mRootNode, scene);

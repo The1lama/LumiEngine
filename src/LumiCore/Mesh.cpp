@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <format>
 #include <string>
+#include <utility>
 #include "Shader.h"
 #include "logger/Logger.h"
 
@@ -12,7 +13,7 @@ namespace LumiCore
 Mesh::Mesh(LumiCore::MeshData data, GLenum renderType)
 {
 
-  m_verticies =std::move(data.vertecies);
+  m_verticies = std::move(data.vertecies);
   m_indicies = std::move(data.indices);
   m_textures = std::move(data.textures);
   m_renderType = renderType;
@@ -23,7 +24,7 @@ Mesh::Mesh(LumiCore::MeshData data, GLenum renderType)
 Mesh::~Mesh()
 {
   Release();
-  //LOG_WARNING("Mesh has been destroyed");
+  // LOG_WARNING("Mesh has been destroyed");
 }
 
 // Move constructor
@@ -33,11 +34,11 @@ Mesh::Mesh(Mesh&& other) noexcept
   m_VAO = std::exchange(other.m_VAO, 0);
   m_VBO = std::exchange(other.m_VBO, 0);
   m_EBO = std::exchange(other.m_EBO, 0);
-  
+
   m_verticies = std::move(other.m_verticies);
   m_indicies = std::move(other.m_indicies);
   m_textures = std::move(other.m_textures);
-  
+
   m_renderType = other.m_renderType;
 }
 Mesh& Mesh::operator=(Mesh&& other) noexcept
@@ -47,11 +48,11 @@ Mesh& Mesh::operator=(Mesh&& other) noexcept
     m_VAO = std::exchange(other.m_VAO, 0);
     m_VBO = std::exchange(other.m_VBO, 0);
     m_EBO = std::exchange(other.m_EBO, 0);
-  
+
     m_verticies = std::move(other.m_verticies);
     m_indicies = std::move(other.m_indicies);
     m_textures = std::move(other.m_textures);
-  
+
     m_renderType = other.m_renderType;
   }
   return *this;

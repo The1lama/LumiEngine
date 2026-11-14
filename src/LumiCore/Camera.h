@@ -9,7 +9,7 @@ namespace LumiCore
 class Camera
 {
 
-  protected:
+protected:
   glm::mat4 m_viewMatrix{1.0f};
   glm::mat4 m_perspectiveMatrix{1.0f};
   glm::mat4 m_orthographicMatrix{1.0f};
@@ -28,7 +28,7 @@ class Camera
   void GeneratePerspectiveMatrix();
   void GenerateOrhograpthicMatrix();
 
-  public:
+public:
   Camera(const glm::vec3 position, const float fov, const float aspectRatio, const float nearPlane,
          const float farPlane);
   ~Camera() = default;
@@ -42,6 +42,7 @@ class Camera
 
   glm::mat4 GetViewMatrix() const;
   glm::mat4 GetProjectionMatrix() const;
+  glm::vec3 GetLocation() const;
 };
 
 } // namespace LumiCore

@@ -10,6 +10,8 @@
 #include <string>
 #include <vector>
 #include "LumiCore/Model.h"
+#include "glm/ext/matrix_float3x3.hpp"
+#include "glm/matrix.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "LumiCore/3D/Cube.h"
@@ -470,10 +472,13 @@ int main()
   }
 
   // std::unique_ptr<LumiCore::Model> ape = GenerateObject("assets/objects/MonkeyHat.obj", textures);
-  std::unique_ptr<LumiCore::Model> backpack =
-      GenerateObject("assets/objects/smallBuilding/SmallBuilding02.obj", textures);
-  // GenerateObject("assets/objects/Monkey.obx", 0);
-  // GenerateObject("assets/objects/thing.obj", 0);
+  std::unique_ptr<LumiCore::Model> barrel = GenerateObject("assets/objects/barrel/Barrel.obj", textures);
+  std::unique_ptr<LumiCore::Model> cat = GenerateObject("assets/objects/cat/Maxwell.obj", textures);
+  std::unique_ptr<LumiCore::Model> tallBuilding =
+      GenerateObject("assets/objects/building/TallBuilding02.obj", textures);
+  std::unique_ptr<LumiCore::Model> guy = GenerateObject("assets/objects/guy/MaleVillager.obj", textures);
+  std::unique_ptr<LumiCore::Model> smallBuilding =
+      GenerateObject("assets/objects/smallBuliding/SmallBuilding02.obj", textures);
 
 #pragma endregion MeshObjects
 
@@ -504,6 +509,7 @@ int main()
   // these we only need to set one time as they are the same for now
   basic3DShader.SetMatrix4("u_View", camera.GetViewMatrix());
   basic3DShader.SetMatrix4("u_Projection", camera.GetProjectionMatrix());
+  basic3DShader.SetVec3("u_ViewPosition", camera.GetLocation()); // used for specular light
 
   basic3DShader.UnUse();
 
@@ -573,109 +579,115 @@ int main()
     const glm::vec3 right(0.0f, 0.0f, 1.0f);
 
     { // Cube 1
-      glm::mat4 cubeModel = glm::mat4(1.0f);
+      glm::mat4 model = glm::mat4(1.0f);
 
-      cubeModel = glm::translate(cubeModel, glm::vec3(-2.0f, 1.5f, 0.0f));
+      model = glm::translate(model, glm::vec3(-2.0f, 1.5f, 0.0f));
 
-      cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), up);
-      cubeModel = glm::rotate(cubeModel, glm::radians(90.0f), forward);
+      model = glm::rotate(model, glm::radians(90.0f), up);
+      model = glm::rotate(model, glm::radians(90.0f), forward);
 
-      cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
+      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
 
-      basic3DShader.SetVec3("u_Color", redColor);
-      basic3DShader.SetMatrix4("u_Model", cubeModel);
+      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+
+      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
+      basic3DShader.SetMatrix4("u_Model", model);
+
+
       cubeObject.Render(basic3DShader);
     }
 
     { // Cube 2
-      glm::mat4 cubeModel = glm::mat4(1.0f);
+      glm::mat4 model = glm::mat4(1.0f);
 
-      cubeModel = glm::translate(cubeModel, glm::vec3(-2.0f, -1.5f, 0.0f));
+      model = glm::translate(model, glm::vec3(-2.0f, -1.5f, 0.0f));
+      model = glm::rotate(model, glm::radians(-90.0f), up);
+      model = glm::rotate(model, glm::radians(-90.0f), forward);
+      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
 
-      cubeModel = glm::rotate(cubeModel, glm::radians(-90.0f), up);
-      cubeModel = glm::rotate(cubeModel, glm::radians(-90.0f), forward);
+      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
 
-      cubeModel = glm::scale(cubeModel, glm::vec3(0.5, 0.5, 0.5));
+      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
 
-      basic3DShader.SetVec3("u_Color", redColor);
-      basic3DShader.SetMatrix4("u_Model", cubeModel);
+      basic3DShader.SetMatrix4("u_Model", model);
       cubeObject.Render(basic3DShader);
     }
 
     { // Pyramid 1
-      glm::mat4 pyramidModel = glm::mat4(1.0f);
+      glm::mat4 model = glm::mat4(1.0f);
 
-      pyramidModel = glm::translate(pyramidModel, glm::vec3(0.0f, 1.5f, 0.0f));
+      model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0f));
+      model = glm::rotate(model, glm::radians(90.0f), up);
+      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
 
-      pyramidModel = glm::rotate(pyramidModel, glm::radians(90.0f), up);
+      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
 
-      pyramidModel = glm::scale(pyramidModel, glm::vec3(0.5, 0.5, 0.5));
+      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
 
-      basic3DShader.SetVec3("u_Color", blueColor);
-      basic3DShader.SetMatrix4("u_Model", pyramidModel);
+      basic3DShader.SetMatrix4("u_Model", model);
       pyramidObject.Render(basic3DShader);
     }
 
     { // Pyramid 2
-      glm::mat4 pyramidModel = glm::mat4(1.0f);
+      glm::mat4 model = glm::mat4(1.0f);
 
-      pyramidModel = glm::translate(pyramidModel, glm::vec3(0.0f, -1.5f, 0.0f));
+      model = glm::translate(model, glm::vec3(0.0f, -1.5f, 0.0f));
+      model = glm::rotate(model, glm::radians(-90.0f), up);
+      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
 
-      pyramidModel = glm::rotate(pyramidModel, glm::radians(-90.0f), up);
+      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
 
-      pyramidModel = glm::scale(pyramidModel, glm::vec3(0.5, 0.5, 0.5));
-
-      basic3DShader.SetVec3("u_Color", blueColor);
-      basic3DShader.SetMatrix4("u_Model", pyramidModel);
+      basic3DShader.SetMatrix4("u_Model", model);
       pyramidObject.Render(basic3DShader);
     }
 
     { // Sphere 1
-      glm::mat4 sphereModel = glm::mat4(1.0f);
+      glm::mat4 model = glm::mat4(1.0f);
 
-      sphereModel = glm::translate(sphereModel, glm::vec3(2.0, 1.5f, 0.0f));
+      model = glm::translate(model, glm::vec3(2.0, 1.5f, 0.0f));
+      model = glm::rotate(model, glm::radians(0.0f), up);
+      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
 
-      sphereModel = glm::rotate(sphereModel, glm::radians(0.0f), up);
+      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
 
-      sphereModel = glm::scale(sphereModel, glm::vec3(0.5, 0.5, 0.5));
-
-      basic3DShader.SetVec3("u_Color", greenColor);
-      basic3DShader.SetMatrix4("u_Model", sphereModel);
+      basic3DShader.SetMatrix4("u_Model", model);
       sphereObject.Render(basic3DShader);
     }
 
     { // Sphere 2
-      glm::mat4 sphereModel = glm::mat4(1.0f);
+      glm::mat4 model = glm::mat4(1.0f);
 
-      sphereModel = glm::translate(sphereModel, glm::vec3(2.0, -1.5f, 0.0f));
+      model = glm::translate(model, glm::vec3(2.0, -1.5f, 0.0f));
+      model = glm::rotate(model, glm::radians(-180.0f), up);
+      model = glm::rotate(model, glm::radians(-90.0f), right);
+      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
 
-      sphereModel = glm::rotate(sphereModel, glm::radians(-180.0f), up);
-      sphereModel = glm::rotate(sphereModel, glm::radians(-90.0f), right);
+      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
 
-      sphereModel = glm::scale(sphereModel, glm::vec3(0.5, 0.5, 0.5));
-
-      basic3DShader.SetVec3("u_Color", greenColor);
-      basic3DShader.SetMatrix4("u_Model", sphereModel);
+      basic3DShader.SetMatrix4("u_Model", model);
       sphereObject.Render(basic3DShader);
     }
-    { // ape
-      glm::mat4 apeModel = glm::mat4(1.0f);
 
-      apeModel = glm::translate(apeModel, glm::vec3(0.0, -0.2f, 3.0f));
-      apeModel *= glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
-      apeModel = glm::scale(apeModel, glm::vec3(0.5, 0.5, 0.5));
+    { // cat
+      glm::mat4 model = glm::mat4(1.0f);
 
-      basic3DShader.SetVec3("u_Color", greenColor);
-      basic3DShader.SetMatrix4("u_Model", apeModel);
-      // ape->Draw(basic3DShader);
-      backpack->Draw(basic3DShader);
+      model = glm::translate(model, glm::vec3(0.0, -0.2f, 3.0f));
+      model *= glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
+      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+
+      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+
+      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
+      basic3DShader.SetMatrix4("u_Model", model);
+      cat->Draw(basic3DShader);
     }
 
     glfwSwapBuffers(window);
     glfwPollEvents();
   }
-
-  // ape.reset();
 
   glfwTerminate();
   return 0;

@@ -7,7 +7,7 @@
 
 class Shader
 {
-  public:
+public:
   Shader(const std::string& vertexPath, const std::string& fragmentPath);
   ~Shader();
 
@@ -24,8 +24,9 @@ class Shader
   void SetVec3(const std::string& name, glm::vec3 value) const;
 
   void SetMatrix4(const std::string& name, glm::mat4 value) const;
+  void SetMatrix3(const std::string& name, glm::mat3 value) const;
 
-  private:
+private:
   unsigned int m_ID;
 
   GLint getUniformLocation(const std::string& name) const;

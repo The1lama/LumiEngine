@@ -2,6 +2,7 @@
 
 
 #include "Mesh.h"
+#include "assimp/material.h"
 
 class Shader;
 class Mesh;
@@ -9,8 +10,6 @@ class Mesh;
 struct aiNode;
 struct aiMesh;
 struct aiScene;
-struct aiMaterial;
-enum aiTextureType;
 
 namespace LumiCore
 {

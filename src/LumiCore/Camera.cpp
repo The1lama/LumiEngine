@@ -50,6 +50,7 @@ glm::mat4 Camera::GetProjectionMatrix() const
 {
   return {currentProjectionMatrix == 0 ? m_perspectiveMatrix : m_orthographicMatrix};
 }
+glm::vec3 Camera::GetLocation() const { return m_position; };
 #pragma endregion
 
 #pragma region Generate_Matrixes
