@@ -15,6 +15,7 @@ namespace LumiCore::Resources
 std::shared_ptr<LumiCore::Model> ResourceManager::GetModel(const std::string& path,
                                                            const std::vector<LumiCore::Texture>& textures)
 {
+  LOG_INFO(std::format("-- Getting Model: {}", path));
   // Searches for if the model from path has been loaded before
 
   // If it has return the model
@@ -170,12 +171,13 @@ std::shared_ptr<Model> ResourceManager::CustomObjectLoader(const std::string& pa
     }
 
   } // while
-  LOG_INFO(std::format("Position   amount: {}", temp_positions.size()));
-  LOG_INFO(std::format("Normal     amount: {}", temp_normals.size()));
-  LOG_INFO(std::format("UVs        amount: {}", temp_uvs.size()));
 
-  LOG_INFO(std::format("Vertexes   amount: {}", vertices.size()));
-  LOG_INFO(std::format("Indices    amount: {}", indices.size()));
+  // LOG_INFO(std::format("Position   amount: {}", temp_positions.size()));
+  // LOG_INFO(std::format("Normal     amount: {}", temp_normals.size()));
+  // LOG_INFO(std::format("UVs        amount: {}", temp_uvs.size()));
+
+  // LOG_INFO(std::format("Vertexes   amount: {}", vertices.size()));
+  // LOG_INFO(std::format("Indices    amount: {}", indices.size()));
 
   return std::make_shared<LumiCore::Model>(vertices, indices, textures);
 }
@@ -196,6 +198,8 @@ std::shared_ptr<Model> ResourceManager::GenerateObject(const std::string& path,
   {
     LOG_WARNING(std::format("File {} is not valid", path));
   };
+
+  LOG_INFO(std::format("Generating model: {}", path));
 
   if (useCustomObjectLoader)
   {

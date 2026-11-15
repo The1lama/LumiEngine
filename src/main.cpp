@@ -12,16 +12,12 @@
 #include "glm/matrix.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "LumiCore/3D/Cube.h"
-#include "LumiCore/3D/Pyramid.h"
-#include "LumiCore/3D/Sphere.h"
 #include "LumiCore/Camera.h"
 #include "LumiCore/Mesh.h"
 #include "LumiCore/Shader.h"
 #include "LumiCore/Utility.h"
 #include "LumiCore/logger/Logger.h"
 #include "glm/ext/matrix_transform.hpp"
-#include "glm/ext/vector_float2.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/trigonometric.hpp"
 
@@ -175,6 +171,30 @@ void SwitchRenderingMode()
     glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); // draws vertex points
 };
 
+namespace Objects
+{
+
+enum EObjectType
+{
+  NONE,
+  ROTATE,
+};
+
+struct Transform
+{
+  glm::vec3 Position;
+  glm::vec3 Rotation;
+  glm::vec3 Scale;
+};
+
+struct GameObject
+{
+  std::shared_ptr<LumiCore::Model> model;
+  EObjectType type;
+  Transform transform;
+};
+
+} // namespace Objects
 
 int main()
 {
@@ -259,37 +279,70 @@ int main()
 #pragma region MeshObjects
   std::vector<LumiCore::Texture> textures{uvTexture};
 
-  LumiCore3D::Cube cubeObject(textures);
-  if (!cubeObject.IsValid())
-  {
-    LOG_WARNING("Mesh VAO coud not be initialized for cube mesh");
-    return -20;
-  }
-
-  LumiCore3D::Pyramid pyramidObject(textures);
-  if (!pyramidObject.IsValid())
-  {
-    LOG_WARNING("Mesh VAO coud not be initialized for pyramid mesh");
-    return -22;
-  }
-
-  textures[0] = noiseTexture;
-
-  LumiCore3D::Sphere sphereObject(textures);
-  if (!sphereObject.IsValid())
-  {
-    LOG_WARNING("Mesh VAO coud not be initialized for sphere mesh");
-    return -23;
-  }
-
   LumiCore::Resources::ResourceManager RM;
 
-  std::shared_ptr<LumiCore::Model> barrel = RM.GetModel("assets/objects/barrel/Barrel.obj", textures);
-  std::shared_ptr<LumiCore::Model> cat = RM.GetModel("assets/objects/cat/Maxwell.obj", textures);
-  std::shared_ptr<LumiCore::Model> tallBuilding = RM.GetModel("assets/objects/building/TallBuilding02.obj", textures);
-  std::shared_ptr<LumiCore::Model> guy = RM.GetModel("assets/objects/guy/MaleVillager.obj", textures);
-  std::shared_ptr<LumiCore::Model> smallBuilding =
-      RM.GetModel("assets/objects/smallBuliding/SmallBuilding02.obj", textures);
+  std::vector<Objects::GameObject> renderObjects;
+
+  glm::vec3 halfScale(0.5f, 0.5f, 0.5f);
+
+  { // Barrel
+    Objects::GameObject object;
+    object.model = RM.GetModel("assets/objects/barrel/Barrel.obj", textures);
+    object.transform = {glm::vec3(-2.0f, 0.8f, 0.0f), glm::vec3(0, 0, 0), halfScale};
+    object.type = Objects::ROTATE;
+    renderObjects.push_back(object);
+  }
+
+  { // Maxwell 1
+    Objects::GameObject object;
+    object.model = RM.GetModel("assets/objects//cat/Maxwell.obj", textures);
+    object.transform = {glm::vec3(0.0f, 0.8f, 0.0f), glm::vec3(0, 0, 0), halfScale};
+    object.type = Objects::ROTATE;
+    renderObjects.push_back(object);
+  }
+  { // Maxwell 2
+    Objects::GameObject object;
+    object.model = RM.GetModel("assets/objects//cat/Maxwell.obj", textures);
+    object.transform = {glm::vec3(2.0f, 0.8f, 0.0f), glm::vec3(0, 64, 0), halfScale};
+    object.type = Objects::NONE;
+    renderObjects.push_back(object);
+  }
+  { // Guy
+    Objects::GameObject object;
+    object.model = RM.GetModel("assets/objects/guy/MaleVillager.obj", textures);
+    object.transform = {glm::vec3(-2.0f, -1.5f, .0f), glm::vec3(0, 45.f, 0), halfScale};
+    object.type = Objects::NONE;
+    renderObjects.push_back(object);
+  }
+  { // TallBuilding02
+    Objects::GameObject object;
+    object.model = RM.GetModel("assets/objects/building/TallBuilding02.obj", textures);
+    object.transform = {glm::vec3(2.0f, -2.0f, 0.0f), glm::vec3(0.f), halfScale * 0.2f};
+    object.type = Objects::ROTATE;
+    renderObjects.push_back(object);
+  }
+  { // SmallBuilding02
+    Objects::GameObject object;
+    object.model = RM.GetModel("assets/objects/smallBuilding/SmallBuilding02.obj", textures);
+    object.transform = {glm::vec3(0.0f, -2.0f, 0.0f), glm::vec3(0.f), halfScale * 0.4f};
+    object.type = Objects::ROTATE;
+    renderObjects.push_back(object);
+  }
+  { // FILE NOT FOUND
+    Objects::GameObject object;
+    object.model = RM.GetModel("assets/objects/building/TallBuilding02", textures);
+    object.transform = {glm::vec3(2.0f, -0.7f, 0.0f), glm::vec3(90.f), halfScale * 0.2f};
+    object.type = Objects::ROTATE;
+    renderObjects.push_back(object);
+  }
+
+  // std::shared_ptr<LumiCore::Model> barrel = RM.GetModel("assets/objects/barrel/Barrel.obj", textures);
+  // std::shared_ptr<LumiCore::Model> cat = RM.GetModel("assets/objects/cat/Maxwell.obj", textures);
+  // std::shared_ptr<LumiCore::Model> cat2 = RM.GetModel("assets/objects/cat/Maxwell.obj", textures);
+  // std::shared_ptr<LumiCore::Model> tallBuilding = RM.GetModel("assets/objects/building/TallBuilding02.obj",
+  // textures); std::shared_ptr<LumiCore::Model> guy = RM.GetModel("assets/objects/guy/MaleVillager.obj", textures);
+  // std::shared_ptr<LumiCore::Model> smallBuilding =
+  //    RM.GetModel("assets/objects/smallBuilding/SmallBuilding02.obj", textures);
 
 #pragma endregion MeshObjects
 
@@ -389,112 +442,117 @@ int main()
     const glm::vec3 up(0.0f, 1.0f, 0.0f);
     const glm::vec3 right(0.0f, 0.0f, 1.0f);
 
-    { // Cube 1
+
+    for (auto& object : renderObjects)
+    {
+      if (object.model == nullptr)
+        continue;
+
       glm::mat4 model = glm::mat4(1.0f);
 
-      model = glm::translate(model, glm::vec3(-2.0f, 1.5f, 0.0f));
+      model = glm::translate(model, object.transform.Position);
 
-      model = glm::rotate(model, glm::radians(90.0f), up);
-      model = glm::rotate(model, glm::radians(90.0f), forward);
+      // if (object.type == Objects::ROTATE)
+      //{
+      model = glm::rotate(model, glm::radians(object.transform.Rotation.x), forward);
+      model = glm::rotate(model, glm::radians(object.transform.Rotation.y), up);
+      model = glm::rotate(model, glm::radians(object.transform.Rotation.z), right);
+      // }
 
-      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+      if (object.type == Objects::ROTATE)
+      {
+        model *= glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
+      }
+
+      model = glm::scale(model, object.transform.Scale);
 
       glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-
       basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
       basic3DShader.SetMatrix4("u_Model", model);
 
-
-      cubeObject.Render(basic3DShader);
+      object.model->Draw(basic3DShader);
     }
 
-    { // Cube 2
-      glm::mat4 model = glm::mat4(1.0f);
 
-      model = glm::translate(model, glm::vec3(-2.0f, -1.5f, 0.0f));
-      model = glm::rotate(model, glm::radians(-90.0f), up);
-      model = glm::rotate(model, glm::radians(-90.0f), forward);
-      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+    //{ // Cube 1
+    //  glm::mat4 model = glm::mat4(1.0f);
+    //  model = glm::translate(model, glm::vec3(-2.0f, 1.5f, 0.0f));
+    //  model = glm::rotate(model, glm::radians(90.0f), up);
+    //  model = glm::rotate(model, glm::radians(90.0f), forward);
+    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
+    //  basic3DShader.SetMatrix4("u_Model", model);
+    //  cubeObject.Render(basic3DShader);
+    //}
 
-      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+    //{ // Cube 2
+    //  glm::mat4 model = glm::mat4(1.0f);
+    //  model = glm::translate(model, glm::vec3(-2.0f, -1.5f, 0.0f));
+    //  model = glm::rotate(model, glm::radians(-90.0f), up);
+    //  model = glm::rotate(model, glm::radians(-90.0f), forward);
+    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
+    //  basic3DShader.SetMatrix4("u_Model", model);
+    //  cubeObject.Render(basic3DShader);
+    //}
 
-      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
+    //{ // Pyramid 1
+    //  glm::mat4 model = glm::mat4(1.0f);
+    //  model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0f));
+    //  model = glm::rotate(model, glm::radians(90.0f), up);
+    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
+    //  basic3DShader.SetMatrix4("u_Model", model);
+    //  pyramidObject.Render(basic3DShader);
+    //}
 
-      basic3DShader.SetMatrix4("u_Model", model);
-      cubeObject.Render(basic3DShader);
-    }
+    //{ // Pyramid 2
+    //  glm::mat4 model = glm::mat4(1.0f);
+    //  model = glm::translate(model, glm::vec3(0.0f, -1.5f, 0.0f));
+    //  model = glm::rotate(model, glm::radians(-90.0f), up);
+    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
+    //  basic3DShader.SetMatrix4("u_Model", model);
+    //  pyramidObject.Render(basic3DShader);
+    //}
 
-    { // Pyramid 1
-      glm::mat4 model = glm::mat4(1.0f);
+    //{ // Sphere 1
+    //  glm::mat4 model = glm::mat4(1.0f);
+    //  model = glm::translate(model, glm::vec3(2.0, 1.5f, 0.0f));
+    //  model = glm::rotate(model, glm::radians(0.0f), up);
+    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
+    //  basic3DShader.SetMatrix4("u_Model", model);
+    //  sphereObject.Render(basic3DShader);
+    //}
 
-      model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0f));
-      model = glm::rotate(model, glm::radians(90.0f), up);
-      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+    //{ // Sphere 2
+    //  glm::mat4 model = glm::mat4(1.0f);
+    //  model = glm::translate(model, glm::vec3(2.0, -1.5f, 0.0f));
+    //  model = glm::rotate(model, glm::radians(-180.0f), up);
+    //  model = glm::rotate(model, glm::radians(-90.0f), right);
+    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
+    //  basic3DShader.SetMatrix4("u_Model", model);
+    //  sphereObject.Render(basic3DShader);
+    // }
 
-      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-
-      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-
-      basic3DShader.SetMatrix4("u_Model", model);
-      pyramidObject.Render(basic3DShader);
-    }
-
-    { // Pyramid 2
-      glm::mat4 model = glm::mat4(1.0f);
-
-      model = glm::translate(model, glm::vec3(0.0f, -1.5f, 0.0f));
-      model = glm::rotate(model, glm::radians(-90.0f), up);
-      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-
-      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-
-      basic3DShader.SetMatrix4("u_Model", model);
-      pyramidObject.Render(basic3DShader);
-    }
-
-    { // Sphere 1
-      glm::mat4 model = glm::mat4(1.0f);
-
-      model = glm::translate(model, glm::vec3(2.0, 1.5f, 0.0f));
-      model = glm::rotate(model, glm::radians(0.0f), up);
-      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-
-      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-
-      basic3DShader.SetMatrix4("u_Model", model);
-      sphereObject.Render(basic3DShader);
-    }
-
-    { // Sphere 2
-      glm::mat4 model = glm::mat4(1.0f);
-
-      model = glm::translate(model, glm::vec3(2.0, -1.5f, 0.0f));
-      model = glm::rotate(model, glm::radians(-180.0f), up);
-      model = glm::rotate(model, glm::radians(-90.0f), right);
-      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-
-      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-
-      basic3DShader.SetMatrix4("u_Model", model);
-      sphereObject.Render(basic3DShader);
-    }
-
-    { // cat
-      glm::mat4 model = glm::mat4(1.0f);
-
-      model = glm::translate(model, glm::vec3(0.0, -0.2f, 3.0f));
-      model *= glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
-      model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-
-      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-
-      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-      basic3DShader.SetMatrix4("u_Model", model);
-      cat->Draw(basic3DShader);
-    }
+    //{ // cat
+    // glm::mat4 model = glm::mat4(1.0f);
+    // model = glm::translate(model, glm::vec3(0.0, -0.2f, 3.0f));
+    // model *= glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
+    // model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
+    // glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+    // basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
+    // basic3DShader.SetMatrix4("u_Model", model);
+    // cat->Draw(basic3DShader);
+    // }
 
     glfwSwapBuffers(window);
     glfwPollEvents();
