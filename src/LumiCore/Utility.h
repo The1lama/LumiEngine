@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <format>
 #include <fstream>
 #include <string>
@@ -17,6 +18,17 @@ inline bool IsValidFile(const std::string path)
   std::ifstream file(path);
   return file.good();
 }
+
+inline bool IsValidFile(const std::string& filePath, const std::vector<std::string>& validExtentions)
+{
+  const std::filesystem::path path(filePath);
+  const bool isValidExtention = std::find(std::begin(validExtentions), std::end(validExtentions),
+                                          path.extension().string()) != std::end(validExtentions);
+  const bool fileExist = IsValidFile(filePath);
+
+  return fileExist && isValidExtention;
+}
+
 
 inline std::vector<std::string> SplitString(std::string s, const std::string& delimiter)
 {

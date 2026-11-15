@@ -1,21 +1,18 @@
 #include <GLFW/glfw3.h>
-#include <filesystem>
 #include <format>
-#include <fstream>
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <vector>
 #include "LumiCore/Model.h"
+#include "LumiCore/ResourceManager.h"
 #include "glm/ext/matrix_float3x3.hpp"
 #include "glm/matrix.hpp"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "LumiCore/3D/Cube.h"
-#include "LumiCore/3D/GeneratedMesh.h"
 #include "LumiCore/3D/Pyramid.h"
 #include "LumiCore/3D/Sphere.h"
 #include "LumiCore/Camera.h"
@@ -178,192 +175,6 @@ void SwitchRenderingMode()
     glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); // draws vertex points
 };
 
-bool IsValidFile(const std::filesystem::path& filePath)
-{
-  const std::string validExtentions[] = {".obj"};
-  const bool isValidExtention = std::find(std::begin(validExtentions), std::end(validExtentions),
-                                          filePath.extension().string()) != std::end(validExtentions);
-  const bool fileExist = LumiCore::Utility::IsValidFile(filePath.string());
-
-  return fileExist && isValidExtention;
-}
-
-std::unique_ptr<LumiCore::Model> CustomObjectLoader(const std::filesystem::path& objectPath,
-                                                    std::vector<LumiCore::Vertex>& vertices,
-                                                    std::vector<unsigned int>& indices,
-                                                    const std::vector<LumiCore::Texture> textures)
-{
-  std::vector<glm::vec3> temp_positions;
-  std::vector<glm::vec3> temp_normals;
-  std::vector<glm::vec2> temp_uvs;
-
-  std::ifstream file(objectPath);
-  if (!file.is_open())
-  {
-    LOG_CRITICAL(std::format("Failed to open OBJ file: {}", objectPath.string()));
-    return nullptr;
-  }
-
-  // this will read the line in the file, line by line
-  std::string line;
-  while (std::getline(file, line))
-  {
-
-    // we get the current line and save it to the ss variable
-    std::stringstream ss(line);
-    std::string prefix;
-    // we skip leading spaces and will read directly into a string until we hit
-    // white spaces on the row. we then extrat said string with the >> to it is
-    // gone and save the string to the prefix variable.
-    ss >> prefix;
-
-    if (prefix == std::string("v"))
-    {
-      std::string x;
-      std::string y;
-      std::string z;
-      ss >> x;
-      ss >> y;
-      ss >> z;
-
-      temp_positions.push_back(glm::vec3(std::stof(x), std::stof(y), std::stof(z)));
-    }
-    else if (prefix == std::string("vn"))
-    {
-      std::string x;
-      std::string y;
-      std::string z;
-      ss >> x;
-      ss >> y;
-      ss >> z;
-
-      temp_normals.push_back(glm::vec3(std::stof(x), std::stof(y), std::stof(z)));
-    }
-
-    else if (prefix == std::string("vt"))
-    {
-      std::string x;
-      std::string y;
-      ss >> x;
-      ss >> y;
-
-      temp_uvs.push_back(glm::vec2(std::stof(x), std::stof(y)));
-    }
-    // Create vertexes and indicies
-    else if (prefix == std::string("f"))
-    {
-
-      std::vector<std::string> faces;
-      std::string faceLine;
-      while (ss >> faceLine)
-      {
-        faces.push_back(faceLine);
-      }
-
-      // only proccess if we have more than 3 faces
-      if (faces.size() < 3 || faces.size() > 4)
-      {
-        continue;
-      }
-      // assemble the faces
-
-      // 1. Loop through the faces vector
-      // 2. Split up the string by /
-      // 3. each value goes from vertex position/uv/normal index: remeber that
-      // .OBJ starts from 1 so we need to do -1
-      // 4. create the indecies for the face
-
-      // assemble vertex data
-      for (int i = 0; i < faces.size(); ++i)
-      {
-        std::vector<std::string> values = LumiCore::Utility::SplitString(faces[i], "/");
-
-        const int posIndex = std::stoi(values[0]) - 1;
-        const int uvIndex = std::stoi(values[1]) - 1;
-        const int normIndex = std::stoi(values[2]) - 1;
-
-        const LumiCore::Vertex vertex{temp_positions[posIndex], temp_normals[normIndex], temp_uvs[uvIndex]};
-        vertices.push_back(vertex);
-      }
-
-      // assemble indecies order
-      if (faces.size() == 3)
-      {
-        const int first = vertices.size() - 3;
-        const int second = vertices.size() - 2;
-        const int third = vertices.size() - 1;
-        indices.push_back(first);
-        indices.push_back(second);
-        indices.push_back(third);
-      }
-      if (faces.size() == 4)
-      {
-        const int first = vertices.size() - 4;
-        const int second = vertices.size() - 3;
-        const int third = vertices.size() - 2;
-        const int fourth = vertices.size() - 1;
-
-        // first triangle
-        indices.push_back(first);
-        indices.push_back(second);
-        indices.push_back(third);
-
-        // second triangle
-        indices.push_back(fourth);
-        indices.push_back(first);
-        indices.push_back(third);
-      }
-    }
-    else if (prefix == std::string("o"))
-    {
-      //
-      std::string name;
-      ss >> name;
-      LOG_INFO(std::format("Object name: {}", name));
-    }
-
-  } // while
-  LOG_INFO(std::format("Position   amount: {}", temp_positions.size()));
-  LOG_INFO(std::format("Normal     amount: {}", temp_normals.size()));
-  LOG_INFO(std::format("UVs        amount: {}", temp_uvs.size()));
-
-  LOG_INFO(std::format("Vertexes   amount: {}", vertices.size()));
-  LOG_INFO(std::format("Indices    amount: {}", indices.size()));
-
-  return std::make_unique<LumiCore::Model>(vertices, indices, textures);
-}
-
-std::unique_ptr<LumiCore::Model> GenerateModel(const std::string& path)
-{
-  return std::make_unique<LumiCore::Model>(path.c_str());
-}
-
-std::unique_ptr<LumiCore::Model> GenerateObject(const std::filesystem::path& objectPath,
-                                                const std::vector<LumiCore::Texture> textures)
-{
-  constexpr bool useCustomObjectLoader = false;
-  //
-  // Validate check if the file extention is correct and if file exist
-  if (!IsValidFile(objectPath))
-  {
-    LOG_WARNING(std::format("File {} is not valid", objectPath.filename().string()));
-  };
-
-
-  std::unique_ptr<LumiCore::Model> returnModel;
-  if (useCustomObjectLoader)
-  {
-    std::vector<LumiCore::Vertex> vertices;
-    std::vector<unsigned int> indices;
-
-    return CustomObjectLoader(objectPath, vertices, indices, textures);
-  }
-  else
-  {
-    return GenerateModel(objectPath.string());
-  }
-}
-
 
 int main()
 {
@@ -471,14 +282,14 @@ int main()
     return -23;
   }
 
-  // std::unique_ptr<LumiCore::Model> ape = GenerateObject("assets/objects/MonkeyHat.obj", textures);
-  std::unique_ptr<LumiCore::Model> barrel = GenerateObject("assets/objects/barrel/Barrel.obj", textures);
-  std::unique_ptr<LumiCore::Model> cat = GenerateObject("assets/objects/cat/Maxwell.obj", textures);
-  std::unique_ptr<LumiCore::Model> tallBuilding =
-      GenerateObject("assets/objects/building/TallBuilding02.obj", textures);
-  std::unique_ptr<LumiCore::Model> guy = GenerateObject("assets/objects/guy/MaleVillager.obj", textures);
-  std::unique_ptr<LumiCore::Model> smallBuilding =
-      GenerateObject("assets/objects/smallBuliding/SmallBuilding02.obj", textures);
+  LumiCore::Resources::ResourceManager RM;
+
+  std::shared_ptr<LumiCore::Model> barrel = RM.GetModel("assets/objects/barrel/Barrel.obj", textures);
+  std::shared_ptr<LumiCore::Model> cat = RM.GetModel("assets/objects/cat/Maxwell.obj", textures);
+  std::shared_ptr<LumiCore::Model> tallBuilding = RM.GetModel("assets/objects/building/TallBuilding02.obj", textures);
+  std::shared_ptr<LumiCore::Model> guy = RM.GetModel("assets/objects/guy/MaleVillager.obj", textures);
+  std::shared_ptr<LumiCore::Model> smallBuilding =
+      RM.GetModel("assets/objects/smallBuliding/SmallBuilding02.obj", textures);
 
 #pragma endregion MeshObjects
 
