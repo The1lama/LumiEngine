@@ -49,8 +49,8 @@ public:
   Mesh& operator=(const Mesh& mesh) = delete;
 
   // but allows moing
-  Mesh(Mesh&& mesh) noexcept;
-  Mesh& operator=(Mesh&& mesh) noexcept;
+  Mesh(Mesh&& other) noexcept;
+  Mesh& operator=(Mesh&& other) noexcept;
 
   bool IsValid() const;
 
@@ -73,7 +73,10 @@ private:
 
   void GenerateTransformationMatrix();
 
-  inline bool IsFunctional() { return m_indicies.size() > 0 && m_VBO != 0; }
+  inline bool IsFunctional()
+  {
+    return m_indicies.size() > 0 && m_VBO != 0;
+  }
 };
 
 } // namespace LumiCore

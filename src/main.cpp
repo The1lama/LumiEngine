@@ -26,7 +26,10 @@ void glfwErrorCallback(int error, const char* description)
   LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("GLFW error ({}): {}", error, description));
 }
 
-void framebufferSizeCallback(GLFWwindow*, int width, int height) { glViewport(0, 0, width, height); }
+void framebufferSizeCallback(GLFWwindow*, int width, int height)
+{
+  glViewport(0, 0, width, height);
+}
 
 struct EditorSettings
 {
@@ -56,8 +59,7 @@ bool processInput(GLFWwindow* window, bool& bToggleColor, bool& bSwitchDrawMode,
   if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
   {
     hasPressed = true;
-    if (bSwitchDrawMode == false)
-      SwitchRenderingMode();
+    if (bSwitchDrawMode == false) SwitchRenderingMode();
     bSwitchDrawMode = true;
   }
   if (glfwGetKey(window, GLFW_KEY_1) == GLFW_RELEASE)
@@ -82,8 +84,7 @@ bool processInput(GLFWwindow* window, bool& bToggleColor, bool& bSwitchDrawMode,
 void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei lenght, const char* message,
                    const void* userParam)
 {
-  if (id == 131169 || id == 131185 || id == 131218 || id == 131204)
-    return;
+  if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
   LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("---------------"));
   LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Debug Message ({}): {}", id, message));
@@ -163,12 +164,9 @@ void SwitchRenderingMode()
 {
   renderingModeIndex = renderingModeIndex + 1 < 3 ? renderingModeIndex + 1 : 0;
 
-  if (renderingModeIndex == 0)
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // fill in the triangles
-  else if (renderingModeIndex == 1)
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draws in wireframe mode
-  else
-    glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); // draws vertex points
+  if (renderingModeIndex == 0) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // fill in the triangles
+  else if (renderingModeIndex == 1) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draws in wireframe mode
+  else glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); // draws vertex points
 };
 
 namespace Objects
@@ -445,8 +443,7 @@ int main()
 
     for (auto& object : renderObjects)
     {
-      if (object.model == nullptr)
-        continue;
+      if (object.model == nullptr) continue;
 
       glm::mat4 model = glm::mat4(1.0f);
 

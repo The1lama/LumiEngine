@@ -1,0 +1,64 @@
+HeaderFilterRegex: '.*'
+WarningsAsErrors: ''
+
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  performace-*,
+  portability-*,
+  readability-*,
+  clang-diagnostic-*,
+  llvm-*,
+  misc-*,
+  -misc-no-recursion,
+  -misc-unused-parameters,
+  -misc-non-private-member-variables-in-classes,
+  -readability-magic-numbers,
+  -readability-implicit-bool-conversion,
+  -readability-braces-around-statements,
+  -readability-uppercase-literal-suffix,
+  readability-identifier-naming
+
+CheckOptions:
+  # Classes, structs and enums
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumCase
+    value: CamelCase
+  - key: readability-identifier-naming.EnumConstantCase
+    value: CamelCase
+
+  # Functions and methods
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.MethodCase
+    value: CamelCase
+
+  # Variables and parameters
+  - key: readability-identifier-naming.VariableCase
+    value: camelBack
+  - key: readability-identifier-naming.ParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalVariableCase
+    value: camelBack
+
+  # Class member variables
+  - key: readability-identifier-naming.PrivateMemberCase
+    value: camelBack
+  - key: readability-identifier-naming.PrivateMemberPrefix
+    value: m_
+  - key: readability-identifier-naming.ProtectedMemberCase
+    value: camelBack
+  - key: readability-identifier-naming.ProtectedMemberPrefix
+    value: m_
+
+  # Constants
+  - key: readability-identifier-naming.ConstantCase
+    value: CamelCase
+
+  # Namespaces
+  - key: readability-identifier-naming.NamespaceCase
+    value: CamelCase

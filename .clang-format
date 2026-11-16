@@ -45,10 +45,14 @@ MacroBlockEnd: ''
 MaxEmptyLinesToKeep: 2
 NamespaceIndentation: Inner
 PointerAlignment: Left
+ReferenceAlignment: Left
 SpaceInEmptyParentheses: false
 SpacesInAngles: false
 SpacesInConditionalStatement: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
 TabWidth: 2
+UseTab: Never
+AllowShortFunctionsOnASingleLine : Empty
+AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 ...

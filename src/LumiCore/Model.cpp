@@ -17,7 +17,10 @@
 namespace LumiCore
 {
 
-Model::Model(const char* path) { LoadModel(path); }
+Model::Model(const char* path)
+{
+  LoadModel(path);
+}
 Model::Model(const std::vector<Vertex>& vertecies, const std::vector<unsigned int>& indices,
              const std::vector<Texture>& textures)
 {
@@ -26,7 +29,7 @@ Model::Model(const std::vector<Vertex>& vertecies, const std::vector<unsigned in
 
 void Model::Draw(const Shader& shader)
 {
-  for (auto& mesh : m_Meshes)
+  for (auto& mesh : m_meshes)
   {
     mesh.Render(shader);
   }
@@ -37,7 +40,7 @@ void Model::SaveInputedMesh(const std::vector<Vertex>& vertecies, const std::vec
                             const std::vector<Texture>& textures)
 {
   // Returns a finished created mesh for the model
-  m_Meshes.push_back(LumiCore3D::GenMesh(vertecies, indices, textures));
+  m_meshes.push_back(LumiCore3D::GenMesh(vertecies, indices, textures));
 }
 void Model::LoadModel(const std::string& path)
 {
@@ -46,7 +49,7 @@ void Model::LoadModel(const std::string& path)
   // This generates and fixes up the model that we want to import, we can extract out the data it generated to and move
   // the data to fit our formatting
   const aiScene* scene = importer.ReadFile(
-      path, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcessPreset_TargetRealtime_Fast);
+      path, aiProcessPreset_TargetRealtime_Fast | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 
   // check if error occurred
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
@@ -55,9 +58,9 @@ void Model::LoadModel(const std::string& path)
     return;
   }
 
-  m_Directory = path.substr(0, path.find_last_of('/'));
+  m_directory = path.substr(0, path.find_last_of('/'));
 
-  m_Meshes.reserve(scene->mNumMeshes);
+  m_meshes.reserve(scene->mNumMeshes);
 
   ProccessNode(scene->mRootNode, scene);
 }
@@ -71,7 +74,7 @@ void Model::ProccessNode(aiNode* node, const aiScene* scene)
   for (unsigned int i = 0; i < node->mNumMeshes; ++i)
   {
     aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-    m_Meshes.push_back(ProcessMesh(mesh, scene));
+    m_meshes.push_back(ProcessMesh(mesh, scene));
   }
 
   // Then we check if this node has any children and process them also
@@ -96,10 +99,8 @@ Mesh Model::ProcessMesh(aiMesh* mesh, const aiScene* scene)
     vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
 
     // Check if the mesh has UV coordinates
-    if (mesh->mTextureCoords[0])
-      vertex.uvCoord = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-    else
-      vertex.uvCoord = glm::vec2(0.0f, 0.0f);
+    if (mesh->mTextureCoords[0]) vertex.uvCoord = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+    else vertex.uvCoord = glm::vec2(0.0f, 0.0f);
 
     vertecies.push_back(vertex);
   }
@@ -143,7 +144,7 @@ std::vector<Texture> Model::LoadMaterialTextures(aiMaterial* mat, aiTextureType 
     mat->GetTexture(type, i, &str);
 
     Texture texture;
-    texture.id = LumiCore::Utility::GenerateTexture(str.C_Str(), m_Directory); // Generate texture
+    texture.id = LumiCore::Utility::GenerateTexture(str.C_Str(), m_directory); // Generate texture
     texture.type = typeName;
     texture.path = str.C_Str();
 

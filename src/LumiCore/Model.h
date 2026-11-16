@@ -25,8 +25,8 @@ public:
   void Draw(const Shader& shader);
 
 private:
-  std::vector<Mesh> m_Meshes;
-  std::string m_Directory;
+  std::vector<Mesh> m_meshes;
+  std::string m_directory;
 
   void SaveInputedMesh(const std::vector<Vertex>& vertecies, const std::vector<unsigned int>& indices,
                        const std::vector<Texture>& textures);
