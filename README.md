@@ -62,9 +62,3 @@ test the normals if they are correct on the models we are loading in.
 
 ---
 
-
-
-
-
-
-
