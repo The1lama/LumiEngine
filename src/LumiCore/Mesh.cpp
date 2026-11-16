@@ -10,15 +10,13 @@
 namespace LumiCore
 {
 
-Mesh::Mesh(LumiCore::MeshData data, GLenum renderType)
+Mesh::Mesh(const LumiCore::MeshData& data, const GLenum renderType)
 {
-
-  m_verticies = std::move(data.vertecies);
   m_indicies = std::move(data.indices);
   m_textures = std::move(data.textures);
   m_renderType = renderType;
 
-  CreateMesh();
+  CreateMesh(data);
 }
 
 Mesh::~Mesh()
@@ -35,7 +33,6 @@ Mesh::Mesh(Mesh&& other) noexcept
   m_VBO = std::exchange(other.m_VBO, 0);
   m_EBO = std::exchange(other.m_EBO, 0);
 
-  m_verticies = std::move(other.m_verticies);
   m_indicies = std::move(other.m_indicies);
   m_textures = std::move(other.m_textures);
 
@@ -49,7 +46,6 @@ Mesh& Mesh::operator=(Mesh&& other) noexcept
     m_VBO = std::exchange(other.m_VBO, 0);
     m_EBO = std::exchange(other.m_EBO, 0);
 
-    m_verticies = std::move(other.m_verticies);
     m_indicies = std::move(other.m_indicies);
     m_textures = std::move(other.m_textures);
 
@@ -68,7 +64,7 @@ void Mesh::Release()
     glDeleteBuffers(1, &m_EBO);
 }
 
-void Mesh::CreateMesh()
+void Mesh::CreateMesh(const LumiCore::MeshData& data)
 {
   constexpr size_t vertexSize = sizeof(Vertex);
 
@@ -79,12 +75,13 @@ void Mesh::CreateMesh()
   // Create VBO
   glGenBuffers(1, &m_VBO);
   glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-  glBufferData(GL_ARRAY_BUFFER, m_verticies.size() * vertexSize, m_verticies.data(), GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, data.vertecies.size() * vertexSize, data.vertecies.data(), GL_STATIC_DRAW);
 
   // Create EBO
   glGenBuffers(1, &m_EBO);
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-  glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indicies.size() * sizeof(unsigned int), m_indicies.data(), GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indices.size() * sizeof(unsigned int), data.indices.data(),
+               GL_STATIC_DRAW);
 
   constexpr GLsizei stride = sizeof(Vertex);
 
@@ -128,7 +125,6 @@ void Mesh::Render(const Shader& shader)
     glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
   }
   glActiveTexture(GL_TEXTURE0); // Reset the active texture
-
 
   // Draw mesh
   glBindVertexArray(m_VAO);

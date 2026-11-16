@@ -9,8 +9,8 @@
 namespace LumiCore
 {
 class Model;
-class Vertex;
-class Texture;
+struct Vertex;
+struct Texture;
 } // namespace LumiCore
 
 namespace LumiCore::Resources

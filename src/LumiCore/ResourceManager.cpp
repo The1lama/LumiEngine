@@ -190,13 +190,14 @@ std::shared_ptr<Model> ResourceManager::GenerateModel(const std::string& path)
 std::shared_ptr<Model> ResourceManager::GenerateObject(const std::string& path,
                                                        const std::vector<LumiCore::Texture>& textures)
 {
-  constexpr bool useCustomObjectLoader = true;
+  constexpr bool useCustomObjectLoader = false;
   //
   // Validate check if the file extension is correct and if file exist
   const std::vector<std::string> validFileExtentsions = {".obj"};
   if (!LumiCore::Utility::IsValidFile(path, validFileExtentsions))
   {
     LOG_WARNING(std::format("File {} is not valid", path));
+    return nullptr;
   };
 
   LOG_INFO(std::format("Generating model: {}", path));

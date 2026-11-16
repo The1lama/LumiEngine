@@ -43,11 +43,11 @@ class Mesh
 public:
   Mesh() = default;
   ~Mesh();
-  
+
   // Prevenets copying the class
   Mesh(const Mesh& mesh) = delete;
   Mesh& operator=(const Mesh& mesh) = delete;
-  
+
   // but allows moing
   Mesh(Mesh&& mesh) noexcept;
   Mesh& operator=(Mesh&& mesh) noexcept;
@@ -58,9 +58,9 @@ public:
   virtual void Release();
 
 protected:
-  Mesh(LumiCore::MeshData data, GLenum renderType);
+  Mesh(const LumiCore::MeshData& data, GLenum renderType);
 
-  std::vector<Vertex> m_verticies;
+
   std::vector<unsigned int> m_indicies;
   std::vector<Texture> m_textures;
 
@@ -69,7 +69,7 @@ protected:
 private:
   GLuint m_VBO, m_VAO, m_EBO;
 
-  void CreateMesh();
+  void CreateMesh(const LumiCore::MeshData& data);
 
   void GenerateTransformationMatrix();
 
