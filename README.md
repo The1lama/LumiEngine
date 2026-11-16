@@ -45,3 +45,26 @@ There is two different projection matrices that we can switch between with keypr
 The two is `Perspective` and `Orthographic` projection.
 
 ![Week2Progress.](media/Week2Objects.png)
+
+---
+# Week 3 
+**Tag Version:** `Week3/ObjectLoader`
+
+This week I have implemented two different object loaders. One custom made and the other with Assimp.
+
+We have added 5 different objects that we can load in. We also have added a resource manager where we
+can get or create new object meshes, so we dont create duplicate models.
+
+We have also added a lighting model of Phong. This is so we can create shadows on the objects and to 
+test the normals if they are correct on the models we are loading in.
+
+![Week3Progress.](media/Week3Loader.png)
+
+---
+
+
+
+
+
+
+
