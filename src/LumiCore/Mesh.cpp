@@ -68,8 +68,6 @@ void Mesh::CreateMesh(const LumiCore::MeshData& data)
 {
   constexpr size_t vertexSize = sizeof(Vertex);
 
-  constexpr size_t vertexSize = sizeof(Vertex);
-
   // Create VAO
   glGenVertexArrays(1, &m_VAO);
   glBindVertexArray(m_VAO);

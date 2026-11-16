@@ -66,18 +66,10 @@ protected:
 
   GLenum m_renderType;
 
-  glm::vec3 m_location;
-  glm::vec3 m_rotation;
-  glm::vec3 m_scale;
-
-  glm::mat4 m_transformMatrix;
-
 private:
   GLuint m_VBO, m_VAO, m_EBO;
 
   void CreateMesh(const LumiCore::MeshData& data);
-
-  void GenerateTransformationMatrix();
 
   void GenerateTransformationMatrix();
 
