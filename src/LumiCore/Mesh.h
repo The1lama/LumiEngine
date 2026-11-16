@@ -2,52 +2,67 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <string>
 #include <vector>
 
 class Shader;
 
-namespace LumiCore {
+namespace LumiCore
+{
 
-struct Vertex {
+struct Vertex
+{
   glm::vec3 position;
   glm::vec3 normal;
+  glm::vec2 uvCoord;
 
-  Vertex(glm::vec3 VertexPosition, glm::vec3 VertexNormal)
-      : position(VertexPosition), normal(VertexNormal) {};
-  Vertex(float pX, float pY, float pZ, float nX, float nY, float nZ)
-      : position(glm::vec3(pX, pY, pZ)), normal(glm::vec3(nX, nY, nZ)) {};
+  Vertex() = default;
+  Vertex(glm::vec3 VertexPosition, glm::vec3 VertexNormal, glm::vec2 UvCoord) :
+      position(VertexPosition), normal(VertexNormal), uvCoord(UvCoord) {};
+  Vertex(float pX, float pY, float pZ, float nX, float nY, float nZ, float uX, float uY) :
+      position(glm::vec3(pX, pY, pZ)), normal(glm::vec3(nX, nY, nZ)), uvCoord(glm::vec2(uX, uY)) {};
 };
 
-struct MeshData {
+struct Texture
+{
+  unsigned int id;
+  std::string type;
+  std::string path;
+};
+
+struct MeshData
+{
   std::vector<Vertex> vertecies;
   std::vector<unsigned int> indices;
+  std::vector<Texture> textures;
 };
 
-class Mesh {
+
+class Mesh
+{
 public:
   Mesh() = default;
   ~Mesh();
 
+  // Prevenets copying the class
+  Mesh(const Mesh& mesh) = delete;
+  Mesh& operator=(const Mesh& mesh) = delete;
+
+  // but allows moing
+  Mesh(Mesh&& mesh) noexcept;
+  Mesh& operator=(Mesh&& mesh) noexcept;
+
   bool IsValid() const;
 
-  void SetTime(const float time) { m_time = time; }
-  void SetAngle(const float angle) { m_angle = angle; }
-  void SetOffset(const glm::vec2 offset) { m_xyOffsets = offset; }
-  void SetScale(const glm::vec2 scale) { m_xyScale = scale; }
-  void SetColor(const glm::vec3 color) { m_color = color; }
-
-  void SetLocation(const glm::vec3 newLocation);
-  void SetRotation(const glm::vec3 newRotation);
-  void SetScale(const glm::vec3 newScale);
-
-  virtual void Render(Shader &shader);
+  virtual void Render(const Shader& shader);
   virtual void Release();
 
 protected:
-  Mesh(LumiCore::MeshData data, GLenum renderType);
+  Mesh(const LumiCore::MeshData& data, GLenum renderType);
 
-  std::vector<Vertex> m_verticies;
+
   std::vector<unsigned int> m_indicies;
+  std::vector<Texture> m_textures;
 
   GLenum m_renderType;
 
@@ -58,16 +73,11 @@ protected:
   glm::mat4 m_transformMatrix;
 
 private:
-  float m_time = 1.f;
-  float m_angle = .0f;
-  glm::vec2 m_xyOffsets = glm::vec2(0, 0);
-  glm::vec2 m_xyScale = glm::vec2(1, 1);
-  glm::vec3 m_color = glm::vec3(0, 0, 0);
-
   GLuint m_VBO, m_VAO, m_EBO;
 
-  void CreateMesh(std::vector<Vertex> &vertecies,
-                  std::vector<unsigned int> &indicies);
+  void CreateMesh(const LumiCore::MeshData& data);
+
+  void GenerateTransformationMatrix();
 
   void GenerateTransformationMatrix();
 
