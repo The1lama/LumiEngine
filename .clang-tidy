@@ -11,9 +11,11 @@ Checks: >
   clang-diagnostic-*,
   llvm-*,
   misc-*,
+  -bugprone-easily-swappable-parameters,
   -misc-no-recursion,
   -misc-unused-parameters,
   -misc-non-private-member-variables-in-classes,
+  -readability-avoid-const-params-in-decls,
   -readability-magic-numbers,
   -readability-implicit-bool-conversion,
   -readability-braces-around-statements,
@@ -44,6 +46,12 @@ CheckOptions:
     value: camelBack
   - key: readability-identifier-naming.LocalVariableCase
     value: camelBack
+
+  # Static Variables
+  - key: readability-identifier-naming.StaticConstantCase
+    value: camelback
+  - key: readability-identifier-naming.StaticConstantCase
+    value: s_
 
   # Class member variables
   - key: readability-identifier-naming.PrivateMemberCase

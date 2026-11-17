@@ -16,7 +16,7 @@ enum class ELogVerbose
   ERROR
 };
 
-class Logger : public Utility::Template::Singleton<Logger>
+class Logger : public Utility::Function::Singleton<Logger>
 {
 private:
   ELogVerbose m_minLogLevel = ELogVerbose::DEBUG;
