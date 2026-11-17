@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "LumiCore/InputSystem.h"
 #include "LumiCore/Model.h"
 #include "LumiCore/ResourceManager.h"
 #include "glm/ext/matrix_float3x3.hpp"
@@ -193,6 +194,12 @@ struct GameObject
 };
 
 } // namespace Objects
+
+void CallbackKeyPressFunction()
+{
+  LOG_DEBUG("Keypress callback has beedn called");
+}
+
 
 int main()
 {
@@ -395,6 +402,17 @@ int main()
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
   glFrontFace(GL_CCW);
+
+
+  /// TEST WITH INPUTMANAGER ///
+
+  LumiCore::InputSystem::InputSystem inputManager(window);
+
+  inputManager.AddKeybind(LumiCore::InputSystem::EKeyCode::Keycode_W, 0);
+  inputManager.BindKeybind(LumiCore::InputSystem::EKeyCode::Keycode_W, 0, CallbackKeyPressFunction);
+
+  /// TEST WITH INPUTMANAGER ///
+
 
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
