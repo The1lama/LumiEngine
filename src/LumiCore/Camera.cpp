@@ -1,6 +1,8 @@
 #include "Camera.h"
+#include <format>
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/vector_float3.hpp"
+#include "glm/geometric.hpp"
 #include "logger/Logger.h"
 
 namespace LumiCore
@@ -39,12 +41,6 @@ Camera& Camera::SetLocation(const glm::vec3 NewLocation)
   GenerateViewMatrix();
   return *this;
 }
-Camera& Camera::SetTargetLookAtLocation(const glm::vec3 TargetLocation)
-{
-  m_targetLocation = TargetLocation;
-  GenerateViewMatrix();
-  return *this;
-}
 #pragma endregion
 
 #pragma region Getters
@@ -59,7 +55,20 @@ glm::mat4 Camera::GetProjectionMatrix() const
 glm::vec3 Camera::GetLocation() const
 {
   return m_position;
+}
+glm::vec3 Camera::GetForwardDirection() const
+{
+  return m_forward;
+}
+glm::vec3 Camera::GetUpDirection() const
+{
+  return m_up;
 };
+glm::vec3 Camera::GetRightDirection() const
+{
+  return glm::normalize(glm::cross(m_up, m_forward));
+}
+
 #pragma endregion
 
 #pragma region Generate_Matrixes
@@ -71,13 +80,19 @@ void Camera::GenerateProjectionMatixes()
 
 void Camera::GenerateViewMatrix()
 {
-  glm::vec3 cameraDirection = glm::normalize(m_position - m_targetLocation);
+  glm::vec3 front;
+  front.x = cos(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
+  front.y = sin(glm::radians(m_pitch));
+  front.z = sin(glm::radians(m_yaw)) * cos(glm::radians(m_pitch));
 
-  glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
-  glm::vec3 cameraRight = glm::normalize(glm::cross(worldUp, cameraDirection));
-  glm::vec3 cameraUp = glm::cross(cameraDirection, cameraRight);
+  m_forward = glm::normalize(front);
 
-  m_viewMatrix = glm::lookAt(m_position, m_targetLocation, worldUp);
+  constexpr glm::vec3 worldUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+  glm::vec3 cameraRight = glm::normalize(glm::cross(m_forward, worldUp));
+  m_up = glm::normalize(glm::cross(cameraRight, m_forward));
+
+  m_viewMatrix = glm::lookAt(m_position, m_position + m_forward, worldUp);
 }
 
 void Camera::GeneratePerspectiveMatrix()

@@ -257,10 +257,7 @@ struct GameObject
 
 namespace Resources
 {
-
 void InitResources() {}
-
-
 } // namespace Resources
 
 
@@ -278,6 +275,60 @@ void SwitchProjectionMatrix(LumiCore::Camera& camera, Shader& shader)
   shader.UnUse();
 }
 
+struct playerActions
+{
+  float moveX = 0;
+  float moveZ = 0;
+
+  float rotateX = 0;
+  float rotateY = 0;
+};
+
+void GetPlayerInput(GLFWwindow* window, int activePlayers, playerActions& input)
+{
+  if (activePlayers == 1)
+  {
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    {
+      input.moveX = 1;
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    {
+      input.moveX = -1;
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    {
+      input.moveZ = 1;
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    {
+      input.moveZ = -1;
+    }
+    return;
+  }
+
+  if (activePlayers == 2)
+  {
+
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+    {
+      input.moveX = 1;
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+    {
+      input.moveX = -1;
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+    {
+      input.moveZ = 1;
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+    {
+      input.moveZ = -1;
+    }
+    return;
+  }
+};
 
 int main()
 {
@@ -364,19 +415,11 @@ int main()
     renderObjects.push_back(object);
   }
 
-  // std::shared_ptr<LumiCore::Model> barrel = RM.GetModel("assets/objects/barrel/Barrel.obj", textures);
-  // std::shared_ptr<LumiCore::Model> cat = RM.GetModel("assets/objects/cat/Maxwell.obj", textures);
-  // std::shared_ptr<LumiCore::Model> cat2 = RM.GetModel("assets/objects/cat/Maxwell.obj", textures);
-  // std::shared_ptr<LumiCore::Model> tallBuilding = RM.GetModel("assets/objects/building/TallBuilding02.obj",
-  // textures); std::shared_ptr<LumiCore::Model> guy = RM.GetModel("assets/objects/guy/MaleVillager.obj", textures);
-  // std::shared_ptr<LumiCore::Model> smallBuilding =
-  //    RM.GetModel("assets/objects/smallBuilding/SmallBuilding02.obj", textures);
-
 #pragma endregion MeshObjects
 
   /////////////// PROJECTION ///////////////
 
-  glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 6.0f);
+  glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, -6.0f);
 
   const auto fov = glm::radians(45.0f);
   int frameWidth, frameHeight;
@@ -400,7 +443,6 @@ int main()
 
   basic3DShader.Use();
   // these we only need to set one time as they are the same for now
-  basic3DShader.SetMatrix4("u_View", camera.GetViewMatrix());
   basic3DShader.SetMatrix4("u_Projection", camera.GetProjectionMatrix());
   basic3DShader.SetVec3("u_ViewPosition", camera.GetLocation()); // used for specular light
 
@@ -429,25 +471,25 @@ int main()
 
   /// TEST WITH INPUTMANAGER ///
 
-  LumiCore::InputSystem::InputSystem inputManager(window);
+  // LumiCore::InputSystem::InputSystem inputManager(window);
 
-  LumiCore::InputSystem::InputKeyBind keybindW{LumiCore::InputSystem::EKeyCode::Keycode_W, 0};
-  LumiCore::InputSystem::InputKeyBind keybindA{LumiCore::InputSystem::EKeyCode::Keycode_A, 0};
-  LumiCore::InputSystem::InputKeyBind keybind1{LumiCore::InputSystem::EKeyCode::Keycode_Key1, 0};
-  LumiCore::InputSystem::InputKeyBind keybind2{LumiCore::InputSystem::EKeyCode::Keycode_Key2, 0};
+  // LumiCore::InputSystem::InputKeyBind keybindW{LumiCore::InputSystem::EKeyCode::Keycode_W, 0};
+  // LumiCore::InputSystem::InputKeyBind keybindA{LumiCore::InputSystem::EKeyCode::Keycode_A, 0};
+  // LumiCore::InputSystem::InputKeyBind keybind1{LumiCore::InputSystem::EKeyCode::Keycode_Key1, 0};
+  // LumiCore::InputSystem::InputKeyBind keybind2{LumiCore::InputSystem::EKeyCode::Keycode_Key2, 0};
 
-  inputManager.AddKeybind(keybindW);
-  inputManager.BindKeybindPress(keybindW, CallbackKeyPressFunction);
+  // inputManager.AddKeybind(keybindW);
+  // inputManager.BindKeybindPress(keybindW, CallbackKeyPressFunction);
 
-  inputManager.AddKeybind(keybindA);
-  inputManager.BindKeybindPress(keybindA, CallbackKeyPressFunction);
+  // inputManager.AddKeybind(keybindA);
+  // inputManager.BindKeybindPress(keybindA, CallbackKeyPressFunction);
 
-  inputManager.AddKeybind(keybind1);
-  inputManager.BindKeybindPress(keybind1, WindowOpenGL::SwitchRenderingMode);
+  // inputManager.AddKeybind(keybind1);
+  // inputManager.BindKeybindPress(keybind1, WindowOpenGL::SwitchRenderingMode);
 
-  inputManager.AddKeybind(keybind2);
-  inputManager.BindKeybindPress(keybind2,
-                                [&camera, &basic3DShader]() { SwitchProjectionMatrix(camera, basic3DShader); });
+  // inputManager.AddKeybind(keybind2);
+  // inputManager.BindKeybindPress(keybind2,
+  //                               [&camera, &basic3DShader]() { SwitchProjectionMatrix(camera, basic3DShader); });
 
   /// TEST WITH INPUTMANAGER ///
 
@@ -456,10 +498,13 @@ int main()
   int cacheWindowHeigh;
   glfwGetFramebufferSize(window, &cacheWindowWitdh, &cacheWindowHeigh);
 
+  int activePlayers = {1};
+
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
   {
     float runningTime = glfwGetTime();
+
 
     int currentWindowWidth;
     int currentWindowHeight;
@@ -477,10 +522,47 @@ int main()
       cacheWindowWitdh = currentWindowWidth;
     }
 
+    //////////////////////
+    //// Handle input ////
+    //////////////////////
+
+    playerActions input{};
+
+    GetPlayerInput(window, activePlayers, input);
+
+    //////////////////////
+    //// Handle Logic ////
+    //////////////////////
+
+    constexpr float speed = 1.f;
+    {
+      if (input.moveX != 0)
+      {
+        glm::vec3 location = camera.GetLocation();
+        location += camera.GetForwardDirection() * speed * input.moveX;
+        camera.SetLocation(location);
+      }
+
+      if (input.moveZ != 0)
+      {
+        glm::vec3 location = camera.GetLocation();
+        location += camera.GetRightDirection() * speed * input.moveZ;
+        camera.SetLocation(location);
+      }
+    }
+
+    LOG_DEBUG(std::format("Camera Location: x; {} y; {} z;{}", camera.GetLocation().x, camera.GetLocation().y,
+                          camera.GetLocation().z));
+    //////////////////////////
+    //// Handle Rendering ////
+    //////////////////////////
+
     /* Render here */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     basic3DShader.Use();
+
+    basic3DShader.SetMatrix4("u_View", camera.GetViewMatrix());
 
     const glm::vec3 forward(1.0f, 0.0f, 0.0f);
     const glm::vec3 up(0.0f, 1.0f, 0.0f);

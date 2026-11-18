@@ -16,7 +16,12 @@ protected:
   int m_currentProjectionMatrix{0};
 
   glm::vec3 m_position{0.0f, 0.0f, 0.0f};
-  glm::vec3 m_targetLocation{0.0f, 0.0f, 0.0f};
+  glm::vec3 m_forward{1.0f, 0.0f, 0.0f};
+  glm::vec3 m_up{0.0f, 1.0f, 0.0f};
+
+  float m_yaw = 90.f;
+  float m_pitch = 0.0f;
+  float m_roll = 0.0f;
 
   float m_fov{90};
   float m_aspectRatio{1.77}; // standard 16/9
@@ -38,11 +43,13 @@ public:
   Camera& SetFov(const float Fov);
   Camera& SetAspectRatio(const float AspectRatio);
   Camera& SetLocation(const glm::vec3 NewLocation);
-  Camera& SetTargetLookAtLocation(const glm::vec3 TargetLocation);
 
   glm::mat4 GetViewMatrix() const;
   glm::mat4 GetProjectionMatrix() const;
   glm::vec3 GetLocation() const;
+  glm::vec3 GetForwardDirection() const;
+  glm::vec3 GetRightDirection() const;
+  glm::vec3 GetUpDirection() const;
 };
 
 } // namespace LumiCore
