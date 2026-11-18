@@ -15,17 +15,6 @@ struct GLFWwindow;
 namespace LumiCore::InputSystem
 {
 
-struct InputAction
-{
-
-  // What is should hold
-  //
-  // KeyPress
-  // WasPressedThisFrame
-  // IsPressed
-  // WasReleasedThisFrame
-};
-
 enum class EKeyCode : uint16_t
 {
   Keycode_Space = 32,
@@ -214,7 +203,8 @@ private:
   void ProcessInput(int key, int scancode, int action, int mods);
 
   // stores all the keybinds that we have and a event system for them to process
-  std::unordered_map<InputKeyBind, Utility::Function::EventSystem<>> m_keybinds;
+  std::unordered_map<InputKeyBind, Utility::Function::EventSystem<>> m_keybindsPressed;
+  std::unordered_map<InputKeyBind, Utility::Function::EventSystem<>> m_keybindsReleased;
 
   // stores hold keypresses
   // std::unordered_map<int, int> m_pressedKeys;
@@ -227,31 +217,40 @@ private:
 protected:
   void GenerateKeyMap(GLFWwindow* window);
 
-
 public:
   InputSystem(GLFWwindow* window);
   ~InputSystem();
 
-
-  void AddKeybind(const EKeyCode KeyCode, const uint8_t ModifierFlags);
+  void AddKeybind(const InputKeyBind& keyBind);
 
   template <typename Callable>
-  bool BindKeybind(const EKeyCode KeyCode, const uint8_t ModifierFlags, Callable&& function);
+  bool BindKeybindPress(const InputKeyBind& keyBind, Callable&& function);
 
-  void RemoveKeybind(const EKeyCode KeyCode, const uint8_t ModifierFlags);
+  template <typename Callable>
+  bool BindKeybindReleased(const InputKeyBind& keyBind, Callable&& function);
+
+  void RemoveKeybind(const InputKeyBind& keyBind);
+
+  bool KeybindExist(const InputKeyBind& keyBind) const;
 };
 
 template <typename Callable>
-bool InputSystem::BindKeybind(const EKeyCode KeyCode, const uint8_t ModifierFlags, Callable&& function)
+bool InputSystem::BindKeybindPress(const InputKeyBind& keyBind, Callable&& function)
 {
-  InputKeyBind buildKeybind{KeyCode, ModifierFlags};
+  if (!KeybindExist(keyBind)) return false;
 
-  if (!m_keybinds.contains(buildKeybind)) return false;
-
-  m_keybinds[buildKeybind].Attach(function);
+  m_keybindsPressed[keyBind].Attach(function);
   return true;
 }
 
+template <typename Callable>
+bool InputSystem::BindKeybindReleased(const InputKeyBind& keyBind, Callable&& function)
+{
+  if (!KeybindExist(keyBind)) return false;
+
+  m_keybindsReleased[keyBind].Attach(function);
+  return true;
+}
 
 } // namespace LumiCore::InputSystem
 

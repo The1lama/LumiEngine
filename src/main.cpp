@@ -22,6 +22,8 @@
 #include "glm/ext/vector_float3.hpp"
 #include "glm/trigonometric.hpp"
 
+namespace WindowOpenGL
+{
 void glfwErrorCallback(int error, const char* description)
 {
   LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("GLFW error ({}): {}", error, description));
@@ -39,7 +41,15 @@ struct EditorSettings
   const char* windowTitle = "LumiEngine";
 };
 
-void SwitchRenderingMode();
+static int renderingModeIndex;
+void SwitchRenderingMode()
+{
+  renderingModeIndex = renderingModeIndex + 1 < 3 ? renderingModeIndex + 1 : 0;
+
+  if (renderingModeIndex == 0) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // fill in the triangles
+  else if (renderingModeIndex == 1) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draws in wireframe mode
+  else glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); // draws vertex points
+}
 
 bool processInput(GLFWwindow* window, bool& bToggleColor, bool& bSwitchDrawMode, bool& bSwitchProjectionMatrix)
 {
@@ -160,15 +170,64 @@ void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity,
   }
 }
 
-static int renderingModeIndex;
-void SwitchRenderingMode()
+GLFWwindow* InitializeWindow()
 {
-  renderingModeIndex = renderingModeIndex + 1 < 3 ? renderingModeIndex + 1 : 0;
+  /* Initialize the library */
+  if (!glfwInit())
+  {
+    LOG(LumiCore::Logger::ELogVerbose::ERROR, "Failed to initialize GLFW");
+    return nullptr;
+  }
 
-  if (renderingModeIndex == 0) glPolygonMode(GL_FRONT_AND_BACK, GL_FILL); // fill in the triangles
-  else if (renderingModeIndex == 1) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); // draws in wireframe mode
-  else glPolygonMode(GL_FRONT_AND_BACK, GL_POINT); // draws vertex points
+  glfwSetErrorCallback(glfwErrorCallback);
+
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+  EditorSettings settings;
+
+  glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
+
+  /* Create a windowed mode window and its OpenGL context */
+  GLFWwindow* window =
+      glfwCreateWindow(settings.windowWidth, settings.windowHeight, settings.windowTitle, nullptr, nullptr);
+
+  if (!window)
+  {
+    LOG(LumiCore::Logger::ELogVerbose::ERROR, "Something on window initialize went wrong");
+    glfwTerminate();
+    return nullptr;
+  }
+
+  /* Make the window's context current */
+  glfwMakeContextCurrent(window);
+  glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
+  glfwSwapInterval(1);
+
+  const int loadedVersion = gladLoadGL();
+  if (loadedVersion == 0)
+  {
+    LOG_ERROR("Failed to load OpenGL functions with GLAD");
+    glfwDestroyWindow(window);
+    glfwTerminate();
+    return nullptr;
+  }
+
+  int flags;
+  glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
+  if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
+  {
+    LOG_DEBUG("initialize debug output");
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+    glDebugMessageCallback(glDebugOutput, nullptr);
+    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
+  }
+  return window;
 };
+
+} // namespace WindowOpenGL
 
 namespace Objects
 {
@@ -195,9 +254,28 @@ struct GameObject
 
 } // namespace Objects
 
+
+namespace Resources
+{
+
+void InitResources() {}
+
+
+} // namespace Resources
+
+
 void CallbackKeyPressFunction()
 {
   LOG_DEBUG("Keypress callback has beedn called");
+}
+
+void SwitchProjectionMatrix(LumiCore::Camera& camera, Shader& shader)
+{
+  camera.SwitchProjectionMatrix();
+
+  shader.Use();
+  shader.SetMatrix4("u_Projection", camera.GetProjectionMatrix());
+  shader.UnUse();
 }
 
 
@@ -205,67 +283,12 @@ int main()
 {
   LOG(LumiCore::Logger::ELogVerbose::INFO, "Debugger initialized");
 
-#pragma region Init
-  /* Initialize the library */
-  if (!glfwInit())
-  {
-    LOG(LumiCore::Logger::ELogVerbose::ERROR, "Failed to initialize GLFW");
-    return -1;
-  }
-
-  glfwSetErrorCallback(glfwErrorCallback);
-
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-  EditorSettings settings;
-
-  glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
-
-  /* Create a windowed mode window and its OpenGL context */
-  GLFWwindow* window =
-      glfwCreateWindow(settings.windowWidth, settings.windowHeight, settings.windowTitle, nullptr, nullptr);
-
+  GLFWwindow* window = WindowOpenGL::InitializeWindow();
   if (!window)
   {
-    LOG(LumiCore::Logger::ELogVerbose::ERROR, "Something on window initialize went wrong");
-    glfwTerminate();
+    LOG_ERROR("Could not Initialize OpenGL or Window");
     return -1;
   }
-
-  /* Make the window's context current */
-  glfwMakeContextCurrent(window);
-  glfwSetFramebufferSizeCallback(window, framebufferSizeCallback);
-  glfwSwapInterval(1);
-
-  // window cache size
-  int cacheWindowWitdh;
-  int cacheWindowHeigh;
-  glfwGetFramebufferSize(window, &cacheWindowWitdh, &cacheWindowHeigh);
-
-  const int loadedVersion = gladLoadGL();
-  if (loadedVersion == 0)
-  {
-    LOG_ERROR("Failed to load OpenGL functions with GLAD");
-    glfwDestroyWindow(window);
-    glfwTerminate();
-    return 1;
-  }
-
-  int flags;
-  glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
-  if (flags & GL_CONTEXT_FLAG_DEBUG_BIT)
-  {
-    LOG_DEBUG("initialize debug output");
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-    glDebugMessageCallback(glDebugOutput, nullptr);
-    glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
-  }
-
-  ///////////////
-#pragma endregion Init
 
   /// Colors ///
   glm::vec3 redColor = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -374,6 +397,7 @@ int main()
     LOG_ERROR("3D shader could not compile");
     return -2;
   }
+
   basic3DShader.Use();
   // these we only need to set one time as they are the same for now
   basic3DShader.SetMatrix4("u_View", camera.GetViewMatrix());
@@ -403,16 +427,34 @@ int main()
   glCullFace(GL_BACK);
   glFrontFace(GL_CCW);
 
-
   /// TEST WITH INPUTMANAGER ///
 
   LumiCore::InputSystem::InputSystem inputManager(window);
 
-  inputManager.AddKeybind(LumiCore::InputSystem::EKeyCode::Keycode_W, 0);
-  inputManager.BindKeybind(LumiCore::InputSystem::EKeyCode::Keycode_W, 0, CallbackKeyPressFunction);
+  LumiCore::InputSystem::InputKeyBind keybindW{LumiCore::InputSystem::EKeyCode::Keycode_W, 0};
+  LumiCore::InputSystem::InputKeyBind keybindA{LumiCore::InputSystem::EKeyCode::Keycode_A, 0};
+  LumiCore::InputSystem::InputKeyBind keybind1{LumiCore::InputSystem::EKeyCode::Keycode_Key1, 0};
+  LumiCore::InputSystem::InputKeyBind keybind2{LumiCore::InputSystem::EKeyCode::Keycode_Key2, 0};
+
+  inputManager.AddKeybind(keybindW);
+  inputManager.BindKeybindPress(keybindW, CallbackKeyPressFunction);
+
+  inputManager.AddKeybind(keybindA);
+  inputManager.BindKeybindPress(keybindA, CallbackKeyPressFunction);
+
+  inputManager.AddKeybind(keybind1);
+  inputManager.BindKeybindPress(keybind1, WindowOpenGL::SwitchRenderingMode);
+
+  inputManager.AddKeybind(keybind2);
+  inputManager.BindKeybindPress(keybind2,
+                                [&camera, &basic3DShader]() { SwitchProjectionMatrix(camera, basic3DShader); });
 
   /// TEST WITH INPUTMANAGER ///
 
+  // window cache size
+  int cacheWindowWitdh;
+  int cacheWindowHeigh;
+  glfwGetFramebufferSize(window, &cacheWindowWitdh, &cacheWindowHeigh);
 
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
@@ -435,20 +477,6 @@ int main()
       cacheWindowWitdh = currentWindowWidth;
     }
 
-    bool bSwitchProjectionMatrix = false;
-    processInput(window, bToggleRoofColor, bSwitchDrawingMode, bSwitchProjectionMatrix);
-
-    if (bSwitchProjectionMatrix && !bHasSwitchedProjectionMatrix)
-    {
-      camera.SwitchProjectionMatrix();
-
-      basic3DShader.Use();
-      basic3DShader.SetMatrix4("u_Projection", camera.GetProjectionMatrix());
-      basic3DShader.UnUse();
-    }
-
-    bHasSwitchedProjectionMatrix = bSwitchProjectionMatrix;
-
     /* Render here */
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -467,12 +495,9 @@ int main()
 
       model = glm::translate(model, object.transform.Position);
 
-      // if (object.type == Objects::ROTATE)
-      //{
       model = glm::rotate(model, glm::radians(object.transform.Rotation.x), forward);
       model = glm::rotate(model, glm::radians(object.transform.Rotation.y), up);
       model = glm::rotate(model, glm::radians(object.transform.Rotation.z), right);
-      // }
 
       if (object.type == Objects::ROTATE)
       {
@@ -487,87 +512,6 @@ int main()
 
       object.model->Draw(basic3DShader);
     }
-
-
-    //{ // Cube 1
-    //  glm::mat4 model = glm::mat4(1.0f);
-    //  model = glm::translate(model, glm::vec3(-2.0f, 1.5f, 0.0f));
-    //  model = glm::rotate(model, glm::radians(90.0f), up);
-    //  model = glm::rotate(model, glm::radians(90.0f), forward);
-    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-    //  basic3DShader.SetMatrix4("u_Model", model);
-    //  cubeObject.Render(basic3DShader);
-    //}
-
-    //{ // Cube 2
-    //  glm::mat4 model = glm::mat4(1.0f);
-    //  model = glm::translate(model, glm::vec3(-2.0f, -1.5f, 0.0f));
-    //  model = glm::rotate(model, glm::radians(-90.0f), up);
-    //  model = glm::rotate(model, glm::radians(-90.0f), forward);
-    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-    //  basic3DShader.SetMatrix4("u_Model", model);
-    //  cubeObject.Render(basic3DShader);
-    //}
-
-    //{ // Pyramid 1
-    //  glm::mat4 model = glm::mat4(1.0f);
-    //  model = glm::translate(model, glm::vec3(0.0f, 1.5f, 0.0f));
-    //  model = glm::rotate(model, glm::radians(90.0f), up);
-    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-    //  basic3DShader.SetMatrix4("u_Model", model);
-    //  pyramidObject.Render(basic3DShader);
-    //}
-
-    //{ // Pyramid 2
-    //  glm::mat4 model = glm::mat4(1.0f);
-    //  model = glm::translate(model, glm::vec3(0.0f, -1.5f, 0.0f));
-    //  model = glm::rotate(model, glm::radians(-90.0f), up);
-    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-    //  basic3DShader.SetMatrix4("u_Model", model);
-    //  pyramidObject.Render(basic3DShader);
-    //}
-
-    //{ // Sphere 1
-    //  glm::mat4 model = glm::mat4(1.0f);
-    //  model = glm::translate(model, glm::vec3(2.0, 1.5f, 0.0f));
-    //  model = glm::rotate(model, glm::radians(0.0f), up);
-    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-    //  basic3DShader.SetMatrix4("u_Model", model);
-    //  sphereObject.Render(basic3DShader);
-    //}
-
-    //{ // Sphere 2
-    //  glm::mat4 model = glm::mat4(1.0f);
-    //  model = glm::translate(model, glm::vec3(2.0, -1.5f, 0.0f));
-    //  model = glm::rotate(model, glm::radians(-180.0f), up);
-    //  model = glm::rotate(model, glm::radians(-90.0f), right);
-    //  model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-    //  basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-    //  basic3DShader.SetMatrix4("u_Model", model);
-    //  sphereObject.Render(basic3DShader);
-    // }
-
-    //{ // cat
-    // glm::mat4 model = glm::mat4(1.0f);
-    // model = glm::translate(model, glm::vec3(0.0, -0.2f, 3.0f));
-    // model *= glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
-    // model = glm::scale(model, glm::vec3(0.5, 0.5, 0.5));
-    // glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-    // basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-    // basic3DShader.SetMatrix4("u_Model", model);
-    // cat->Draw(basic3DShader);
-    // }
 
     glfwSwapBuffers(window);
     glfwPollEvents();

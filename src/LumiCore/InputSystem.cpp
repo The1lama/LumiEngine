@@ -27,41 +27,45 @@ void InputSystem::Cleanup()
 
 void InputSystem::KeyCallbackStatic(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
-  if (action = !GLFW_PRESS && action != GLFW_REPEAT) return;
+  if (action != GLFW_PRESS && action != GLFW_RELEASE) return;
   InputSystem* instance = static_cast<InputSystem*>(glfwGetWindowUserPointer(window));
   if (instance) instance->ProcessInput(key, scancode, action, mods);
 }
 
 void InputSystem::ProcessInput(int key, int scancode, int action, int mods)
 {
-  //  LOG_INFO(
-  //      std::format("KeyPressed in callback. Key: {} scancode: {}, action: {}, mods: {}", key, scancode, action,
-  //      mods));
-
   // bulid the keyinput
   InputKeyBind inputCombo;
   inputCombo.baseKey = (EKeyCode)key;
   inputCombo.modifierFlags = mods;
 
   // send the notification event if there is a correct input action
-  if (m_keybinds.contains(inputCombo))
+  LOG_DEBUG(std::format("Action press: {}", action));
+  if (action == GLFW_PRESS && m_keybindsPressed.contains(inputCombo))
   {
-    m_keybinds[inputCombo].Notify();
+    m_keybindsPressed[inputCombo].Notify();
+  }
+  else if (action == GLFW_RELEASE && m_keybindsReleased.contains(inputCombo))
+  {
+    m_keybindsReleased[inputCombo].Notify();
   }
 }
 
-void InputSystem::AddKeybind(const EKeyCode KeyCode, const uint8_t ModifierFlags)
+void InputSystem::AddKeybind(const InputKeyBind& keyBind)
 {
-  InputKeyBind buildKeybind{KeyCode, ModifierFlags};
-
-  m_keybinds.try_emplace(buildKeybind, Utility::Function::EventSystem<>());
+  m_keybindsPressed.try_emplace(keyBind, Utility::Function::EventSystem<>());
+  m_keybindsReleased.try_emplace(keyBind, Utility::Function::EventSystem<>());
 }
 
-void InputSystem::RemoveKeybind(const EKeyCode KeyCode, const uint8_t ModifierFlags)
+void InputSystem::RemoveKeybind(const InputKeyBind& keyBind)
 {
-  InputKeyBind buildKeybind{KeyCode, ModifierFlags};
+  m_keybindsPressed.erase(keyBind);
+  m_keybindsReleased.erase(keyBind);
+}
 
-  m_keybinds.try_emplace(buildKeybind, Utility::Function::EventSystem<>());
+bool InputSystem::KeybindExist(const InputKeyBind& keyBind) const
+{
+  return m_keybindsPressed.contains(keyBind);
 }
 
 } // namespace LumiCore::InputSystem
