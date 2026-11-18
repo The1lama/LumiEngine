@@ -76,9 +76,8 @@ public:
   virtual void Notify(Args... args)
   {
     // We reverse the observer list so that any newly added callbacks functions gets run next time
-
     const int ObserverLenght = GetSize();
-    if (ObserverLenght == 0) return;
+    if (ObserverLenght <= 0) return;
     for (int i = ObserverLenght - 1; i >= 0; --i)
     {
       m_observers[i](args...);

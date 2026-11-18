@@ -95,7 +95,7 @@ bool processInput(GLFWwindow* window, bool& bToggleColor, bool& bSwitchDrawMode,
 void glDebugOutput(GLenum source, GLenum type, unsigned int id, GLenum severity, GLsizei lenght, const char* message,
                    const void* userParam)
 {
-  if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
+  if (id == 131169 || id == 131185 || id == 131218 || id == 131204 || id == 131139) return;
 
   LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("---------------"));
   LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Debug Message ({}): {}", id, message));
@@ -280,54 +280,237 @@ struct playerActions
   float moveX = 0;
   float moveZ = 0;
 
-  float rotateX = 0;
-  float rotateY = 0;
+  float yaw = 0;
+  float pitch = 0;
 };
 
-void GetPlayerInput(GLFWwindow* window, int activePlayers, playerActions& input)
+
+struct Player
 {
-  if (activePlayers == 1)
+  LumiCore::Camera camera;
+  std::shared_ptr<LumiCore::Model> model;
+  glm::vec3 position, rotation;
+  playerActions action;
+
+  Player(glm::vec3 startPos, glm::vec3 startRotation, std::shared_ptr<LumiCore::Model> model)
   {
+    position = startPos;
+    rotation = startRotation;
+
+    camera.SetLocation(startPos);
+    camera.SetYaw(startRotation.x);
+    camera.SetPitch(startRotation.y);
+
+    this->model = model;
+  }
+};
+
+// handle player input
+void GetPlayerInput(GLFWwindow* window, int activePlayers, std::vector<Player>& players)
+{
+  if (players.size() > 2) return;
+
+  if (activePlayers >= 1)
+  {
+    playerActions action;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
     {
-      input.moveX = 1;
+      action.moveX = 1;
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
     {
-      input.moveX = -1;
+      action.moveX = -1;
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
     {
-      input.moveZ = 1;
+      action.yaw = -1;
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
     {
-      input.moveZ = -1;
+      action.yaw = 1;
     }
-    return;
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+    {
+      action.pitch = 1;
+    }
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    {
+      action.pitch = -1;
+    }
+    players[0].action = action;
   }
 
-  if (activePlayers == 2)
+  if (players.size() >= 2)
   {
-
+    playerActions action;
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
     {
-      input.moveX = 1;
+      action.moveX = 1;
     }
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
     {
-      input.moveX = -1;
+      action.moveX = -1;
     }
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
     {
-      input.moveZ = 1;
+      action.yaw = -1;
     }
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
     {
-      input.moveZ = -1;
+      action.yaw = 1;
     }
-    return;
+    players[1].action = action;
   }
+};
+
+// this is where we are moving the player and chaning the player struct position
+void GameLogic(const int ActivePlayers, std::vector<Player>& players)
+{
+  constexpr float Speed = 1.0f;
+
+  for (Player& current : players)
+  {
+    playerActions& action = current.action;
+    LumiCore::Camera& camera = current.camera;
+    if (action.moveX != 0)
+    {
+      glm::vec3 location = camera.GetLocation();
+      location += camera.GetForwardDirection() * Speed * action.moveX;
+      camera.SetLocation(location);
+      current.position = location;
+    }
+    if (action.moveZ != 0)
+    {
+      glm::vec3 location = camera.GetLocation();
+      location += camera.GetRightDirection() * Speed * action.moveZ;
+      camera.SetLocation(location);
+      current.position = location;
+    }
+    if (action.yaw != 0)
+    {
+      float yaw = camera.GetYaw();
+      yaw += Speed * action.yaw;
+      camera.SetYaw(yaw);
+      current.rotation.x = yaw;
+    }
+    if (action.pitch != 0)
+    {
+      float pitch = camera.GetPitch();
+      pitch += Speed * action.pitch;
+      camera.SetPitch(pitch);
+      current.rotation.y = pitch;
+    }
+  }
+};
+
+// return the aspect ratio
+float updateViewPort(GLFWwindow* window, const int playerIndex, const int ActivePlayers)
+{
+  // DO MATH for dividing up the window into a split screen
+  int windowWidth;
+  int windowHeight;
+  glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
+
+  const bool IsPlayerOne = playerIndex == 0;
+
+  // BOTTOM X
+  int bx = ActivePlayers < 2 ? 0 : IsPlayerOne ? 0 : windowWidth / 2;
+
+  // TOP X
+  int tx = ActivePlayers < 2 ? windowWidth : IsPlayerOne ? windowWidth / 2 : windowWidth;
+
+  // Change the viewport for the screen
+  glViewport(bx, 0, tx, windowHeight);
+  glEnable(GL_SCISSOR_TEST);
+  glScissor(bx, 0, tx, windowHeight); // the area we should divide the screen up, same as the view port
+
+  if (IsPlayerOne) glClearColor(0.3f, .0f, .0f, 1.0f);
+  else glClearColor(0.0f, .0f, .3f, 1.0f);
+
+  /// DO THE RENDERING HERE ///
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+  // return aspect ratio
+  return ((float)tx - (float)bx) / (float)windowHeight;
+}
+
+
+// Render teh screen
+void renderPlay(GLFWwindow* window, Shader& shader, const int ActivePlayers, std::vector<Player>& players,
+                std::vector<Objects::GameObject>& renderObjects)
+{
+
+  glClearColor(.1f, .09f, .12f, 1.0f);
+  glEnable(GL_DEPTH_TEST);
+
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  glFrontFace(GL_CCW);
+
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  constexpr glm::vec3 forward(1.0f, 0.0f, 0.0f);
+  constexpr glm::vec3 up(0.0f, 1.0f, 0.0f);
+  constexpr glm::vec3 right(0.0f, 0.0f, 1.0f);
+
+  for (int i = 0; i < ActivePlayers; ++i)
+  {
+    Player& player = players[i];
+
+    // maybe change view port, then we also need to change the aspect ratio
+    player.camera.SetAspectRatio(updateViewPort(window, i, ActivePlayers));
+
+    shader.SetMatrix4("u_View", player.camera.GetViewMatrix());
+
+    for (auto& object : renderObjects)
+    {
+      if (object.model == nullptr) continue;
+
+      glm::mat4 model = glm::mat4(1.0f);
+
+      model = glm::translate(model, object.transform.Position);
+
+      model = glm::rotate(model, glm::radians(object.transform.Rotation.x), forward);
+      model = glm::rotate(model, glm::radians(object.transform.Rotation.y), up);
+      model = glm::rotate(model, glm::radians(object.transform.Rotation.z), right);
+
+      // if (object.type == Objects::ROTATE)
+      //{
+      //   model *= glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
+      // }
+
+      model = glm::scale(model, object.transform.Scale);
+
+      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+      shader.SetMatrix3("u_NormalMatrix", normalMatrix);
+      shader.SetMatrix4("u_Model", model);
+
+      object.model->Draw(shader);
+    }
+
+    // if there are more players render them out
+    if (ActivePlayers > 1)
+    {
+      Player& other = players[(i + 1) % ActivePlayers];
+
+
+      glm::mat4 model = glm::mat4(1.0f);
+      model = glm::translate(model, other.position);
+
+      // model = glm::rotate(model, glm::radians(other.rotation.x), forward);
+      model = glm::rotate(model, glm::radians(other.rotation.x), up);
+      model = glm::rotate(model, glm::radians(other.rotation.y), right);
+
+      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+      shader.SetMatrix3("u_NormalMatrix", normalMatrix);
+      shader.SetMatrix4("u_Model", model);
+
+
+      other.model->Draw(shader);
+    }
+  }
+  glDisable(GL_SCISSOR_TEST);
 };
 
 int main()
@@ -434,40 +617,27 @@ int main()
 
   ///////////////
 
-  Shader basic3DShader = Shader("assets/shaders/3dBasicShader.vert", "assets/shaders/3dBasicShader.frag");
-  if (!basic3DShader.IsValid())
+  Shader shader = Shader("assets/shaders/3dBasicShader.vert", "assets/shaders/3dBasicShader.frag");
+  if (!shader.IsValid())
   {
     LOG_ERROR("3D shader could not compile");
     return -2;
   }
 
-  basic3DShader.Use();
+  shader.Use();
   // these we only need to set one time as they are the same for now
-  basic3DShader.SetMatrix4("u_Projection", camera.GetProjectionMatrix());
-  basic3DShader.SetVec3("u_ViewPosition", camera.GetLocation()); // used for specular light
+  shader.SetMatrix4("u_Projection", camera.GetProjectionMatrix());
+  shader.SetVec3("u_ViewPosition", camera.GetLocation()); // used for specular light
 
-  basic3DShader.UnUse();
+  shader.UnUse();
 
   ///////////////
 
   LOG_INFO(std::format("OpenGL: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION))));
   LOG_INFO(std::format("Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER))));
 
-  bool bToggleRoofColor = false;
   float lastInputTime;
   bool bSwitchDrawingMode = false;
-  //
-  // Switch between projection matrixes
-  bool bHasSwitchedProjectionMatrix = false;
-  int projectionIndex = 0;
-
-  glClearColor(.1f, .09f, .12f, 1.0f);
-
-  glEnable(GL_DEPTH_TEST);
-
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
-  glFrontFace(GL_CCW);
 
   /// TEST WITH INPUTMANAGER ///
 
@@ -489,7 +659,7 @@ int main()
 
   // inputManager.AddKeybind(keybind2);
   // inputManager.BindKeybindPress(keybind2,
-  //                               [&camera, &basic3DShader]() { SwitchProjectionMatrix(camera, basic3DShader); });
+  //                               [&camera, &shader]() { SwitchProjectionMatrix(camera, basic3DShader); });
 
   /// TEST WITH INPUTMANAGER ///
 
@@ -498,13 +668,19 @@ int main()
   int cacheWindowHeigh;
   glfwGetFramebufferSize(window, &cacheWindowWitdh, &cacheWindowHeigh);
 
-  int activePlayers = {1};
+  std::vector<Player> players{
+      Player{glm::vec3(0.0f, 0.0f, -6.0f), glm::vec3(90, 0, 0),
+             RM.GetModel("assets/objects/cat/Maxwell.obj", textures)},
+      Player{glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(90, 0, 0),
+             RM.GetModel("assets/objects/barrel/Barrel.obj", textures)},
+  };
+
+  int activePlayers = (int)players.size();
 
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
   {
     float runningTime = glfwGetTime();
-
 
     int currentWindowWidth;
     int currentWindowHeight;
@@ -515,9 +691,9 @@ int main()
 
       camera.SetAspectRatio((float)currentWindowWidth / (float)currentWindowHeight);
 
-      basic3DShader.Use();
-      basic3DShader.SetMatrix4("u_View", camera.GetViewMatrix());
-      basic3DShader.UnUse();
+      shader.Use();
+      shader.SetMatrix4("u_View", camera.GetViewMatrix());
+      shader.UnUse();
       cacheWindowHeigh = currentWindowHeight;
       cacheWindowWitdh = currentWindowWidth;
     }
@@ -526,74 +702,24 @@ int main()
     //// Handle input ////
     //////////////////////
 
-    playerActions input{};
-
-    GetPlayerInput(window, activePlayers, input);
+    std::vector<playerActions> inputs;
+    inputs.resize(activePlayers);
+    GetPlayerInput(window, activePlayers, players);
 
     //////////////////////
     //// Handle Logic ////
     //////////////////////
 
-    constexpr float speed = 1.f;
-    {
-      if (input.moveX != 0)
-      {
-        glm::vec3 location = camera.GetLocation();
-        location += camera.GetForwardDirection() * speed * input.moveX;
-        camera.SetLocation(location);
-      }
+    GameLogic(activePlayers, players);
 
-      if (input.moveZ != 0)
-      {
-        glm::vec3 location = camera.GetLocation();
-        location += camera.GetRightDirection() * speed * input.moveZ;
-        camera.SetLocation(location);
-      }
-    }
-
-    LOG_DEBUG(std::format("Camera Location: x; {} y; {} z;{}", camera.GetLocation().x, camera.GetLocation().y,
-                          camera.GetLocation().z));
     //////////////////////////
     //// Handle Rendering ////
     //////////////////////////
 
     /* Render here */
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    shader.Use();
+    renderPlay(window, shader, activePlayers, players, renderObjects);
 
-    basic3DShader.Use();
-
-    basic3DShader.SetMatrix4("u_View", camera.GetViewMatrix());
-
-    const glm::vec3 forward(1.0f, 0.0f, 0.0f);
-    const glm::vec3 up(0.0f, 1.0f, 0.0f);
-    const glm::vec3 right(0.0f, 0.0f, 1.0f);
-
-
-    for (auto& object : renderObjects)
-    {
-      if (object.model == nullptr) continue;
-
-      glm::mat4 model = glm::mat4(1.0f);
-
-      model = glm::translate(model, object.transform.Position);
-
-      model = glm::rotate(model, glm::radians(object.transform.Rotation.x), forward);
-      model = glm::rotate(model, glm::radians(object.transform.Rotation.y), up);
-      model = glm::rotate(model, glm::radians(object.transform.Rotation.z), right);
-
-      if (object.type == Objects::ROTATE)
-      {
-        model *= glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
-      }
-
-      model = glm::scale(model, object.transform.Scale);
-
-      glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-      basic3DShader.SetMatrix3("u_NormalMatrix", normalMatrix);
-      basic3DShader.SetMatrix4("u_Model", model);
-
-      object.model->Draw(basic3DShader);
-    }
 
     glfwSwapBuffers(window);
     glfwPollEvents();

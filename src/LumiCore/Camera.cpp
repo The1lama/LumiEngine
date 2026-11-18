@@ -41,6 +41,18 @@ Camera& Camera::SetLocation(const glm::vec3 NewLocation)
   GenerateViewMatrix();
   return *this;
 }
+Camera& Camera::SetPitch(const float PitchValue)
+{
+  m_pitch = PitchValue;
+  GenerateViewMatrix();
+  return *this;
+}
+Camera& Camera::SetYaw(const float YawValue)
+{
+  m_yaw = YawValue;
+  GenerateViewMatrix();
+  return *this;
+}
 #pragma endregion
 
 #pragma region Getters
@@ -63,6 +75,14 @@ glm::vec3 Camera::GetForwardDirection() const
 glm::vec3 Camera::GetUpDirection() const
 {
   return m_up;
+}
+float Camera::GetYaw() const
+{
+  return m_yaw;
+}
+float Camera::GetPitch() const
+{
+  return m_pitch;
 };
 glm::vec3 Camera::GetRightDirection() const
 {

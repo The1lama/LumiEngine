@@ -23,7 +23,7 @@ protected:
   float m_pitch = 0.0f;
   float m_roll = 0.0f;
 
-  float m_fov{90};
+  float m_fov{120};
   float m_aspectRatio{1.77}; // standard 16/9
   float m_nearPlane{0.01f};
   float m_farPlane{100.0f};
@@ -36,6 +36,7 @@ protected:
 public:
   Camera(const glm::vec3 Position, const float FieldOfView, const float AspectRatio, const float NearPlane,
          const float FarPlane);
+  Camera() = default;
   ~Camera() = default;
 
   void SwitchProjectionMatrix();
@@ -43,6 +44,8 @@ public:
   Camera& SetFov(const float Fov);
   Camera& SetAspectRatio(const float AspectRatio);
   Camera& SetLocation(const glm::vec3 NewLocation);
+  Camera& SetPitch(const float PitchValue);
+  Camera& SetYaw(const float YawValue);
 
   glm::mat4 GetViewMatrix() const;
   glm::mat4 GetProjectionMatrix() const;
@@ -50,6 +53,8 @@ public:
   glm::vec3 GetForwardDirection() const;
   glm::vec3 GetRightDirection() const;
   glm::vec3 GetUpDirection() const;
+  float GetYaw() const;
+  float GetPitch() const;
 };
 
 } // namespace LumiCore
