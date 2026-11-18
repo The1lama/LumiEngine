@@ -1,7 +1,7 @@
 #include "InputSystem.h"
-#include <format>
 #include "GLFW/glfw3.h"
 #include "logger/Logger.h"
+#include <format>
 
 namespace LumiCore::InputSystem
 {
@@ -34,12 +34,12 @@ void InputSystem::KeyCallbackStatic(GLFWwindow* window, int key, int scancode, i
 
 void InputSystem::ProcessInput(int key, int scancode, int action, int mods)
 {
-  // bulid the keyinput
+  // build the key input
   InputKeyBind inputCombo;
   inputCombo.baseKey = (EKeyCode)key;
   inputCombo.modifierFlags = mods;
 
-  // send the notification event if there is a correct input action
+  // Send the notification event if there is a correct input action
   LOG_DEBUG(std::format("Action press: {}", action));
   if (action == GLFW_PRESS && m_keybindsPressed.contains(inputCombo))
   {
