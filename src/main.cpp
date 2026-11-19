@@ -1,3 +1,5 @@
+
+#define STB_IMAGE_IMPLEMENTATION
 #include "LumiCore/InputSystem.h"
 #include "LumiCore/Model.h"
 #include "LumiCore/ResourceManager.h"
@@ -8,11 +10,9 @@
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <memory>
 #include <string>
 #include <vector>
 
-#define STB_IMAGE_IMPLEMENTATION
 #include "LumiCore/Camera.h"
 #include "LumiCore/Mesh.h"
 #include "LumiCore/Shader.h"
@@ -199,8 +199,8 @@ namespace Objects
 
   struct GameObject
   {
-    LumiCore::Model* Model;
-    unsigned int TextureId;
+    std::string ModelPath;
+    std::string TexturePath;
     Transform Transform;
   };
 
@@ -257,7 +257,7 @@ namespace SceneStuff
 
     // TODO: Remove Object from scene
 
-    const std::vector<Objects::GameObject>& GetObjectsInWorldByType(const ObjectType type) const
+    std::vector<Objects::GameObject>& GetObjectsInWorldByType(const ObjectType type)
     {
       switch (type)
       {
@@ -277,13 +277,6 @@ namespace SceneStuff
 
 
 } // namespace SceneStuff
-
-
-namespace Resources
-{
-  void InitResources() {}
-} // namespace Resources
-
 
 void CallbackKeyPressFunction()
 {
@@ -316,11 +309,11 @@ namespace PlayerStuff
   struct Player
   {
     LumiCore::Camera Camera;
-    LumiCore::Model* Model;
+    std::string ModelPath;
     glm::vec3 Position, Rotation;
     playerActions Action;
 
-    Player(glm::vec3 startPos, glm::vec3 startRotation, LumiCore::Model* model)
+    Player(glm::vec3 startPos, glm::vec3 startRotation, std::string model)
     {
       Position = startPos;
       Rotation = startRotation;
@@ -329,7 +322,7 @@ namespace PlayerStuff
       Camera.SetYaw(startRotation.x);
       Camera.SetPitch(startRotation.y);
 
-      this->Model = model;
+      ModelPath = model;
     }
   };
 
@@ -472,7 +465,7 @@ namespace Pipeline
   // Render the screen
   void RenderPlay(GLFWwindow* window, Shader& shader, const int activePlayers,
                   std::vector<PlayerStuff::Player>& players, SceneStuff::Scene& scene,
-                  LumiCore::Resources::ResourceManager& resources)
+                  LumiCore::Resources::AssetManagers& resources)
   {
 
     glClearColor(.1f, .09f, .12f, 1.0f);
@@ -498,9 +491,10 @@ namespace Pipeline
 
       shader.SetMatrix4("u_View", player.Camera.GetViewMatrix());
 
-      for (const auto& object : scene.GetObjectsInWorldByType(SceneStuff::ObjectType::Static))
+      for (auto& object : scene.GetObjectsInWorldByType(SceneStuff::ObjectType::Static))
       {
-        if (!object.Model) continue;
+        LumiCore::Model& mesh = resources.Models.Get(object.ModelPath, resources);
+        if (!mesh.IsValid()) continue;
 
         glm::mat4 model = glm::mat4(1.0f);
 
@@ -510,18 +504,13 @@ namespace Pipeline
         model = glm::rotate(model, glm::radians(object.Transform.Rotation.y), up);
         model = glm::rotate(model, glm::radians(object.Transform.Rotation.z), right);
 
-        // if (object.type == Objects::ROTATE)
-        //{
-        //   model *= glm::rotate(glm::mat4(1.0f), glm::radians(runningTime * 50), up);
-        // }
-
         model = glm::scale(model, object.Transform.Scale);
 
         glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
         shader.SetMatrix3("u_NormalMatrix", normalMatrix);
         shader.SetMatrix4("u_Model", model);
 
-        object.Model->Draw(shader);
+        mesh.Draw(shader);
       }
 
       // if there are more players render them out
@@ -529,6 +518,8 @@ namespace Pipeline
       {
         Player& other = players[(i + 1) % activePlayers];
 
+        LumiCore::Model& mesh = resources.Models.Get(other.ModelPath, resources);
+        if (!mesh.IsValid()) continue;
 
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, other.Position);
@@ -541,8 +532,7 @@ namespace Pipeline
         shader.SetMatrix3("u_NormalMatrix", normalMatrix);
         shader.SetMatrix4("u_Model", model);
 
-
-        other.Model->Draw(shader);
+        mesh.Draw(shader);
       }
     }
     glDisable(GL_SCISSOR_TEST);
@@ -569,11 +559,7 @@ int main()
   glm::vec3 blackColor = glm::vec3(0.0f, 0.0f, 0.0f);
 
   SceneStuff::Scene currentScene;
-
-  LumiCore::Resources::ResourceManager rm;
-
-  unsigned int uvTexId = rm.GenerateTexture("assets/textures/uvTest.png");
-  unsigned int noiseTexId = rm.GenerateTexture("assets/textures/noise.jpg");
+  LumiCore::Resources::AssetManagers resources;
 
 #pragma region MeshObjects
 
@@ -581,51 +567,51 @@ int main()
 
   { // Barrel
     Objects::GameObject object;
-    object.Model = rm.GetModel("assets/objects/barrel/Barrel.obj", {});
-    object.TextureId = uvTexId;
+    object.ModelPath = "assets/objects/barrel/Barrel.obj";
+    object.TexturePath = "assets/textures/uvTest.png";
     object.Transform = {glm::vec3(-2.0f, 0.8f, 0.0f), glm::vec3(0, 0, 0), halfScale};
     currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
   }
   { // Maxwell 1
     Objects::GameObject object;
-    object.Model = rm.GetModel("assets/objects/cat/Maxwell.obj", {});
+    object.ModelPath = "assets/objects/cat/Maxwell.obj";
     object.Transform = {glm::vec3(0.0f, 0.8f, 0.0f), glm::vec3(0, 0, 0), halfScale};
-    object.TextureId = uvTexId;
+    object.TexturePath = "assets/textures/uvTest.png";
     currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
   }
   { // Maxwell 2
     Objects::GameObject object;
-    object.Model = rm.GetModel("assets/objects/cat/Maxwell.obj", {});
+    object.ModelPath = "assets/objects/cat/Maxwell.obj";
     object.Transform = {glm::vec3(2.0f, 0.8f, 0.0f), glm::vec3(0, 64, 0), halfScale};
-    object.TextureId = uvTexId;
+    object.TexturePath = "assets/textures/uvTest.png";
     currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
   }
   { // Guy
     Objects::GameObject object;
-    object.Model = rm.GetModel("assets/objects/guy/MaleVillager.obj", {});
+    object.ModelPath = "assets/objects/guy/MaleVillager.obj";
     object.Transform = {glm::vec3(-2.0f, -1.5f, .0f), glm::vec3(0, 45.f, 0), halfScale};
-    object.TextureId = uvTexId;
+    object.TexturePath = "assets/textures/uvTest.png";
     currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
   }
   { // TallBuilding02
     Objects::GameObject object;
-    object.Model = rm.GetModel("assets/objects/building/TallBuilding02.obj", {});
+    object.ModelPath = "assets/objects/building/TallBuilding02.obj";
     object.Transform = {glm::vec3(2.0f, -2.0f, 0.0f), glm::vec3(0.f), halfScale * 0.2f};
-    object.TextureId = uvTexId;
+    object.TexturePath = "assets/textures/uvTest.png";
     currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
   }
   { // SmallBuilding02
     Objects::GameObject object;
-    object.Model = rm.GetModel("assets/objects/smallBuilding/SmallBuilding02.obj", {});
+    object.ModelPath = "assets/objects/smallBuilding/SmallBuilding02.obj";
     object.Transform = {glm::vec3(0.0f, -2.0f, 0.0f), glm::vec3(0.f), halfScale * 0.4f};
-    object.TextureId = uvTexId;
+    object.TexturePath = "assets/textures/uvTest.png";
     currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
   }
   { // FILE NOT FOUND
     Objects::GameObject object;
-    object.Model = rm.GetModel("assets/objects/building/TallBuilding02", {});
+    object.ModelPath = "assets/objects/building/TallBuilding02";
     object.Transform = {glm::vec3(2.0f, -0.7f, 0.0f), glm::vec3(90.f), halfScale * 0.2f};
-    object.TextureId = uvTexId;
+    object.TexturePath = "assets/textures/uvTest.png";
     currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
   }
 
@@ -701,11 +687,10 @@ int main()
   glfwGetFramebufferSize(window, &cacheWindowWitdh, &cacheWindowHeigh);
 
   std::vector<PlayerStuff::Player> players{
-      PlayerStuff::Player{glm::vec3(0.0f, 0.0f, -6.0f), glm::vec3(90, 0, 0),
-                          rm.GetModel("assets/objects/cat/Maxwell.obj", {})},
-      PlayerStuff::Player{glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(90, 0, 0),
-                          rm.GetModel("assets/objects/barrel/Barrel.obj", {})},
+      PlayerStuff::Player{glm::vec3(0.0f, 0.0f, -6.0f), glm::vec3(90, 0, 0), "assets/objects/cat/Maxwell.obj"},
+      PlayerStuff::Player{glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(90, 0, 0), "assets/objects/barrel/Barrel.obj"},
   };
+
 
   int activePlayers = (int)players.size();
 
@@ -749,7 +734,7 @@ int main()
     //////////////////////////
 
     /* Render here */
-    Pipeline::RenderPlay(window, shader, activePlayers, players, currentScene, rm);
+    Pipeline::RenderPlay(window, shader, activePlayers, players, currentScene, resources);
 
     glfwSwapBuffers(window);
     glfwPollEvents();

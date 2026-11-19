@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <format>
 #include <fstream>
+#include <glad/glad.h>
 #include <string>
 #include <vector>
 
@@ -28,7 +29,6 @@ namespace LumiCore::Utility
 
     return fileExist && isValidExtention;
   }
-
 
   inline std::vector<std::string> SplitString(std::string s, const std::string& delimiter)
   {

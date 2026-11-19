@@ -1,10 +1,11 @@
 #pragma once
 
 
+#include "logger/Logger.h"
+#include <format>
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 namespace LumiCore
 {
@@ -15,47 +16,79 @@ namespace LumiCore
 
 namespace LumiCore::Resources
 {
+  struct AssetManagers;
 
+  template <typename Resource>
   class ResourceManager
   {
   protected:
-    std::unordered_map<std::string, std::unique_ptr<Model>> m_modelResources;
-    std::vector<Texture> m_textureResources;
+    std::unordered_map<std::string, std::unique_ptr<Resource>> m_resources;
 
-    std::unique_ptr<Model> GenerateModel(const std::string& path);
-    std::unique_ptr<Model> GenerateObject(const std::string& path, const std::vector<LumiCore::Texture>& textures);
-    std::unique_ptr<Model> CustomObjectLoader(const std::string& path, std::vector<LumiCore::Vertex>& vertices,
-                                              std::vector<unsigned int>& indices,
-                                              const std::vector<LumiCore::Texture>& textures);
+    /**
+     * Create new resource
+     *
+     * @ const std::string& resourcePath: The path to the resource we want to create
+     */
+    std::unique_ptr<Resource> CreateResource(const std::string& resourcePath);
 
   public:
-    /* Will return a model of the given path.
+    /**
+     * Get a resource from the resource manager
      *
-     * If it has a valid file extension and path
+     * @ const std::string& resourcePath: the path to the resource we want to use
      *
-     * If the model has already been created we just return the model
-     * else we create a new one
+     * @ return: a const reference of the resource
      */
-    Model* GetModel(const std::string& path, const std::vector<LumiCore::Texture>& textures);
+    Resource& Get(std::string& resourcePath, Resources::AssetManagers& resources);
 
     /**
-     * Generate texture and return the index
+     * The resource will be moved to the resource manager. This will put the resource in a moved from state.
+     * As we are moving the reference to the unsorted map
      *
-     * @ const std::string& path: the path the texture should generate from
+     * @ std::string& resourcePath: The path name to the rescource, it it the key for accessing the resource later
+     * @ Rescoure& ref: The type of resource we want to move to the unsorted map resource
      *
-     * @ Return: The index the texture is at
-     *
+     * @ return bool: if it successfully moved the resource to the map
      */
-    unsigned int GenerateTexture(const std::string& path, const std::string& typeOfMaterial = "material");
-    /**
-     * Get a texture from the gerenrated textures.
-     *
-     * @ const int index: The index of the texture that we got from GenerateTexture()
-     *
-     * @ Return: The texture
-     *
-     */
-    const Texture* GetTextureById(const unsigned int index);
+    bool Create(std::string& resourcePath, Resource& ref);
+
+    bool Contains(std::string& resourcePath) const;
+  };
+
+  template <typename Resource>
+  inline bool ResourceManager<Resource>::Contains(std::string& resourcePath) const
+  {
+    return m_resources.contains(resourcePath);
+  }
+
+  template <typename Resource>
+  inline bool ResourceManager<Resource>::Create(std::string& resourcePath, Resource& ref)
+  {
+    if (Contains(resourcePath)) return false;
+
+    LOG_DEBUG(std::format("Make new Resouce: {}", resourcePath));
+    m_resources.emplace(resourcePath, std::make_unique<Resource>(std::move(ref)));
+    return true;
+  }
+
+  template <typename Resource>
+  inline Resource& ResourceManager<Resource>::Get(std::string& resourcePath, Resources::AssetManagers& resources)
+  {
+    if (!Contains(resourcePath))
+    {
+      // Generate new resource
+      LOG_DEBUG(std::format("Make new Resouce: {}", resourcePath));
+      m_resources.emplace(resourcePath, std::make_unique<Resource>(resourcePath, resources));
+    }
+
+    return *m_resources.at(resourcePath);
+  }
+
+
+  struct AssetManagers
+  {
+    Resources::ResourceManager<LumiCore::Texture> Textures;
+    Resources::ResourceManager<LumiCore::Model> Models;
   };
 
 } // namespace LumiCore::Resources
