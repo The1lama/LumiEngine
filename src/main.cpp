@@ -201,14 +201,14 @@ namespace Objects
   {
     std::string ModelPath;
     std::string TexturePath;
-    Transform Transform;
+    Objects::Transform Transform;
   };
 
   struct StaticObject
   {
     std::string Model;
     std::string TextureName;
-    Transform Transform;
+    Objects::Transform Transform;
   };
 
 } // namespace Objects
@@ -217,6 +217,7 @@ namespace SceneStuff
 {
   enum class ObjectType
   {
+    None,
     Static,
     Dynamic,
   };
@@ -224,22 +225,119 @@ namespace SceneStuff
   struct Scene
   {
     // Scene Info //
-    // std::string SceneName;
-    // std::string FilePath;
-    // int LevelId;
+    std::string SceneName;
+    std::string FilePath;
+    int LevelId;
+
+    std::vector<glm::vec3> SpawnPoints;
+    glm::vec3 GoalPosition;
 
     // Scene Objects //
     std::vector<Objects::GameObject> WorldStatic;
     std::vector<Objects::GameObject> WorldDynamic;
 
-    // void Initialize(std::string& loadScene)
-    //{
-    //   // Parse thourgh the scene loader file
+    void Initialize(const std::string& newScene)
+    {
+      // check if file is correct
+      auto fsPath = std::filesystem::path(newScene);
+      if (fsPath.extension() != ".lscene") return; // This have to be done before calling initialize but is here now
 
-    //  // Add each object to scene
-    //  // AddToScene(Objects::GameObject &object, ObjectType type);
-    //}
+      FilePath = newScene;
 
+      // read file
+      std::ifstream file(newScene);
+      if (!file.is_open())
+      {
+        LOG_CRITICAL(std::format("Failed to open OBJ file: {}", newScene));
+        return;
+      }
+
+      ObjectType objectType = ObjectType::None;
+
+      // This will read the line in the file, line by line
+      std::string line;
+      while (std::getline(file, line))
+      {
+        std::stringstream ss(line);
+        std::string prefix;
+        ss >> prefix;
+
+        if (prefix == std::string("o")) // file name
+        {
+          ss >> SceneName;
+          LOG_DEBUG(std::format("Scene Loaded: {}", SceneName));
+        }
+        else if (prefix == std::string("sp")) // spawn point, is in a vector as there could be more SpawnPoints in scene
+        {
+          LOG_INFO("SpawnPoint has been found");
+          glm::vec3 sp;
+          ss >> sp.x >> sp.y >> sp.z;
+          SpawnPoints.emplace_back(sp);
+        }
+        else if (prefix == std::string("gp")) // Goal position
+        {
+          ss >> GoalPosition.x >> GoalPosition.y >> GoalPosition.z;
+          LOG_INFO("Goal Position has been found");
+        }
+        else if (prefix == std::string("END")) // Set the object type to None
+        {
+          LOG_INFO("END has been found");
+          objectType = ObjectType::None;
+        }
+        else if (prefix == std::string("STATIC")) // Set the object type to Static
+        {
+          LOG_INFO("STATIC has been found");
+          objectType = ObjectType::Static;
+        }
+        else if (prefix == std::string("DYNAMIC")) // Set the object type to Dynamic
+        {
+          LOG_INFO("DYNAMIC has been found");
+          objectType = ObjectType::Dynamic;
+        }
+        else if (prefix == std::string("e")) // Create Object/ model
+        {
+          LOG_INFO("E has been found");
+
+          Objects::GameObject object;
+
+          // get model path
+          std::string filePath;
+          ss >> filePath;
+          object.ModelPath = "assets/objects/" + filePath;
+
+          // Get texture if there is a specified
+          ss >> filePath;
+          if (filePath != "NONE") object.TexturePath = "assets/textures/" + filePath;
+
+          Objects::Transform transform;
+          // get Position
+          // glm::vec3 pos;
+
+          std::string posi;
+
+          ss >> posi;
+          std::vector<std::string> positions = LumiCore::Utility::SplitString(posi, ",");
+          LOG_DEBUG(std::format("Position: x: {} y: {} z: {}", positions[0], positions[1], positions[2]));
+          transform.Position = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
+
+          // Get Rotation
+          ss >> posi;
+          positions = LumiCore::Utility::SplitString(posi, ",");
+          LOG_DEBUG(std::format("Rotation: x: {} y: {} z: {}", positions[0], positions[1], positions[2]));
+          transform.Rotation = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
+
+          // Get Scale
+          ss >> posi;
+          positions = LumiCore::Utility::SplitString(posi, ",");
+          LOG_DEBUG(std::format("Scale: x: {} y: {} z: {}", positions[0], positions[1], positions[2]));
+          transform.Scale = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
+
+          object.Transform = transform;
+          AddToScene(object, objectType);
+        }
+      } // while
+        // parse through it
+    }
 
     void AddToScene(Objects::GameObject& object, const ObjectType type)
     {
@@ -247,10 +345,12 @@ namespace SceneStuff
       switch (type)
       {
       case ObjectType::Static:
-        WorldStatic.emplace_back(object);
+        WorldStatic.emplace_back(std::move(object));
         break;
       case ObjectType::Dynamic:
-        WorldDynamic.emplace_back(object);
+        WorldDynamic.emplace_back(std::move(object));
+        break;
+      case ObjectType::None:
         break;
       }
     }
@@ -386,6 +486,14 @@ namespace Pipeline
       {
         action.yaw = 1;
       }
+      if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
+      {
+        action.pitch = 1;
+      }
+      if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
+      {
+        action.pitch = -1;
+      }
       players[1].Action = action;
     }
   };
@@ -393,7 +501,7 @@ namespace Pipeline
   // This is where we are moving the player and modifying the player struct position
   void GameLogic(const int activePlayers, std::vector<Player>& players)
   {
-    constexpr float speed = 1.0f;
+    constexpr float speed = 0.4f;
 
     for (Player& current : players)
     {
@@ -495,11 +603,14 @@ namespace Pipeline
       {
         LumiCore::Model& mesh = resources.Models.Get(object.ModelPath, resources);
         if (!mesh.IsValid()) continue;
+        glActiveTexture(GL_TEXTURE0);
+
+        shader.SetInt("u_Texture_diffuse1", 0);
+        glBindTexture(GL_TEXTURE_2D, resources.Textures.Get(object.TexturePath, resources).id);
 
         glm::mat4 model = glm::mat4(1.0f);
 
         model = glm::translate(model, object.Transform.Position);
-
         model = glm::rotate(model, glm::radians(object.Transform.Rotation.x), forward);
         model = glm::rotate(model, glm::radians(object.Transform.Rotation.y), up);
         model = glm::rotate(model, glm::radians(object.Transform.Rotation.z), right);
@@ -552,13 +663,8 @@ int main()
     return -1;
   }
 
-  /// Colors ///
-  glm::vec3 redColor = glm::vec3(1.0f, 0.0f, 0.0f);
-  glm::vec3 greenColor = glm::vec3(0.0f, 1.0f, 0.0f);
-  glm::vec3 blueColor = glm::vec3(0.0f, 0.0f, 1.0f);
-  glm::vec3 blackColor = glm::vec3(0.0f, 0.0f, 0.0f);
-
   SceneStuff::Scene currentScene;
+  currentScene.Initialize("assets/scenes/main.lscene");
   LumiCore::Resources::AssetManagers resources;
 
 #pragma region MeshObjects
@@ -635,7 +741,7 @@ int main()
 
   ///////////////
 
-  Shader shader = Shader("assets/shaders/3dBasicShader.vert", "assets/shaders/3dBasicShader.frag");
+  Shader shader = Shader("assets/shaders/Shader.vert", "assets/shaders/Shader.frag");
   if (!shader.IsValid())
   {
     LOG_ERROR("3D shader could not compile");

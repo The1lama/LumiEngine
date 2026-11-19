@@ -10,9 +10,9 @@ in vec3 i_ViewPosition;
 in vec3 i_VertexNormal;
 
 uniform float uTime;
-uniform sampler2D u_Texture_0;
-uniform sampler2D u_Texture_1;
-uniform sampler2D u_Texture_2;
+uniform sampler2D u_Texture_diffuse1;
+uniform sampler2D u_Texture_specular1;
+uniform sampler2D u_Texture_normal1;
 
 out vec4 FragColor;
 
@@ -46,7 +46,7 @@ void main(){
   // Getting the color we should use in the fragment shader
   //vec3 d = vec3(i_Normal.x, i_Normal.y, i_Normal.z);
   //vec4 col = vec4(d, 1.0) *0.5+0.5;
-  vec4 tex = texture(u_Texture_0, i_UvCoord);
+  vec4 tex = texture(u_Texture_diffuse1, i_UvCoord);
 
   vec3 light = CalculateLighting();
 

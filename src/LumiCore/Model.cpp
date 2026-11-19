@@ -116,14 +116,14 @@ namespace LumiCore
     {
       aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
-      std::vector<Texture> diffuseMaps =
-          LoadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse", resources);
+      std::vector<Texture> diffuseMaps = LoadMaterialTextures(material, aiTextureType_DIFFUSE, "diffuse", resources);
       textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
 
-
-      std::vector<Texture> specularMaps =
-          LoadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular", resources);
+      std::vector<Texture> specularMaps = LoadMaterialTextures(material, aiTextureType_SPECULAR, "specular", resources);
       textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+
+      std::vector<Texture> normalMaps = LoadMaterialTextures(material, aiTextureType_NORMALS, "normal", resources);
+      textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
     }
 
     // Returns a finished created mesh for the model

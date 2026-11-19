@@ -114,15 +114,35 @@ namespace LumiCore
       return;
     }
 
+    unsigned int diffuseNr = 1;
+    unsigned int specularNr = 1;
+    unsigned int normalNr = 1;
     // Set the textures to a uniform slot
-    for (unsigned int i = 0; i < m_textures.size(); ++i)
-    {
-      // We can to GL_TEXUTRE0 + 1 becuase of how the macro is layed out in when going
-      // inside, i.e. hypotheticla we can increment the texture slot up to 31
-      glActiveTexture(GL_TEXTURE0 + i);
+    const unsigned int size = m_textures.size();
 
-      shader.SetInt(("u_Texture_" + std::to_string(i)), i);
-      glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
+    if (size > 0)
+    {
+      for (unsigned int i = 0; i < m_textures.size(); ++i)
+      {
+        // We can to GL_TEXUTRE0 + 1 becuase of how the macro is layed out in when going
+        // inside, i.e. hypotheticla we can increment the texture slot up to 31
+        glActiveTexture(GL_TEXTURE0 + i);
+
+        std::string number;
+        std::string name = m_textures[i].type;
+        if (name == "diffuse") number = std::to_string(diffuseNr++);
+        else if (name == "specular") number = std::to_string(specularNr++);
+        else if (name == "normal") number = std::to_string(normalNr++);
+
+        shader.SetInt(("u_Texture_" + name + number), (int)i);
+        glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
+      }
+    }
+    else
+    { // render untextured texture
+      glActiveTexture(GL_TEXTURE0);
+      shader.SetInt(("u_Texture_diffuse0"), 6);
+      glBindTexture(GL_TEXTURE_2D, 6);
     }
     glActiveTexture(GL_TEXTURE0); // Reset the active texture
 

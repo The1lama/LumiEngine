@@ -1,0 +1,17 @@
+o Main Level
+
+# Position Rotation
+sp 2 1 0 90 0 0
+sp -2 1 0 -90 0 0
+
+# Position
+gp 8 1 0
+
+# Static models
+STATIC 
+# Model_Name Texture_Name POS ROTATION SCALE
+e engine/Plane.obj uvTest.jpg 0,-4,0 0,0,0 20,20,20
+e engine/Cube.obj uvTest.jpg 2,2,2 0,0,0 0.2,0.2,0.2
+e guy/MaleVillager.obj NONE 0,0,0 0,0,0 1,1,1
+
+END
