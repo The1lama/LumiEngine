@@ -11,9 +11,11 @@ Checks: >
   clang-diagnostic-*,
   llvm-*,
   misc-*,
+  -bugprone-easily-swappable-parameters,
   -misc-no-recursion,
   -misc-unused-parameters,
   -misc-non-private-member-variables-in-classes,
+  -readability-avoid-const-params-in-decls,
   -readability-magic-numbers,
   -readability-implicit-bool-conversion,
   -readability-braces-around-statements,
@@ -21,6 +23,8 @@ Checks: >
   readability-identifier-naming
 
 CheckOptions:
+  - key: readability-identifier-naming.DefaultCase
+    value: CamelCase
   # Classes, structs and enums
   - key: readability-identifier-naming.ClassCase
     value: CamelCase
@@ -42,8 +46,22 @@ CheckOptions:
     value: camelBack
   - key: readability-identifier-naming.ParameterCase
     value: camelBack
+  - key: readability-identifier-naming.ConstantParameterCase
+    value: camelBack
+  - key: readability-identifier-naming.LocalConstantCase
+    value: camelBack
+  - key: readability-identifier-naming.ConstexprVariableCase
+    value: camelBack
+  - key: readability-identifier-naming.ConstantPointerParameterCase
+    value: camelBack
   - key: readability-identifier-naming.LocalVariableCase
     value: camelBack
+
+  # Static Variables
+  - key: readability-identifier-naming.StaticConstantCase
+    value: camelback
+  - key: readability-identifier-naming.StaticConstantCase
+    value: s_
 
   # Class member variables
   - key: readability-identifier-naming.PrivateMemberCase

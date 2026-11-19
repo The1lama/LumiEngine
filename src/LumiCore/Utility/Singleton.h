@@ -3,15 +3,15 @@
 
 #include <memory>
 #include <mutex>
-namespace LumiCore::Utility::Template
+namespace LumiCore::Utility::Function
 {
 
 template <typename T>
 class Singleton
 {
 private:
-  inline static std::unique_ptr<T> s_instance;
-  inline static std::mutex s_instanceMutexLock;
+  inline static std::unique_ptr<T> sInstance;
+  inline static std::mutex sInstanceMutexLock;
 
 protected:
   Singleton() = default;
@@ -27,15 +27,15 @@ public:
 
   // We call this function to get access to the logger, we check first if there
   // is already a singleton, if there is non we create it
-  inline static T* GetInstance()
+  static T* GetInstance()
   {
-    std::lock_guard<std::mutex> lock(s_instanceMutexLock);
-    if (!s_instance)
+    std::lock_guard<std::mutex> lock(sInstanceMutexLock);
+    if (!sInstance)
     {
-      s_instance.reset(new T());
+      sInstance.reset(new T());
     }
-    return s_instance.get();
+    return sInstance.get();
   }
 };
 
-} // namespace LumiCore::Utility::Template
+} // namespace LumiCore::Utility::Function
