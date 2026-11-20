@@ -37,6 +37,8 @@ BraceWrapping:
   SplitEmptyRecord: true
   SplitEmptyNamespace: true
 RemoveEmptyLinesInUnwrappedLines: true
+FixNamespaceComments: true
+ShortNamespaceLines : 1
 
 ###########################
 ### ALIGNMENT & SPACING ###
@@ -53,7 +55,6 @@ SpacesInAngles: false
 SpacesInConditionalStatement: false
 SpacesInCStyleCastParentheses: false
 SpacesInParentheses: false
-SpacesInBlockComments: Always
 
 
 ###############################
@@ -66,13 +67,9 @@ BreakConstructorInitializers: AfterColon
 BreakConstructorInitializersBeforeComma: false
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 MaxEmptyLinesToKeep: 2
-KeepEmptyLines:
-  AtEndOfBlock: false
-  AtEndOfFile: true
-  AtStartOfBlock: false
-  AtStartOfFile: false
+KeepEmptyLinesAtEOF: true
 InsertNewlineAtEOF: true
-InsertTrailingCommas: Wrapped
+InsertTrailingCommas: None
 
 #############################
 ### POINTERS & REFERENCES ###

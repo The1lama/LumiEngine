@@ -11,32 +11,39 @@ struct aiNode;
 struct aiMesh;
 struct aiScene;
 
+namespace LumiCore::Resources
+{
+  struct AssetManagers;
+} // namespace LumiCore::Resources
+
 namespace LumiCore
 {
 
-class Model
-{
+  class Model
+  {
+  public:
+    Model(const std::string& path, Resources::AssetManagers& resources);
 
-public:
-  Model(const char* path);
-  Model(const std::vector<Vertex>& vertecies, const std::vector<unsigned int>& indices,
-        const std::vector<Texture>& textures);
+    void Draw(const Shader& shader);
+    bool IsValid() const;
 
-  void Draw(const Shader& shader);
+  private:
+    std::vector<Mesh> m_meshes;
+    std::string m_directory;
 
-private:
-  std::vector<Mesh> m_meshes;
-  std::string m_directory;
-
-  void SaveInputedMesh(const std::vector<Vertex>& vertecies, const std::vector<unsigned int>& indices,
-                       const std::vector<Texture>& textures);
+    void SaveInputedMesh(const std::vector<Vertex>& vertecies, const std::vector<unsigned int>& indices,
+                         const std::vector<Texture>& textures);
 
 
-  void LoadModel(const std::string& path);
-  void ProccessNode(aiNode* node, const aiScene* scene);
-  Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene);
+    void LoadModel(const std::string& path, Resources::AssetManagers& resources);
+    void ProccessNode(aiNode* node, const aiScene* scene, Resources::AssetManagers& resources);
+    Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene, Resources::AssetManagers& resources);
 
-  std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
-};
+    void AssLoader(const std::string& path, Resources::AssetManagers& resources);
+    void CustomLoader(const std::string& path, Resources::AssetManagers& resources);
+
+    std::vector<Texture> LoadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName,
+                                              Resources::AssetManagers& resources);
+  };
 
 } // namespace LumiCore

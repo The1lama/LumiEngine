@@ -66,7 +66,7 @@ glm::mat4 Camera::GetProjectionMatrix() const
 }
 glm::vec3 Camera::GetLocation() const
 {
-  return m_position;
+ return m_position;
 }
 glm::vec3 Camera::GetForwardDirection() const
 {
