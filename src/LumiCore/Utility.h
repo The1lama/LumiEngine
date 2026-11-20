@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mesh.h"
+#include "glm/detail/qualifier.hpp"
 #include "logger/Logger.h"
 #include <filesystem>
 #include <format>
@@ -106,6 +107,23 @@ namespace LumiCore::Utility
   {
     const std::string path = directory + '/' + filename;
     return GenerateTexture(path);
+  }
+
+  inline std::string ReplaceAllChar(std::string str, const std::string& from, const std::string& to)
+  {
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos)
+    {
+      str.replace(start_pos, from.length(), to);
+      start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
+    }
+    return str;
+  }
+
+  template <typename T>
+  inline bool ContainsInVector(const std::vector<T>& vector, const T& item)
+  {
+    return std::find(vector.begin(), vector.end(), item) != vector.end();
   }
 
 

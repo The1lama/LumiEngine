@@ -1,36 +1,33 @@
 # This is a comment
-o: scene name
-t: transformation: Position Rotation Scale
-gp: goal Position: Position
-sp: spawn point: position rotation # there chould be more than one, for multiple players
-m: model: string #file path
-tex: texture: string #file path or NONE
-e: Object that we create
-
-model file path start from objects folder 
-texture file path start from texture folder. So if you want to use custom texture this is where you have to put them. 
-Textures can also be loaded from the same folder where the model is located at. but does not work with my obj loader only assimp
+# o: scene name
+# t: transformation: Position Rotation Scale
+# gp: goal Position: Position
+# sp: spawn point: position rotation # there chould be more than one, for multiple players
+# m: model: string #file path
+# tex: texture: string #file path or NONE
+# e: Object that we create
+# 
+# model file path start from objects folder 
+# texture file path start from texture folder. So if you want to use custom texture this is where you have to put them. 
+# Textures can also be loaded from the same folder where the model is located at. but does not work with my obj loader only assimp
 
 # Example:
-o Test Scene
+o Template Scene
 
 # Position Rotation
-sp 2 1 0 90 0 0
-sp -2 1 0 -90 0 0
+sp  1,1,0  90,0,0
+sp -8,1,0 -90,0,0
 
 # Position
-gp 8 1 0
+gp 8,1,0
 
 STATIC 
-# Model_Name Texture_Name POS ROTATION SCALE
-e cube uvTest.jpg 0 0 0 0 0 0 20 20 1
-e guy NONE 4 1 1 0 0 0 1 1 1
-
+# Model_Name           Texture_Name   POS   ROTATION     SCALE
+e engine/Plane.obj      noise.jpg    0,-4,0   0,0,0   20.0,20.0,20.0
+e engine/Cube.obj       uvTest.png   0,0,0    0,0,0   20,20,1
+e guy/MaleVillager.obj  NONE         4,1,1    0,0,0   1,1,1
 END
 
-DYNAMIC 
-# Model_Name Texture_Name POS ROTATION SCALE
-e cube uvTest.jpg 0 0 0 0 0 0 20 20 1
-e guy NONE 4 1 1 0 0 0 1 1 1
-
-END
+# DYNAMIC 
+# # Model_Name Texture_Name POS ROTATION SCALE
+# END
