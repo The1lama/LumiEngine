@@ -864,6 +864,7 @@ int main()
     players.emplace_back(PlayerStuff::Player{transform.Position, transform.Rotation, "assets/objects/cat/Maxwell.obj"});
   }
 
+  std::vector<std::string> sceneList = SceneManager.GetAllScenes();
   bool showAnotherWindow{false};
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
@@ -876,30 +877,46 @@ int main()
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
 
-    { // Test frame we draw
-      static float f = .0f;
-      static int counter = 0;
-
-      ImGui::Begin("Hello, World!");
-      ImGui::Text("A Quick Brown Fox Jumps Over the Lazy Dog");
-      ImGui::Checkbox("Demo Box", &showAnotherWindow);
-
-      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-
-      if (ImGui::Button("Button")) ++counter;
-
-      ImGui::SameLine();
-      ImGui::Text("Counter = %d", counter);
-
+    { // Draw scene switcher
+      ImGui::Begin("LumiEngine");
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+      ImGui::Checkbox("Check Scene List", &showAnotherWindow);
+
+      for (int i = 0; i < activePlayers; i++)
+      {
+        PlayerStuff::Player& p = players[i];
+        std::string playerPosText =
+            std::format("Player {} pos {},{},{}", i + 1, p.Position.x, p.Position.y, p.Position.z);
+        ImGui::Text("%s", playerPosText.c_str());
+      }
+
       ImGui::End();
     }
 
+
     if (showAnotherWindow)
     {
-      ImGui::Begin("Another Window", &showAnotherWindow);
-      ImGui::Text("Hello from another siiiiiide");
-      if (ImGui::Button("Close Me"))
+      ImGui::Begin("Scene Switcher", &showAnotherWindow);
+
+      ImGui::Text("Switch Scene by Pressing on the button");
+      for (int i = 0; i < sceneList.size(); ++i)
+      {
+        std::string name = sceneList[i];
+        if (ImGui::Button(name.c_str()))
+        {
+          // Switch the scene
+          SceneManager.SwitchScene(name);
+
+          // Move the players to spawn location
+          for (int i = 0; i < activePlayers; i++)
+          {
+            Objects::Transform transform = SceneManager.GetCurrentScene().SpawnPoints[i];
+            players[i].Position = transform.Position;
+            players[i].Rotation = transform.Rotation;
+          }
+        }
+      }
+      if (ImGui::Button("Close"))
       {
         showAnotherWindow = false;
       }

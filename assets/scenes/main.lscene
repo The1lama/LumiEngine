@@ -1,8 +1,8 @@
 o Main Level
 
 #  Position Rotation
-sp   2,1,0  0,0,0
-sp  -2,1,0  0,0,0
+sp   0,1,0  0,0,0
+sp  -6,1,30  0,0,0
 
 # Position
 gp 8,1,0
