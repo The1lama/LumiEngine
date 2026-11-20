@@ -1,4 +1,5 @@
 
+#include "LumiCore/EngineSettings.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "LumiCore/InputSystem.h"
 #include "LumiCore/Model.h"
@@ -33,13 +34,6 @@ namespace WindowOpenGL
   {
     glViewport(0, 0, width, height);
   }
-
-  struct EditorSettings
-  {
-    int windowWidth = 640;
-    int windowHeight = 480;
-    const char* windowTitle = "LumiEngine";
-  };
 
   static int renderingModeIndex;
   void SwitchRenderingMode()
@@ -144,13 +138,11 @@ namespace WindowOpenGL
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    EditorSettings settings;
-
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 
     /* Create a windowed mode window and its OpenGL context */
     GLFWwindow* window =
-        glfwCreateWindow(settings.windowWidth, settings.windowHeight, settings.windowTitle, nullptr, nullptr);
+        glfwCreateWindow(LumiEngine::windowWidth, LumiEngine::windowHeight, LumiEngine::windowTitle, nullptr, nullptr);
 
     if (!window)
     {
@@ -383,16 +375,6 @@ void CallbackKeyPressFunction()
   LOG_DEBUG("Keypress callback has beedn called");
 }
 
-void SwitchProjectionMatrix(LumiCore::Camera& camera, Shader& shader)
-{
-  camera.SwitchProjectionMatrix();
-
-  shader.Use();
-  shader.SetMatrix4("u_Projection", camera.GetProjectionMatrix());
-  shader.UnUse();
-}
-
-
 namespace PlayerStuff
 {
 
@@ -546,18 +528,22 @@ namespace Pipeline
     int windowHeight;
     glfwGetFramebufferSize(window, &windowWidth, &windowHeight);
 
+    if (windowHeight <= 0 || windowWidth <= 0) return 1.0f;
+
     const bool isPlayerOne = playerIndex == 0;
+    const int halftWidth = windowWidth / 2;
 
     // BOTTOM X
-    int bx = activePlayers < 2 ? 0 : isPlayerOne ? 0 : windowWidth / 2;
+    const int bottomX = (activePlayers < 2) ? 0 : (isPlayerOne ? 0 : halftWidth);
 
     // TOP X
-    int tx = activePlayers < 2 ? windowWidth : isPlayerOne ? windowWidth / 2 : windowWidth;
+    const int topX = (activePlayers < 2) ? windowWidth : (isPlayerOne ? halftWidth : windowWidth);
+    const int viewportWidth = topX - bottomX;
 
     // Change the viewport for the screen
-    glViewport(bx, 0, tx, windowHeight);
+    glViewport(bottomX, 0, viewportWidth, windowHeight);
     glEnable(GL_SCISSOR_TEST);
-    glScissor(bx, 0, tx, windowHeight); // The area we should divide the screen up, same as the viewport
+    glScissor(bottomX, 0, viewportWidth, windowHeight); // The area we should divide the screen up, same as the viewport
 
     if (isPlayerOne) glClearColor(0.3f, .0f, .0f, 1.0f);
     else glClearColor(0.0f, .0f, .3f, 1.0f);
@@ -565,9 +551,8 @@ namespace Pipeline
     /// DO THE RENDERING HERE ///
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
     // return aspect ratio
-    return ((float)tx - (float)bx) / (float)windowHeight;
+    return (float)viewportWidth / (float)windowHeight;
   }
 
   // Render the screen
@@ -598,6 +583,7 @@ namespace Pipeline
       player.Camera.SetAspectRatio(UpdateViewPort(window, i, activePlayers));
 
       shader.SetMatrix4("u_View", player.Camera.GetViewMatrix());
+      shader.SetMatrix4("u_Projection", player.Camera.GetProjectionMatrix());
 
       for (auto& object : scene.GetObjectsInWorldByType(SceneStuff::ObjectType::Static))
       {
@@ -723,22 +709,6 @@ int main()
 
 #pragma endregion MeshObjects
 
-  /////////////// PROJECTION ///////////////
-
-  glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, -6.0f);
-
-  const auto fov = glm::radians(45.0f);
-  int frameWidth;
-  int frameHeight;
-  glfwGetFramebufferSize(window, &frameWidth, &frameHeight);
-  float aspectRatio = (float)frameWidth / (float)frameHeight;
-
-  constexpr float nearPlane = 0.01f;
-  constexpr float farPlane = 100.0f;
-  LumiCore::Camera camera(cameraPos, fov, aspectRatio, nearPlane, farPlane);
-
-  ///////////////
-
   ///////////////
 
   Shader shader = Shader("assets/shaders/Shader.vert", "assets/shaders/Shader.frag");
@@ -748,20 +718,10 @@ int main()
     return -2;
   }
 
-  shader.Use();
-  // These we only need to set one time as they are the same for now
-  shader.SetMatrix4("u_Projection", camera.GetProjectionMatrix());
-  shader.SetVec3("u_ViewPosition", camera.GetLocation()); // used for specular light
-
-  shader.UnUse();
-
   ///////////////
 
   LOG_INFO(std::format("OpenGL: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION))));
   LOG_INFO(std::format("Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER))));
-
-  float lastInputTime;
-  bool bSwitchDrawingMode = false;
 
   /// TEST WITH INPUTMANAGER ///
 
@@ -787,39 +747,16 @@ int main()
 
   /// TEST WITH INPUTMANAGER ///
 
-  // window cache size
-  int cacheWindowWitdh;
-  int cacheWindowHeigh;
-  glfwGetFramebufferSize(window, &cacheWindowWitdh, &cacheWindowHeigh);
-
   std::vector<PlayerStuff::Player> players{
       PlayerStuff::Player{glm::vec3(0.0f, 0.0f, -6.0f), glm::vec3(90, 0, 0), "assets/objects/cat/Maxwell.obj"},
       PlayerStuff::Player{glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(90, 0, 0), "assets/objects/barrel/Barrel.obj"},
   };
-
-
   int activePlayers = (int)players.size();
 
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
   {
     float runningTime = (float)glfwGetTime();
-
-    int currentWindowWidth;
-    int currentWindowHeight;
-    glfwGetFramebufferSize(window, &currentWindowWidth, &currentWindowHeight);
-
-    if (cacheWindowWitdh != currentWindowWidth || cacheWindowHeigh != currentWindowHeight)
-    {
-
-      camera.SetAspectRatio((float)currentWindowWidth / (float)currentWindowHeight);
-
-      shader.Use();
-      shader.SetMatrix4("u_View", camera.GetViewMatrix());
-      shader.UnUse();
-      cacheWindowHeigh = currentWindowHeight;
-      cacheWindowWitdh = currentWindowWidth;
-    }
 
     //////////////////////
     //// Handle input ////

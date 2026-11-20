@@ -11,4 +11,9 @@ namespace LumiEngine
   // A validation vector of all the
   static const std::vector<std::string> ValidObjectFileExtentsions = {".obj"};
 
+  static int windowWidth = 640;
+  static int windowHeight = 480;
+  static const char* windowTitle = "LumiEngine";
+
+
 } // namespace LumiEngine
