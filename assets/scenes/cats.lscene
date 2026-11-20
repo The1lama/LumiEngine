@@ -1,0 +1,23 @@
+o Master of Cats
+
+# Position Rotation
+sp  20,1,0 -180,0,0
+sp -20,1,0 0,0,0
+
+# Position
+gp 8,1,0
+
+# Static models
+STATIC 
+#   Model_Name                     Texture_Name   POS      ROTATION     SCALE
+e engine/Plane.obj                  noise.jpg   0,-4,0     0,0,0     20.0,20.0,20.0
+e cat/Maxwell.obj                   uvTest.png   2,2,2      0,0,0     0.2,0.2,0.2
+e cat/Maxwell.obj                   NONE         10,0,0      0,0,0     1,0,1.0,1.0
+e cat/Maxwell.ob                    uvTest.png  -2,0.8,0    0,0,0     0.5,0.5,0.5
+e cat/Maxwell.obj                   uvTest.png   0,0.8,10    0,0,0     0.5,0.5,0.5
+e cat/Maxwell.obj                   uvTest.png   2,0.8,0    0,0,0     0.5,0.5,0.5
+e cat/Maxwell.obj                   uvTest.png  -2,-1.5,0   0,45,0    0.5,0.5,0.5
+e cat/Maxwell.obj                   NONE        2,-2,4     0,0,0     0.2,0.2,0.2
+e cat/Maxwell.obj                   uvTest.png   8,-2,0     0,0,0     0.4,0.4,0.4
+e cat/Maxwell.obj                   uvTest.png   0,-2,8     0,0,0     0.4,0.4,0.4
+END

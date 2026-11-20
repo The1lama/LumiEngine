@@ -1,17 +1,23 @@
 o Main Level
 
-# Position Rotation
-sp 2 1 0 90 0 0
-sp -2 1 0 -90 0 0
+#  Position Rotation
+sp   2,1,0  0,0,0
+sp  -2,1,0  0,0,0
 
 # Position
-gp 8 1 0
+gp 8,1,0
 
 # Static models
 STATIC 
-# Model_Name Texture_Name POS ROTATION SCALE
-e engine/Plane.obj uvTest.jpg 0,-4,0 0,0,0 20,20,20
-e engine/Cube.obj uvTest.jpg 2,2,2 0,0,0 0.2,0.2,0.2
-e guy/MaleVillager.obj NONE 0,0,0 0,0,0 1,1,1
-
+#   Model_Name                     Texture_Name   POS      ROTATION     SCALE
+e engine/Plane.obj                  uvTest.png   0,-4,0     0,0,0     20.0,20.0,20.0
+e engine/Cube.obj                   uvTest.png   2,2,2      0,0,0     0.2,0.2,0.2
+e guy/MaleVillager.obj              uvTest.png         10,0,0      0,0,0     1,0,1.0,1.0
+e barrel/barrel.ob                  uvTest.png  -2,0.8,0    0,0,0     0.5,0.5,0.5
+e cat/Maxwell.obj                   uvTest.png   0,0.8,10    0,0,0     0.5,0.5,0.5
+e cat/Maxwell.obj                   uvTest.png   2,0.8,0    0,0,0     0.5,0.5,0.5
+e guy/MaleVillager.obj              uvTest.png  -2,-1.5,0   0,45,0    0.5,0.5,0.5
+e building/TallBuilding02.obj       uvTest.png         2,-2,4     0,0,0     0.2,0.2,0.2
+e smallBuilding/SmallBuilding02.obj uvTest.png   8,-2,0     0,0,0     0.4,0.4,0.4
+e smallBuilding/SmallBuilding0.obj  uvTest.png   0,-2,8     0,0,0     0.4,0.4,0.4
 END

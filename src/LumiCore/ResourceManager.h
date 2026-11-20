@@ -51,6 +51,7 @@ namespace LumiCore::Resources
      * @ return bool: if it successfully moved the resource to the map
      */
     bool Create(std::string& resourcePath, Resource& ref);
+    bool Create(std::string& resource, std::string& directory, Resource& ref);
 
     bool Contains(std::string& resourcePath) const;
   };
@@ -65,9 +66,16 @@ namespace LumiCore::Resources
   inline bool ResourceManager<Resource>::Create(std::string& resourcePath, Resource& ref)
   {
     if (Contains(resourcePath)) return false;
-
     LOG_DEBUG(std::format("Make new Resouce: {}", resourcePath));
     m_resources.emplace(resourcePath, std::make_unique<Resource>(std::move(ref)));
+    return true;
+  }
+  template <typename Resource>
+  inline bool ResourceManager<Resource>::Create(std::string& resource, std::string& directory, Resource& ref)
+  {
+    if (Contains(directory + resource)) return false;
+    LOG_DEBUG(std::format("Moing Resouce to resource manager: {}", resource));
+    m_resources.emplace(directory + resource, std::make_unique<Resource>(std::move(ref)));
     return true;
   }
 
@@ -77,7 +85,6 @@ namespace LumiCore::Resources
     if (!Contains(resourcePath))
     {
       // Generate new resource
-      LOG_DEBUG(std::format("Make new Resouce: {}", resourcePath));
       m_resources.emplace(resourcePath, std::make_unique<Resource>(resourcePath, resources));
     }
 

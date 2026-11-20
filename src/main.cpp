@@ -186,7 +186,7 @@ namespace Objects
   {
     glm::vec3 Position;
     glm::vec3 Rotation;
-    glm::vec3 Scale;
+    glm::vec3 Scale = glm::vec3(1.0f);
   };
 
   struct GameObject
@@ -221,18 +221,19 @@ namespace SceneStuff
     std::string FilePath;
     int LevelId;
 
-    std::vector<glm::vec3> SpawnPoints;
+    std::vector<Objects::Transform> SpawnPoints;
     glm::vec3 GoalPosition;
 
     // Scene Objects //
     std::vector<Objects::GameObject> WorldStatic;
     std::vector<Objects::GameObject> WorldDynamic;
 
-    void Initialize(const std::string& newScene)
+    bool Initialize(const std::string& newScene)
     {
       // check if file is correct
       auto fsPath = std::filesystem::path(newScene);
-      if (fsPath.extension() != ".lscene") return; // This have to be done before calling initialize but is here now
+      if (fsPath.extension() != ".lscene")
+        return false; // This have to be done before calling initialize but is here now
 
       FilePath = newScene;
 
@@ -240,31 +241,59 @@ namespace SceneStuff
       std::ifstream file(newScene);
       if (!file.is_open())
       {
-        LOG_CRITICAL(std::format("Failed to open OBJ file: {}", newScene));
-        return;
+        LOG_CRITICAL(std::format("Failed to open scene file: {}", newScene));
+        return false;
       }
 
       ObjectType objectType = ObjectType::None;
 
       // This will read the line in the file, line by line
       std::string line;
+      unsigned int row = -1;
       while (std::getline(file, line))
       {
         std::stringstream ss(line);
         std::string prefix;
         ss >> prefix;
-
+        ++row;
         if (prefix == std::string("o")) // file name
         {
-          ss >> SceneName;
+          std::string str;
+          while (ss >> str || IsNotAComment(str))
+          {
+            SceneName = std::format("{} {}", SceneName, str);
+          }
           LOG_DEBUG(std::format("Scene Loaded: {}", SceneName));
         }
         else if (prefix == std::string("sp")) // spawn point, is in a vector as there could be more SpawnPoints in scene
         {
           LOG_INFO("SpawnPoint has been found");
-          glm::vec3 sp;
-          ss >> sp.x >> sp.y >> sp.z;
-          SpawnPoints.emplace_back(sp);
+          Objects::Transform transfrom;
+          std::string stringTransform;
+
+          // Get Position
+          ss >> stringTransform;
+          std::vector<std::string> positions = LumiCore::Utility::SplitString(stringTransform, ",");
+          if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
+          {
+            LOG_WARNING(std::format("Could not load in {} row. As poition is wrongly formated", row));
+            transfrom.Position = glm::vec3(0);
+          }
+          else
+            transfrom.Position = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
+
+          // Get Rotation
+          ss >> stringTransform;
+          positions = LumiCore::Utility::SplitString(stringTransform, ",");
+          if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
+          {
+            LOG_WARNING(std::format("Could not load in {} row. As poition is wrongly formated", row));
+            transfrom.Rotation = glm::vec3(0);
+          }
+          else
+            transfrom.Rotation = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
+
+          SpawnPoints.emplace_back(transfrom);
         }
         else if (prefix == std::string("gp")) // Goal position
         {
@@ -273,23 +302,18 @@ namespace SceneStuff
         }
         else if (prefix == std::string("END")) // Set the object type to None
         {
-          LOG_INFO("END has been found");
           objectType = ObjectType::None;
         }
         else if (prefix == std::string("STATIC")) // Set the object type to Static
         {
-          LOG_INFO("STATIC has been found");
           objectType = ObjectType::Static;
         }
         else if (prefix == std::string("DYNAMIC")) // Set the object type to Dynamic
         {
-          LOG_INFO("DYNAMIC has been found");
           objectType = ObjectType::Dynamic;
         }
         else if (prefix == std::string("e")) // Create Object/ model
         {
-          LOG_INFO("E has been found");
-
           Objects::GameObject object;
 
           // get model path
@@ -302,26 +326,35 @@ namespace SceneStuff
           if (filePath != "NONE") object.TexturePath = "assets/textures/" + filePath;
 
           Objects::Transform transform;
-          // get Position
-          // glm::vec3 pos;
-
           std::string posi;
 
           ss >> posi;
           std::vector<std::string> positions = LumiCore::Utility::SplitString(posi, ",");
-          LOG_DEBUG(std::format("Position: x: {} y: {} z: {}", positions[0], positions[1], positions[2]));
+          if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
+          {
+            LOG_WARNING(std::format("Could not load in {} row. As poition is wrongly formated", row));
+            continue;
+          }
           transform.Position = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
 
           // Get Rotation
           ss >> posi;
           positions = LumiCore::Utility::SplitString(posi, ",");
-          LOG_DEBUG(std::format("Rotation: x: {} y: {} z: {}", positions[0], positions[1], positions[2]));
+          if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
+          {
+            LOG_WARNING(std::format("Could not load in {} row. As Rotation is wrongly formated", row));
+            continue;
+          }
           transform.Rotation = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
 
           // Get Scale
           ss >> posi;
           positions = LumiCore::Utility::SplitString(posi, ",");
-          LOG_DEBUG(std::format("Scale: x: {} y: {} z: {}", positions[0], positions[1], positions[2]));
+          if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
+          {
+            LOG_WARNING(std::format("Could not load in {} row. As Scale is wrongly formated", row));
+            continue;
+          }
           transform.Scale = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
 
           object.Transform = transform;
@@ -329,6 +362,12 @@ namespace SceneStuff
         }
       } // while
         // parse through it
+      return true;
+    }
+
+    bool IsNotAComment(std::string str)
+    {
+      return str == "#";
     }
 
     void AddToScene(Objects::GameObject& object, const ObjectType type)
@@ -591,8 +630,17 @@ namespace Pipeline
         if (!mesh.IsValid()) continue;
         glActiveTexture(GL_TEXTURE0);
 
-        shader.SetInt("u_Texture_diffuse1", 0);
-        glBindTexture(GL_TEXTURE_2D, resources.Textures.Get(object.TexturePath, resources).id);
+        std::string& texPath = object.TexturePath;
+        if (!texPath.empty())
+        {
+          auto texId = resources.Textures.Get(texPath, resources).id;
+          shader.SetInt("u_Texture_diffuse1", texId);
+          glBindTexture(GL_TEXTURE_2D, texId);
+        }
+
+        //   glActiveTexture(GL_TEXTURE0);
+        //   shader.SetInt(("u_Texture_diffuse0"), 6);
+        //   glBindTexture(GL_TEXTURE_2D, 6);
 
         glm::mat4 model = glm::mat4(1.0f);
 
@@ -621,9 +669,9 @@ namespace Pipeline
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, other.Position);
 
-        // model = glm::rotate(model, glm::radians(other.rotation.x), forward);
         model = glm::rotate(model, glm::radians(other.Rotation.x), up);
         model = glm::rotate(model, glm::radians(other.Rotation.y), right);
+        model = glm::rotate(model, glm::radians(other.Rotation.z), forward);
 
         glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
         shader.SetMatrix3("u_NormalMatrix", normalMatrix);
@@ -650,64 +698,15 @@ int main()
   }
 
   SceneStuff::Scene currentScene;
-  currentScene.Initialize("assets/scenes/main.lscene");
+  if (!currentScene.Initialize("assets/scenes/main.lscene"))
+  {
+    glfwTerminate();
+    return -1;
+  } // main.lscene // guy.lscene // cats.lscene
+
+  const std::string newWindowTitle = std::format("{} | {}", LumiEngine::windowTitle, currentScene.SceneName);
+  glfwSetWindowTitle(window, newWindowTitle.c_str());
   LumiCore::Resources::AssetManagers resources;
-
-#pragma region MeshObjects
-
-  glm::vec3 halfScale(0.5f, 0.5f, 0.5f);
-
-  { // Barrel
-    Objects::GameObject object;
-    object.ModelPath = "assets/objects/barrel/Barrel.obj";
-    object.TexturePath = "assets/textures/uvTest.png";
-    object.Transform = {glm::vec3(-2.0f, 0.8f, 0.0f), glm::vec3(0, 0, 0), halfScale};
-    currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
-  }
-  { // Maxwell 1
-    Objects::GameObject object;
-    object.ModelPath = "assets/objects/cat/Maxwell.obj";
-    object.Transform = {glm::vec3(0.0f, 0.8f, 0.0f), glm::vec3(0, 0, 0), halfScale};
-    object.TexturePath = "assets/textures/uvTest.png";
-    currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
-  }
-  { // Maxwell 2
-    Objects::GameObject object;
-    object.ModelPath = "assets/objects/cat/Maxwell.obj";
-    object.Transform = {glm::vec3(2.0f, 0.8f, 0.0f), glm::vec3(0, 64, 0), halfScale};
-    object.TexturePath = "assets/textures/uvTest.png";
-    currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
-  }
-  { // Guy
-    Objects::GameObject object;
-    object.ModelPath = "assets/objects/guy/MaleVillager.obj";
-    object.Transform = {glm::vec3(-2.0f, -1.5f, .0f), glm::vec3(0, 45.f, 0), halfScale};
-    object.TexturePath = "assets/textures/uvTest.png";
-    currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
-  }
-  { // TallBuilding02
-    Objects::GameObject object;
-    object.ModelPath = "assets/objects/building/TallBuilding02.obj";
-    object.Transform = {glm::vec3(2.0f, -2.0f, 0.0f), glm::vec3(0.f), halfScale * 0.2f};
-    object.TexturePath = "assets/textures/uvTest.png";
-    currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
-  }
-  { // SmallBuilding02
-    Objects::GameObject object;
-    object.ModelPath = "assets/objects/smallBuilding/SmallBuilding02.obj";
-    object.Transform = {glm::vec3(0.0f, -2.0f, 0.0f), glm::vec3(0.f), halfScale * 0.4f};
-    object.TexturePath = "assets/textures/uvTest.png";
-    currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
-  }
-  { // FILE NOT FOUND
-    Objects::GameObject object;
-    object.ModelPath = "assets/objects/building/TallBuilding02";
-    object.Transform = {glm::vec3(2.0f, -0.7f, 0.0f), glm::vec3(90.f), halfScale * 0.2f};
-    object.TexturePath = "assets/textures/uvTest.png";
-    currentScene.AddToScene(object, SceneStuff::ObjectType::Static);
-  }
-
-#pragma endregion MeshObjects
 
   ///////////////
 
@@ -724,34 +723,31 @@ int main()
   LOG_INFO(std::format("Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER))));
 
   /// TEST WITH INPUTMANAGER ///
-
   // LumiCore::InputSystem::InputSystem inputManager(window);
-
   // LumiCore::InputSystem::InputKeyBind keybindW{LumiCore::InputSystem::EKeyCode::Keycode_W, 0};
   // LumiCore::InputSystem::InputKeyBind keybindA{LumiCore::InputSystem::EKeyCode::Keycode_A, 0};
   // LumiCore::InputSystem::InputKeyBind keybind1{LumiCore::InputSystem::EKeyCode::Keycode_Key1, 0};
   // LumiCore::InputSystem::InputKeyBind keybind2{LumiCore::InputSystem::EKeyCode::Keycode_Key2, 0};
-
   // inputManager.AddKeybind(keybindW);
   // inputManager.BindKeybindPress(keybindW, CallbackKeyPressFunction);
-
   // inputManager.AddKeybind(keybindA);
   // inputManager.BindKeybindPress(keybindA, CallbackKeyPressFunction);
-
   // inputManager.AddKeybind(keybind1);
   // inputManager.BindKeybindPress(keybind1, WindowOpenGL::SwitchRenderingMode);
-
   // inputManager.AddKeybind(keybind2);
   // inputManager.BindKeybindPress(keybind2,
   //                               [&camera, &shader]() { SwitchProjectionMatrix(camera, basic3DShader); });
-
   /// TEST WITH INPUTMANAGER ///
 
-  std::vector<PlayerStuff::Player> players{
-      PlayerStuff::Player{glm::vec3(0.0f, 0.0f, -6.0f), glm::vec3(90, 0, 0), "assets/objects/cat/Maxwell.obj"},
-      PlayerStuff::Player{glm::vec3(0.0f, 0.0f, -10.0f), glm::vec3(90, 0, 0), "assets/objects/barrel/Barrel.obj"},
-  };
-  int activePlayers = (int)players.size();
+  std::vector<PlayerStuff::Player> players;
+
+  int activePlayers = 2;
+
+  for (int i = 0; i < activePlayers; i++)
+  {
+    Objects::Transform transform = currentScene.SpawnPoints[i];
+    players.emplace_back(PlayerStuff::Player{transform.Position, transform.Rotation, "assets/objects/cat/Maxwell.obj"});
+  }
 
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))

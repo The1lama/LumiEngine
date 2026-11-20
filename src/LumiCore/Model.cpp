@@ -311,7 +311,7 @@ namespace LumiCore
       mat->GetTexture(type, i, &str);
 
       // checck if we already have generated the texture once before
-      std::string texturePath = str.C_Str() + m_directory;
+      std::string texturePath = m_directory + '/' + str.C_Str();
       if (!resources.Textures.Contains(texturePath))
       {
         Texture texture;

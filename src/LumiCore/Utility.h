@@ -54,6 +54,12 @@ namespace LumiCore::Utility
     return tokens;
   }
 
+  template <typename T>
+  inline bool VectorIsGreaterOrEqualTo(std::vector<T> vector, unsigned int value)
+  {
+    return vector.size() >= value;
+  }
+
   inline unsigned int GenerateTexture(const std::string& filePath)
   {
     stbi_set_flip_vertically_on_load(true);

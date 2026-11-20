@@ -138,12 +138,6 @@ namespace LumiCore
         glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
       }
     }
-    else
-    { // render untextured texture
-      glActiveTexture(GL_TEXTURE0);
-      shader.SetInt(("u_Texture_diffuse0"), 6);
-      glBindTexture(GL_TEXTURE_2D, 6);
-    }
     glActiveTexture(GL_TEXTURE0); // Reset the active texture
 
     // Draw mesh
