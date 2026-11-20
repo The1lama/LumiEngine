@@ -1,19 +1,18 @@
-
-#include "LumiCore/EngineSettings.h"
-#include <filesystem>
-#include <fstream>
-#include <memory>
 #define STB_IMAGE_IMPLEMENTATION
+#include "LumiCore/EngineSettings.h"
 #include "LumiCore/InputSystem.h"
 #include "LumiCore/Model.h"
 #include "LumiCore/ResourceManager.h"
 #include "glm/ext/matrix_float3x3.hpp"
 #include "glm/matrix.hpp"
 #include <GLFW/glfw3.h>
+#include <filesystem>
 #include <format>
+#include <fstream>
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -25,6 +24,10 @@
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/trigonometric.hpp"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 
 namespace WindowOpenGL
 {
@@ -180,7 +183,6 @@ namespace WindowOpenGL
     }
     return window;
   };
-
 } // namespace WindowOpenGL
 
 namespace Objects
@@ -525,7 +527,6 @@ namespace PlayerStuff
     float pitch = 0;
   };
 
-
   struct Player
   {
     LumiCore::Camera Camera;
@@ -796,17 +797,29 @@ int main()
     return -1;
   }
 
+  //// ImGui Initialization ////
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO& io = ImGui::GetIO();
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard control
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad control
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking Branch
+
+  // The second parameter will install GLFW callbacks and chain them to ImGui
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplOpenGL3_Init();
+
+
   SceneStuff::SceneManager SceneManager;
   {
     const std::vector<std::string> allscenes = SceneManager.GetAllScenes();
-    std::string level = std::string("main.lscene");
+    std::string level = std::string("cats.lscene"); // main.lscene // guy.lscene // cats.lscene
     if (const SceneStuff::Scene* scene = SceneManager.SwitchScene(level); scene == nullptr)
     {
       glfwTerminate();
       return -1;
-    } // main.lscene // guy.lscene // cats.lscene
+    }
   }
-
 
   LumiCore::Resources::AssetManagers resources;
 
@@ -851,10 +864,47 @@ int main()
     players.emplace_back(PlayerStuff::Player{transform.Position, transform.Rotation, "assets/objects/cat/Maxwell.obj"});
   }
 
+  bool showAnotherWindow{false};
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
   {
     float runningTime = (float)glfwGetTime();
+    glfwPollEvents();
+
+    // Start ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    { // Test frame we draw
+      static float f = .0f;
+      static int counter = 0;
+
+      ImGui::Begin("Hello, World!");
+      ImGui::Text("A Quick Brown Fox Jumps Over the Lazy Dog");
+      ImGui::Checkbox("Demo Box", &showAnotherWindow);
+
+      ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+
+      if (ImGui::Button("Button")) ++counter;
+
+      ImGui::SameLine();
+      ImGui::Text("Counter = %d", counter);
+
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+      ImGui::End();
+    }
+
+    if (showAnotherWindow)
+    {
+      ImGui::Begin("Another Window", &showAnotherWindow);
+      ImGui::Text("Hello from another siiiiiide");
+      if (ImGui::Button("Close Me"))
+      {
+        showAnotherWindow = false;
+      }
+      ImGui::End();
+    }
 
     //////////////////////
     //// Handle input ////
@@ -877,9 +927,17 @@ int main()
     /* Render here */
     Pipeline::RenderPlay(window, shader, activePlayers, players, SceneManager.GetCurrentScene(), resources);
 
+    // End ImGui frame and draws the ImGui frames
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
     glfwSwapBuffers(window);
-    glfwPollEvents();
   }
+
+  // Shutdown for ImGui
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
 
   glfwTerminate();
   return 0;

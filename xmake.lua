@@ -7,7 +7,16 @@ add_rules("plugin.vsxmake.autoupdate")
 add_requires("glfw")
 add_requires("stb 2026.03.18")
 add_requires("minizip 1.3.2")
-add_requires("assimp 6.0.5", {debug = is_mode("debug")})
+add_requires("assimp 6.0.5", {
+  debug = is_mode("debug")
+  }
+)
+add_requires("imgui 1.92.9+b-docking", {
+  configs = {
+    opengl3 = true,
+    glfw = true
+  }
+})
 
 -- OpenGL Version
 local GL_MAJOR_VERSION = 4
@@ -15,7 +24,7 @@ local GL_MINOR_VERSION = 6
 
 -- OpenGL Extensions
 local glad_extensions = {
-	-- Lägg till extension du vill ha här senare. Inga behövs i början
+  -- Add glad extensions if you want it later
 }
 
 -- OpenGL Loader
@@ -41,6 +50,7 @@ set_languages("c++20")
 add_packages("glfw", "glad", "glm", "stb" )
 add_packages("minizip")
 add_packages("assimp")
+add_packages("imgui")
 
 after_build(function(target)
 	os.cp("assets", target:targetdir())
