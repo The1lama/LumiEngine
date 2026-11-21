@@ -34,7 +34,7 @@ namespace WindowOpenGL
 {
   void GlfwErrorCallback(int error, const char* description)
   {
-    LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("GLFW error ({}): {}", error, description));
+    LOG(LumiCore::Logger::ELogVerbose::ERROR, "GLFW error ({}): {}", error, description);
   }
 
   void FramebufferSizeCallback(GLFWwindow*, int width, int height)
@@ -57,75 +57,75 @@ namespace WindowOpenGL
   {
     if (id == 131169 || id == 131185 || id == 131218 || id == 131204 || id == 131139) return;
 
-    LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("---------------"));
-    LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Debug Message ({}): {}", id, message));
+    LOG(LumiCore::Logger::ELogVerbose::ERROR, "---------------");
+    LOG(LumiCore::Logger::ELogVerbose::ERROR, "Debug Message ({}): {}", id, message);
 
     switch (source)
     {
     case GL_DEBUG_SOURCE_API:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: API"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: API");
       break;
     case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: Window System"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: Window System");
       break;
     case GL_DEBUG_SOURCE_SHADER_COMPILER:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: Shader Compiler"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: Shader Compiler");
       break;
     case GL_DEBUG_SOURCE_THIRD_PARTY:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: Third Party"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: Third Party");
       break;
     case GL_DEBUG_SOURCE_APPLICATION:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: Application"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: Application");
       break;
     case GL_DEBUG_SOURCE_OTHER:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: Other"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: Other");
       break;
     }
 
     switch (type)
     {
     case GL_DEBUG_TYPE_ERROR:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Error"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Error");
       break;
     case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Deprecated Behavior"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Deprecated Behavior");
       break;
     case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Undefined Behavior"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Undefined Behavior");
       break;
     case GL_DEBUG_TYPE_PORTABILITY:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Portability"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Portability");
       break;
     case GL_DEBUG_TYPE_PERFORMANCE:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Performance"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Performance");
       break;
     case GL_DEBUG_TYPE_MARKER:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Marker"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Marker");
       break;
     case GL_DEBUG_TYPE_PUSH_GROUP:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Push Group"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Push Group");
       break;
     case GL_DEBUG_TYPE_POP_GROUP:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Pop Group"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Pop Group");
       break;
     case GL_DEBUG_TYPE_OTHER:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Other"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Other");
       break;
     }
 
     switch (severity)
     {
     case GL_DEBUG_SEVERITY_HIGH:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Serverity: High"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Serverity: High");
       break;
     case GL_DEBUG_SEVERITY_MEDIUM:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Serverity: Medium"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Serverity: Medium");
       break;
     case GL_DEBUG_SEVERITY_LOW:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Serverity: Low"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Serverity: Low");
       break;
     case GL_DEBUG_SEVERITY_NOTIFICATION:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Serverity: Notification"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Serverity: Notification");
       break;
     }
   }
@@ -247,7 +247,7 @@ namespace SceneStuff
       std::ifstream file(newScene);
       if (!file.is_open())
       {
-        LOG_CRITICAL(std::format("Failed to open scene file: {}", newScene));
+        LOG_CRITICAL("Failed to open scene file: {}", newScene);
         return false;
       }
 
@@ -269,11 +269,10 @@ namespace SceneStuff
           {
             SceneName = std::format("{} {}", SceneName, str);
           }
-          LOG_DEBUG(std::format("Scene Loaded: {}", SceneName));
+          LOG_DEBUG("Scene Loaded: {}", SceneName);
         }
         else if (prefix == std::string("sp")) // spawn point, is in a vector as there could be more SpawnPoints in scene
         {
-          LOG_INFO("SpawnPoint has been found");
           Objects::Transform transfrom;
           std::string stringTransform;
 
@@ -282,7 +281,7 @@ namespace SceneStuff
           std::vector<std::string> positions = LumiCore::Utility::SplitString(stringTransform, ",");
           if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
           {
-            LOG_WARNING(std::format("Could not load in {} row. As poition is wrongly formated", row));
+            LOG_WARNING("Could not load in {} row. As poition is wrongly formated", row);
             transfrom.Position = glm::vec3(0);
           }
           else
@@ -293,7 +292,7 @@ namespace SceneStuff
           positions = LumiCore::Utility::SplitString(stringTransform, ",");
           if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
           {
-            LOG_WARNING(std::format("Could not load in {} row. As poition is wrongly formated", row));
+            LOG_WARNING("Could not load in row {}. As poition is wrongly formated", row);
             transfrom.Rotation = glm::vec3(0);
           }
           else
@@ -304,7 +303,6 @@ namespace SceneStuff
         else if (prefix == std::string("gp")) // Goal position
         {
           ss >> GoalPosition.x >> GoalPosition.y >> GoalPosition.z;
-          LOG_INFO("Goal Position has been found");
         }
         else if (prefix == std::string("END")) // Set the object type to None
         {
@@ -338,7 +336,7 @@ namespace SceneStuff
           std::vector<std::string> positions = LumiCore::Utility::SplitString(posi, ",");
           if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
           {
-            LOG_WARNING(std::format("Could not load in {} row. As poition is wrongly formated", row));
+            LOG_WARNING("Could not load in {} row. As poition is wrongly formated", row);
             continue;
           }
           transform.Position = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
@@ -348,7 +346,7 @@ namespace SceneStuff
           positions = LumiCore::Utility::SplitString(posi, ",");
           if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
           {
-            LOG_WARNING(std::format("Could not load in {} row. As Rotation is wrongly formated", row));
+            LOG_WARNING("Could not load in {} row. As Rotation is wrongly formated", row);
             continue;
           }
           transform.Rotation = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
@@ -358,7 +356,7 @@ namespace SceneStuff
           positions = LumiCore::Utility::SplitString(posi, ",");
           if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
           {
-            LOG_WARNING(std::format("Could not load in {} row. As Scale is wrongly formated", row));
+            LOG_WARNING("Could not load in {} row. As Scale is wrongly formated", row);
             continue;
           }
           transform.Scale = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
@@ -464,7 +462,7 @@ namespace SceneStuff
 
     fs.close();
 
-    LOG_INFO(std::format("Scene file generated: {}", filePathName));
+    LOG_INFO("Scene file generated: {}", filePathName);
     m_sceneNames.emplace_back(fileName);
   }
 
@@ -476,7 +474,7 @@ namespace SceneStuff
       if (entry.path().extension().string() == ".lscene")
       {
         m_sceneNames.emplace_back(path.filename().string());
-        LOG_INFO(std::format("Scene file found: {}", path.filename().string()));
+        LOG_INFO("Scene file found: {}", path.filename().string());
       }
     }
     return !m_sceneNames.empty();
@@ -493,7 +491,7 @@ namespace SceneStuff
   {
     if (!LumiCore::Utility::ContainsInVector(m_sceneNames, sceneName))
     {
-      LOG_CRITICAL(std::format("Could not find scene {}   Loading in default scene...", sceneName));
+      LOG_CRITICAL("Could not find scene {}   Loading in default scene...", sceneName);
 
       sceneName = "Default_Level.lscene";
       if (!LumiCore::Utility::ContainsInVector(m_sceneNames, sceneName)) GenerateNewScene();
@@ -833,8 +831,8 @@ int main()
 
   ///////////////
 
-  LOG_INFO(std::format("OpenGL: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION))));
-  LOG_INFO(std::format("Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER))));
+  LOG_INFO("OpenGL: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+  LOG_INFO("Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
 
   /// TEST WITH INPUTMANAGER ///
   // LumiCore::InputSystem::InputSystem inputManager(window);
@@ -884,9 +882,9 @@ int main()
       for (int i = 0; i < activePlayers; i++)
       {
         PlayerStuff::Player& p = players[i];
-        std::string playerPosText =
-            std::format("Player {} pos {},{},{}", i + 1, p.Position.x, p.Position.y, p.Position.z);
-        ImGui::Text("%s", playerPosText.c_str());
+        std::string playerInfoText = std::format("Player {}: pos {},{},{}: rot {},{},{}", i + 1, p.Position.x,
+                                                 p.Position.y, p.Position.z, p.Rotation.x, p.Rotation.y, p.Rotation.z);
+        ImGui::Text("%s", playerInfoText.c_str());
       }
 
       ImGui::End();

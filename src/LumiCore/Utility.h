@@ -93,7 +93,7 @@ namespace LumiCore::Utility
       glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
       glGenerateMipmap(GL_TEXTURE_2D);
     }
-    else LOG_WARNING(std::format("Could not load in texture: {}", filePath));
+    else LOG_WARNING("Could not load in texture: {}", filePath);
 
     // Once we have called `glTexImage2D`, we have bound the texture object and
     // attached an image to it. We can generate a Mipmap with `glGenerateMipmap`,

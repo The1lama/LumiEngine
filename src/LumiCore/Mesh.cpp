@@ -22,7 +22,6 @@ namespace LumiCore
   Mesh::~Mesh()
   {
     Release();
-    // LOG_WARNING("Mesh has been destroyed");
   }
 
   // Move constructor
@@ -110,7 +109,7 @@ namespace LumiCore
   {
     if (!IsFunctional())
     {
-      LOG_CRITICAL(std::format("Could not load in mesh: {}", m_VAO));
+      LOG_CRITICAL("Could not load in mesh: {}", m_VAO);
       return;
     }
 
