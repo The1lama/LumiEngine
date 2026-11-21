@@ -1,3 +1,4 @@
+#include "LumiCore/math.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "LumiCore/EngineSettings.h"
 #include "LumiCore/InputSystem.h"
@@ -624,38 +625,36 @@ namespace Pipeline
   {
     constexpr float speed = 0.4f;
 
-    for (Player& current : players)
+    for (Player& player : players)
     {
-      playerActions& action = current.Action;
-      LumiCore::Camera& camera = current.Camera;
-      if (action.moveX != 0)
-      {
-        glm::vec3 location = camera.GetLocation();
-        location += camera.GetForwardDirection() * speed * action.moveX;
-        camera.SetLocation(location);
-        current.Position = location;
-      }
-      if (action.moveZ != 0)
-      {
-        glm::vec3 location = camera.GetLocation();
-        location += camera.GetRightDirection() * speed * action.moveZ;
-        camera.SetLocation(location);
-        current.Position = location;
-      }
+      playerActions& action = player.Action;
+      LumiCore::Camera& camera = player.Camera;
+      auto& pos = player.Position;
+      auto& rot = player.Rotation;
+
       if (action.yaw != 0)
       {
-        float yaw = camera.GetYaw();
-        yaw += speed * action.yaw;
-        camera.SetYaw(yaw);
-        current.Rotation.x = yaw;
+        rot.x += speed * action.yaw;
       }
       if (action.pitch != 0)
       {
-        float pitch = camera.GetPitch();
-        pitch += speed * action.pitch;
-        camera.SetPitch(pitch);
-        current.Rotation.y = pitch;
+        rot.y += speed * action.pitch;
       }
+      if (action.moveX != 0)
+      {
+        // Calculate the new camera position after moving player
+        const glm::vec3 forwardDir = LumiCore::Math::CalculateForwardDirectionEuler(rot.x, rot.y);
+        pos += forwardDir * speed * action.moveX;
+      }
+      if (action.moveZ != 0)
+      {
+        const glm::vec3 forwardDir = LumiCore::Math::CalculateForwardDirectionEuler(rot.x, rot.y);
+        pos += LumiCore::Math::CalculateRightDirection(forwardDir, glm::vec3(0, 1, 0) * speed * action.moveZ);
+      }
+
+      camera.SetLocation(pos);
+      camera.SetYaw(rot.x);
+      camera.SetPitch(rot.y);
     }
   };
 
@@ -927,8 +926,6 @@ int main()
     //// Handle input ////
     //////////////////////
 
-    std::vector<PlayerStuff::playerActions> inputs;
-    inputs.resize(activePlayers);
     Pipeline::GetPlayerInput(window, activePlayers, players);
 
     //////////////////////
