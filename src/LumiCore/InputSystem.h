@@ -153,6 +153,13 @@ namespace LumiCore::InputSystem
     return static_cast<EModifierFlags>(static_cast<uint8_t>(a) | static_cast<uint8_t>(b));
   }
 
+  enum class EKeyState : uint8_t
+  {
+    Released = 0,
+    Hold = 1,
+    Pressed = 2,
+  };
+
   struct InputKeyBind
   {
     EKeyCode baseKey;
@@ -203,8 +210,14 @@ namespace LumiCore::InputSystem
     void ProcessInput(int key, int scancode, int action, int mods);
 
     // stores all the keybinds that we have and a event system for them to process
+    // BUT THIS IS FFUUUUUCCKKKEDDD, i do not like
     std::unordered_map<InputKeyBind, Utility::Function::EventSystem<>> m_keybindsPressed;
+    std::unordered_map<InputKeyBind, Utility::Function::EventSystem<>> m_keybindsHold;
     std::unordered_map<InputKeyBind, Utility::Function::EventSystem<>> m_keybindsReleased;
+
+    // saves the keys that are currently being used
+    std::vector<InputKeyBind> m_currentKeysDown;
+    std::vector<InputKeyBind> m_previousKeysDown;
 
     // stores hold keypresses
     // std::unordered_map<int, int> m_pressedKeys;
@@ -221,81 +234,37 @@ namespace LumiCore::InputSystem
     InputSystem(GLFWwindow* window);
     ~InputSystem();
 
-    void AddKeybind(const InputKeyBind& keyBind);
+    void Update();
 
     template <typename Callable>
-    bool BindKeybindPress(const InputKeyBind& keyBind, Callable&& function);
+    bool BindKeybind(const InputKeyBind& keyBind, const EKeyState state, Callable&& function);
 
-    template <typename Callable>
-    bool BindKeybindReleased(const InputKeyBind& keyBind, Callable&& function);
+    void RemoveKeybind(const InputKeyBind& keyBind, const EKeyState state);
 
-    void RemoveKeybind(const InputKeyBind& keyBind);
-
-    bool KeybindExist(const InputKeyBind& keyBind) const;
+    bool KeybindExist(const InputKeyBind& keyBind, const EKeyState state) const;
   };
-
   template <typename Callable>
-  bool InputSystem::BindKeybindPress(const InputKeyBind& keyBind, Callable&& function)
+  inline bool InputSystem::BindKeybind(const InputKeyBind& keyBind, const EKeyState state, Callable&& function)
   {
-    if (!KeybindExist(keyBind)) return false;
-
-    m_keybindsPressed[keyBind].Attach(function);
-    return true;
+    switch (state)
+    {
+    case EKeyState::Released:
+      m_keybindsReleased.try_emplace(keyBind, Utility::Function::EventSystem<>());
+      m_keybindsReleased[keyBind].Attach(function); 
+      return true;
+    case EKeyState::Pressed:
+      m_keybindsPressed.try_emplace(keyBind, Utility::Function::EventSystem<>());
+      m_keybindsPressed[keyBind].Attach(function); 
+      return true;
+    case EKeyState::Hold:
+      m_keybindsHold.try_emplace(keyBind, Utility::Function::EventSystem<>());
+      m_keybindsHold[keyBind].Attach(function); 
+      return true;
+    }
+    return false;
   }
 
-  template <typename Callable>
-  bool InputSystem::BindKeybindReleased(const InputKeyBind& keyBind, Callable&& function)
-  {
-    if (!KeybindExist(keyBind)) return false;
-
-    m_keybindsReleased[keyBind].Attach(function);
-    return true;
-  }
 
 } // namespace LumiCore::InputSystem
 
 
-/*
-
-bool processInput(GLFWwindow* window, bool& bToggleColor, bool& bSwitchDrawMode, bool& bSwitchProjectionMatrix)
-{
-  bool hasPressed = false;
-
-  // Change color on object //
-  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-  {
-    hasPressed = true;
-    bToggleColor = false;
-  }
-  if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE)
-  {
-    bToggleColor = true;
-  }
-
-  // Draw mode switch //
-  if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS)
-  {
-    hasPressed = true;
-    if (bSwitchDrawMode == false) SwitchRenderingMode();
-    bSwitchDrawMode = true;
-  }
-  if (glfwGetKey(window, GLFW_KEY_1) == GLFW_RELEASE)
-  {
-    bSwitchDrawMode = false;
-  }
-
-  // Projection matrix switch //
-  if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS)
-  {
-    hasPressed = true;
-    bSwitchProjectionMatrix = true;
-  }
-  if (glfwGetKey(window, GLFW_KEY_2) == GLFW_RELEASE)
-  {
-    bSwitchProjectionMatrix = false;
-  }
-
-  return hasPressed;
-}
-
-*/

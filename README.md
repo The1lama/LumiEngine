@@ -66,7 +66,7 @@ test the normals if they are correct on the models we are loading in.
 
 This week I have implemented two player split screen and scene loader, using my own formatting.
 
-How the splitscreen works is by chanching a int variable `activePlayers` from a 1 to 2, and then it will 
+How the split screen works is by modifying an int variable `activePlayers` from a 1 to 2, and then it will 
 give me split screen mode or single mode.
 
 | Action | Player 1 | Player 2 |
@@ -85,6 +85,7 @@ switch between.
 
 ![Week4Progress.](media/Week4SplitScene.png)
 
+---
 
 
 
