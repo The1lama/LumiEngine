@@ -61,7 +61,29 @@ test the normals if they are correct on the models we are loading in.
 ![Week3Progress.](media/Week3Loader.png)
 
 ---
+# Week 4 
+**Tag Version:** `Week4/SplitScene`
 
+This week I have implemented two player split screen and scene loader, using my own formatting.
+
+How the splitscreen works is by chanching a int variable `activePlayers` from a 1 to 2, and then it will 
+give me split screen mode or single mode.
+
+| Action | Player 1 | Player 2 |
+| --------------- | --------------- | --------------- |
+| Forward | W | Up |
+| Backward | S | Down |
+| Yaw Right | D | Right |
+| Yaw Left | A | Left |
+| Pitch Up | E | PgUp |
+| Pitch Down | Q | PgDn |
+
+
+How to switch scene then is with the gui library ImGui. Where we have the potions for where we can 
+see some stats about the game and player Transforms. Right now we have three different scenes we can 
+switch between.
+
+![Week4Progress.](media/Week4SplitScene.png)
 
 
 

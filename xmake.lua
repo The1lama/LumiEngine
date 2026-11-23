@@ -44,13 +44,17 @@ add_requires("glad v0.1.36", {
 add_requires("glm 1.0.3")
 
 target("LumiEngine")
-set_kind("binary")
-add_files("src/**.cpp")
-set_languages("c++20")
-add_packages("glfw", "glad", "glm", "stb" )
-add_packages("minizip")
-add_packages("assimp")
-add_packages("imgui")
+  set_kind("binary")
+  add_files("src/**.cpp")
+  set_languages("c++20")
+  add_packages("glfw", "glad", "glm", "stb" )
+  add_packages("minizip")
+  add_packages("assimp")
+  add_packages("imgui")
+
+  if is_plat("windows")  then
+        add_cxflags("/Zc:preprocessor", "/permissive-", {force = true})
+  end
 
 after_build(function(target)
 	os.cp("assets", target:targetdir())

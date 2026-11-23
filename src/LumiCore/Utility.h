@@ -61,6 +61,12 @@ namespace LumiCore::Utility
     return vector.size() >= value;
   }
 
+  template <typename T>
+  inline bool ContainsInVector(const std::vector<T>& vector, const T& item)
+  {
+    return std::find(vector.begin(), vector.end(), item) != vector.end();
+  }
+
   inline unsigned int GenerateTexture(const std::string& filePath)
   {
     stbi_set_flip_vertically_on_load(true);
@@ -118,12 +124,6 @@ namespace LumiCore::Utility
       start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
     }
     return str;
-  }
-
-  template <typename T>
-  inline bool ContainsInVector(const std::vector<T>& vector, const T& item)
-  {
-    return std::find(vector.begin(), vector.end(), item) != vector.end();
   }
 
 

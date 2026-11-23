@@ -202,13 +202,6 @@ namespace Objects
     Objects::Transform Transform;
   };
 
-  struct StaticObject
-  {
-    std::string Model;
-    std::string TextureName;
-    Objects::Transform Transform;
-  };
-
 } // namespace Objects
 
 namespace SceneStuff
