@@ -2,6 +2,7 @@
 #include <format>
 
 #include "../Utility.h"
+#include "Objects.h"
 
 namespace LumiCore::Scene
 {
@@ -75,6 +76,30 @@ namespace LumiCore::Scene
     m_currentScene->Initialize(SceneDirectory + sceneName);
 
     return m_currentScene.get();
+  }
+  PlayerStuff::Player& SceneManager::GetPlayerByIndex(const unsigned int index)
+  {
+    return *m_players[index];
+  }
+
+  void SceneManager::CreateNewPlayer()
+  {
+    const unsigned int playerIndex = m_players.size();
+    Objects::Transform transform = GetCurrentScene().GetSpawnTransformByIndex(playerIndex);
+    m_players.emplace_back(
+      std::make_unique<PlayerStuff::Player>(transform.Position, transform.Rotation, "assets/objects/cat/Maxwell.obj", playerIndex));
+
+    LOG_DEBUG("Created new player. Player amount: {}", m_players.size());
+  }
+  void SceneManager::StorePlayer(PlayerStuff::Player& newPlayer)
+  {
+    m_players.emplace_back(std::move(&newPlayer));
+  }
+  void SceneManager::RemovePlayer(const int index)
+  {
+    // Dont do anything if the index is on player 1 or the player vector is bigger than index
+    if (m_players.size() < index || index == 0) return;
+    m_players.erase(m_players.begin() + index);
   }
 
 } // namespace LumiCore::Scene

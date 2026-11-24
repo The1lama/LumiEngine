@@ -3,6 +3,7 @@
 #include "LumiCore/InputSystem.h"
 #include "LumiCore/Model.h"
 #include "LumiCore/ResourceManager.h"
+#include "LumiCore/Scene/Objects.h"
 #include "LumiCore/Scene/Scene.h"
 #include "LumiCore/Scene/SceneManager.h"
 #include "LumiCore/math.h"
@@ -27,7 +28,6 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-
 
 namespace WindowOpenGL
 {
@@ -190,93 +190,24 @@ void CallbackKeyPressFunction()
   LOG_DEBUG("Keypress callback has beedn called");
 }
 
-namespace PlayerStuff
-{
-
-  struct playerActions
-  {
-    float moveX = 0;
-    float moveZ = 0;
-
-    float yaw = 0;
-    float pitch = 0;
-    void Reset()
-    {
-      moveX = 0;
-      moveZ = 0;
-      yaw = 0;
-      pitch = 0;
-    }
-  };
-
-  struct Player
-  {
-    LumiCore::Camera Camera;
-    std::string ModelPath;
-    glm::vec3 Position, Rotation;
-    playerActions Action;
-
-    Player(glm::vec3 startPos, glm::vec3 startRotation, std::string model)
-    {
-      Position = startPos;
-      Rotation = startRotation;
-
-      Camera.SetLocation(startPos);
-      Camera.SetYaw(startRotation.x);
-      Camera.SetPitch(startRotation.y);
-
-      ModelPath = model;
-    }
-  };
-
-  // handle player input
-} // namespace PlayerStuff
 
 namespace Pipeline
 {
   using namespace PlayerStuff;
 
-  void GetPlayerInputAction(int playerIndex, std::string action, std::vector<PlayerStuff::Player>& players)
-  {
-    Player& currentPlayer = players[playerIndex];
-
-    if (action == "Forward")
-    {
-      currentPlayer.Action.moveX = 1;
-    }
-    else if (action == "Backward")
-    {
-      currentPlayer.Action.moveX = -1;
-    }
-    else if (action == "YawPlus")
-    {
-      currentPlayer.Action.yaw = 1;
-    }
-    else if (action == "YawMinus")
-    {
-      currentPlayer.Action.yaw = -1;
-    }
-    else if (action == "PitchPlus")
-    {
-      currentPlayer.Action.pitch = 1;
-    }
-    else if (action == "PitchMinus")
-    {
-      currentPlayer.Action.pitch = -1;
-    }
-  };
-
   // This is where we are moving the player and modifying the player struct position
-  void GameLogic(const int activePlayers, std::vector<Player>& players)
+  void GameLogic(const int activePlayers, std::vector<std::unique_ptr<Player>>& players)
   {
     constexpr float speed = 0.4f;
 
-    for (Player& player : players)
+    for (int i = 0; i < players.size(); ++i)
     {
-      playerActions& action = player.Action;
-      LumiCore::Camera& camera = player.Camera;
-      auto& pos = player.Position;
-      auto& rot = player.Rotation;
+      Player* player = players[i].get();
+
+      playerActions& action = player->Action;
+      LumiCore::Camera& camera = player->Camera;
+      auto& pos = player->Position;
+      auto& rot = player->Rotation;
 
       if (action.yaw != 0)
       {
@@ -342,7 +273,7 @@ namespace Pipeline
 
   // Render the screen
   void RenderPlay(GLFWwindow* window, Shader& shader, const int activePlayers,
-                  std::vector<PlayerStuff::Player>& players, LumiCore::Scene::Scene& scene,
+                  std::vector<std::unique_ptr<PlayerStuff::Player>>& players, LumiCore::Scene::Scene& scene,
                   LumiCore::Resources::AssetManagers& resources)
   {
 
@@ -362,13 +293,13 @@ namespace Pipeline
     shader.Use();
     for (int i = 0; i < activePlayers; ++i)
     {
-      Player& player = players[i];
+      Player* player = players[i].get();
 
       // Maybe change view port, then we also need to change the aspect ratio
-      player.Camera.SetAspectRatio(UpdateViewPort(window, i, activePlayers));
+      player->Camera.SetAspectRatio(UpdateViewPort(window, i, activePlayers));
 
-      shader.SetMatrix4("u_View", player.Camera.GetViewMatrix());
-      shader.SetMatrix4("u_Projection", player.Camera.GetProjectionMatrix());
+      shader.SetMatrix4("u_View", player->Camera.GetViewMatrix());
+      shader.SetMatrix4("u_Projection", player->Camera.GetProjectionMatrix());
 
       for (auto& object : scene.GetObjectsInWorldByType(LumiCore::Scene::ObjectType::Static))
       {
@@ -407,17 +338,17 @@ namespace Pipeline
       // if there are more players render them out
       if (activePlayers > 1)
       {
-        Player& other = players[(i + 1) % activePlayers];
+        Player* other = players[(i + 1) % activePlayers].get();
 
-        LumiCore::Model& mesh = resources.Models.Get(other.ModelPath, resources);
+        LumiCore::Model& mesh = resources.Models.Get(other->ModelPath, resources);
         if (!mesh.IsValid()) continue;
 
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, other.Position);
+        model = glm::translate(model, other->Position);
 
-        model = glm::rotate(model, glm::radians(other.Rotation.x), up);
-        model = glm::rotate(model, glm::radians(other.Rotation.y), right);
-        model = glm::rotate(model, glm::radians(other.Rotation.z), forward);
+        model = glm::rotate(model, glm::radians(other->Rotation.x), up);
+        model = glm::rotate(model, glm::radians(other->Rotation.y), right);
+        model = glm::rotate(model, glm::radians(other->Rotation.z), forward);
 
         glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
         shader.SetMatrix3("u_NormalMatrix", normalMatrix);
@@ -442,6 +373,10 @@ int main()
     LOG_ERROR("Could not Initialize OpenGL or Window");
     return -1;
   }
+
+  LOG_INFO("OpenGL: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+  LOG_INFO("Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
+
 
   //// ImGui Initialization ////
   IMGUI_CHECKVERSION();
@@ -479,70 +414,16 @@ int main()
 
   ///////////////
 
-  LOG_INFO("OpenGL: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
-  LOG_INFO("Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
-
-  std::vector<PlayerStuff::Player> players;
-
-  int activePlayers = 2;
-
-  for (int i = 0; i < activePlayers; i++)
-  {
-    Objects::Transform transform = SceneManager.GetCurrentScene().GetSpawnTransformByIndex(i);
-    players.emplace_back(PlayerStuff::Player{transform.Position, transform.Rotation, "assets/objects/cat/Maxwell.obj"});
-  }
-
   std::vector<std::string> sceneList = SceneManager.GetAllScenes();
   bool showAnotherWindow{false};
 
 #pragma region Input System
-  /// TEST WITH INPUTMANAGER ///
   // Initializes Input system so it is a singleton should only need to do once
   auto& inputManager = LumiCore::InputSystem::InputSystem::GetInstance()->Initialize(window);
-  LumiCore::InputSystem::InputKeyBind keybindW{LumiCore::InputSystem::EKeyCode::Keycode_W, 0};
-  LumiCore::InputSystem::InputKeyBind keybindA{LumiCore::InputSystem::EKeyCode::Keycode_A, 0};
-  LumiCore::InputSystem::InputKeyBind keybindS{LumiCore::InputSystem::EKeyCode::Keycode_S, 0};
-  LumiCore::InputSystem::InputKeyBind keybindD{LumiCore::InputSystem::EKeyCode::Keycode_D, 0};
-  LumiCore::InputSystem::InputKeyBind keybindE{LumiCore::InputSystem::EKeyCode::Keycode_E, 0};
-  LumiCore::InputSystem::InputKeyBind keybindQ{LumiCore::InputSystem::EKeyCode::Keycode_Q, 0};
-
-  LumiCore::InputSystem::InputKeyBind keybindUpp{LumiCore::InputSystem::EKeyCode::Keycode_Up, 0};
-  LumiCore::InputSystem::InputKeyBind keybindDown{LumiCore::InputSystem::EKeyCode::Keycode_Down, 0};
-  LumiCore::InputSystem::InputKeyBind keybindLeft{LumiCore::InputSystem::EKeyCode::Keycode_Left, 0};
-  LumiCore::InputSystem::InputKeyBind keybindRight{LumiCore::InputSystem::EKeyCode::Keycode_Right, 0};
-  LumiCore::InputSystem::InputKeyBind keybindPgUp{LumiCore::InputSystem::EKeyCode::Keycode_PageUp, 0};
-  LumiCore::InputSystem::InputKeyBind keybindPgDn{LumiCore::InputSystem::EKeyCode::Keycode_PageDown, 0};
-
-  // Inputs for player 1
-  inputManager.BindKeybind(keybindW, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(0, "Forward", players); });
-  inputManager.BindKeybind(keybindS, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(0, "Backward", players); });
-  inputManager.BindKeybind(keybindD, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(0, "YawPlus", players); });
-  inputManager.BindKeybind(keybindA, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(0, "YawMinus", players); });
-  inputManager.BindKeybind(keybindE, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(0, "PitchPlus", players); });
-  inputManager.BindKeybind(keybindQ, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(0, "PitchMinus", players); });
-
-  // Inputs for player 2
-  inputManager.BindKeybind(keybindUpp, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(1, "Forward", players); });
-  inputManager.BindKeybind(keybindDown, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(1, "Backward", players); });
-  inputManager.BindKeybind(keybindRight, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(1, "YawPlus", players); });
-  inputManager.BindKeybind(keybindLeft, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(1, "YawMinus", players); });
-  inputManager.BindKeybind(keybindPgUp, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(1, "PitchPlus", players); });
-  inputManager.BindKeybind(keybindPgDn, LumiCore::InputSystem::EKeyState::Hold,
-                           [&players]() { Pipeline::GetPlayerInputAction(1, "PitchMinus", players); });
-
-  /// TEST WITH INPUTMANAGER ///
 #pragma endregion // Input System
+
+  SceneManager.CreateNewPlayer();
+  SceneManager.CreateNewPlayer();
 
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
@@ -560,9 +441,9 @@ int main()
       ImGui::Checkbox("Check Scene List", &showAnotherWindow);
 
       // Show active players positions
-      for (int i = 0; i < activePlayers; i++)
+      for (int i = 0; i < SceneManager.GetAllPlayerCount(); i++)
       {
-        PlayerStuff::Player& p = players[i];
+        PlayerStuff::Player& p = SceneManager.GetPlayerByIndex(i);
         std::string playerInfoText = std::format("Player {}: pos {},{},{}: rot {},{},{}", i + 1, p.Position.x,
                                                  p.Position.y, p.Position.z, p.Rotation.x, p.Rotation.y, p.Rotation.z);
         ImGui::Text("%s", playerInfoText.c_str());
@@ -571,7 +452,10 @@ int main()
       // switch between split screen or not
       ImGui::Text("Switch between split screen");
       ImGui::SameLine();
-      if (ImGui::Button("Toggle")) activePlayers = activePlayers == 1 ? 2 : 1;
+      if (ImGui::Button("Toggle"))
+      {
+        SceneManager.GetAllPlayerCount() == 2 ? SceneManager.RemovePlayer(1) : SceneManager.CreateNewPlayer();
+      }
 
       ImGui::End();
     }
@@ -590,11 +474,12 @@ int main()
           SceneManager.SwitchScene(name);
 
           // Move the players to spawn location
-          for (int i = 0; i < activePlayers; i++)
+          for (int i = 0; i < SceneManager.GetAllPlayerCount(); i++)
           {
             Objects::Transform transform = SceneManager.GetCurrentScene().GetSpawnTransformByIndex(i);
-            players[i].Position = transform.Position;
-            players[i].Rotation = transform.Rotation;
+            PlayerStuff::Player player = SceneManager.GetPlayerByIndex(i);
+            player.Position = transform.Position;
+            player.Rotation = transform.Rotation;
           }
         }
       }
@@ -617,14 +502,15 @@ int main()
     //// Handle Logic ////
     //////////////////////
 
-    Pipeline::GameLogic(activePlayers, players);
+    Pipeline::GameLogic(SceneManager.GetAllPlayerCount(), SceneManager.GetAllPlayers());
 
     //////////////////////////
     //// Handle Rendering ////
     //////////////////////////
 
     /* Render here */
-    Pipeline::RenderPlay(window, shader, activePlayers, players, SceneManager.GetCurrentScene(), resources);
+    Pipeline::RenderPlay(window, shader, SceneManager.GetAllPlayerCount(), SceneManager.GetAllPlayers(),
+                         SceneManager.GetCurrentScene(), resources);
 
     // End ImGui frame and draws the ImGui frames
     ImGui::Render();
