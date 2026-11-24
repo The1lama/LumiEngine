@@ -1,19 +1,19 @@
-
-#include "LumiCore/EngineSettings.h"
-#include <filesystem>
-#include <fstream>
-#include <memory>
+#include "LumiCore/math.h"
 #define STB_IMAGE_IMPLEMENTATION
+#include "LumiCore/EngineSettings.h"
 #include "LumiCore/InputSystem.h"
 #include "LumiCore/Model.h"
 #include "LumiCore/ResourceManager.h"
 #include "glm/ext/matrix_float3x3.hpp"
 #include "glm/matrix.hpp"
 #include <GLFW/glfw3.h>
+#include <filesystem>
 #include <format>
+#include <fstream>
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -25,12 +25,16 @@
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/trigonometric.hpp"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 
 namespace WindowOpenGL
 {
   void GlfwErrorCallback(int error, const char* description)
   {
-    LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("GLFW error ({}): {}", error, description));
+    LOG(LumiCore::Logger::ELogVerbose::ERROR, "GLFW error ({}): {}", error, description);
   }
 
   void FramebufferSizeCallback(GLFWwindow*, int width, int height)
@@ -53,75 +57,75 @@ namespace WindowOpenGL
   {
     if (id == 131169 || id == 131185 || id == 131218 || id == 131204 || id == 131139) return;
 
-    LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("---------------"));
-    LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Debug Message ({}): {}", id, message));
+    LOG(LumiCore::Logger::ELogVerbose::ERROR, "---------------");
+    LOG(LumiCore::Logger::ELogVerbose::ERROR, "Debug Message ({}): {}", id, message);
 
     switch (source)
     {
     case GL_DEBUG_SOURCE_API:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: API"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: API");
       break;
     case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: Window System"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: Window System");
       break;
     case GL_DEBUG_SOURCE_SHADER_COMPILER:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: Shader Compiler"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: Shader Compiler");
       break;
     case GL_DEBUG_SOURCE_THIRD_PARTY:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: Third Party"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: Third Party");
       break;
     case GL_DEBUG_SOURCE_APPLICATION:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: Application"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: Application");
       break;
     case GL_DEBUG_SOURCE_OTHER:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Source: Other"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Source: Other");
       break;
     }
 
     switch (type)
     {
     case GL_DEBUG_TYPE_ERROR:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Error"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Error");
       break;
     case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Deprecated Behavior"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Deprecated Behavior");
       break;
     case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Undefined Behavior"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Undefined Behavior");
       break;
     case GL_DEBUG_TYPE_PORTABILITY:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Portability"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Portability");
       break;
     case GL_DEBUG_TYPE_PERFORMANCE:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Performance"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Performance");
       break;
     case GL_DEBUG_TYPE_MARKER:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Marker"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Marker");
       break;
     case GL_DEBUG_TYPE_PUSH_GROUP:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Push Group"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Push Group");
       break;
     case GL_DEBUG_TYPE_POP_GROUP:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Pop Group"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Pop Group");
       break;
     case GL_DEBUG_TYPE_OTHER:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Type: Other"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Type: Other");
       break;
     }
 
     switch (severity)
     {
     case GL_DEBUG_SEVERITY_HIGH:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Serverity: High"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Serverity: High");
       break;
     case GL_DEBUG_SEVERITY_MEDIUM:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Serverity: Medium"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Serverity: Medium");
       break;
     case GL_DEBUG_SEVERITY_LOW:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Serverity: Low"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Serverity: Low");
       break;
     case GL_DEBUG_SEVERITY_NOTIFICATION:
-      LOG(LumiCore::Logger::ELogVerbose::ERROR, std::format("Serverity: Notification"));
+      LOG(LumiCore::Logger::ELogVerbose::ERROR, "Serverity: Notification");
       break;
     }
   }
@@ -180,7 +184,6 @@ namespace WindowOpenGL
     }
     return window;
   };
-
 } // namespace WindowOpenGL
 
 namespace Objects
@@ -196,13 +199,6 @@ namespace Objects
   {
     std::string ModelPath;
     std::string TexturePath;
-    Objects::Transform Transform;
-  };
-
-  struct StaticObject
-  {
-    std::string Model;
-    std::string TextureName;
     Objects::Transform Transform;
   };
 
@@ -244,7 +240,7 @@ namespace SceneStuff
       std::ifstream file(newScene);
       if (!file.is_open())
       {
-        LOG_CRITICAL(std::format("Failed to open scene file: {}", newScene));
+        LOG_CRITICAL("Failed to open scene file: {}", newScene);
         return false;
       }
 
@@ -266,11 +262,10 @@ namespace SceneStuff
           {
             SceneName = std::format("{} {}", SceneName, str);
           }
-          LOG_DEBUG(std::format("Scene Loaded: {}", SceneName));
+          LOG_DEBUG("Scene Loaded: {}", SceneName);
         }
         else if (prefix == std::string("sp")) // spawn point, is in a vector as there could be more SpawnPoints in scene
         {
-          LOG_INFO("SpawnPoint has been found");
           Objects::Transform transfrom;
           std::string stringTransform;
 
@@ -279,7 +274,7 @@ namespace SceneStuff
           std::vector<std::string> positions = LumiCore::Utility::SplitString(stringTransform, ",");
           if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
           {
-            LOG_WARNING(std::format("Could not load in {} row. As poition is wrongly formated", row));
+            LOG_WARNING("Could not load in {} row. As poition is wrongly formated", row);
             transfrom.Position = glm::vec3(0);
           }
           else
@@ -290,7 +285,7 @@ namespace SceneStuff
           positions = LumiCore::Utility::SplitString(stringTransform, ",");
           if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
           {
-            LOG_WARNING(std::format("Could not load in {} row. As poition is wrongly formated", row));
+            LOG_WARNING("Could not load in row {}. As poition is wrongly formated", row);
             transfrom.Rotation = glm::vec3(0);
           }
           else
@@ -301,7 +296,6 @@ namespace SceneStuff
         else if (prefix == std::string("gp")) // Goal position
         {
           ss >> GoalPosition.x >> GoalPosition.y >> GoalPosition.z;
-          LOG_INFO("Goal Position has been found");
         }
         else if (prefix == std::string("END")) // Set the object type to None
         {
@@ -335,7 +329,7 @@ namespace SceneStuff
           std::vector<std::string> positions = LumiCore::Utility::SplitString(posi, ",");
           if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
           {
-            LOG_WARNING(std::format("Could not load in {} row. As poition is wrongly formated", row));
+            LOG_WARNING("Could not load in {} row. As poition is wrongly formated", row);
             continue;
           }
           transform.Position = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
@@ -345,7 +339,7 @@ namespace SceneStuff
           positions = LumiCore::Utility::SplitString(posi, ",");
           if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
           {
-            LOG_WARNING(std::format("Could not load in {} row. As Rotation is wrongly formated", row));
+            LOG_WARNING("Could not load in {} row. As Rotation is wrongly formated", row);
             continue;
           }
           transform.Rotation = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
@@ -355,7 +349,7 @@ namespace SceneStuff
           positions = LumiCore::Utility::SplitString(posi, ",");
           if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
           {
-            LOG_WARNING(std::format("Could not load in {} row. As Scale is wrongly formated", row));
+            LOG_WARNING("Could not load in {} row. As Scale is wrongly formated", row);
             continue;
           }
           transform.Scale = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
@@ -461,7 +455,7 @@ namespace SceneStuff
 
     fs.close();
 
-    LOG_INFO(std::format("Scene file generated: {}", filePathName));
+    LOG_INFO("Scene file generated: {}", filePathName);
     m_sceneNames.emplace_back(fileName);
   }
 
@@ -473,7 +467,7 @@ namespace SceneStuff
       if (entry.path().extension().string() == ".lscene")
       {
         m_sceneNames.emplace_back(path.filename().string());
-        LOG_INFO(std::format("Scene file found: {}", path.filename().string()));
+        LOG_INFO("Scene file found: {}", path.filename().string());
       }
     }
     return !m_sceneNames.empty();
@@ -490,7 +484,7 @@ namespace SceneStuff
   {
     if (!LumiCore::Utility::ContainsInVector(m_sceneNames, sceneName))
     {
-      LOG_CRITICAL(std::format("Could not find scene {}   Loading in default scene...", sceneName));
+      LOG_CRITICAL("Could not find scene {}   Loading in default scene...", sceneName);
 
       sceneName = "Default_Level.lscene";
       if (!LumiCore::Utility::ContainsInVector(m_sceneNames, sceneName)) GenerateNewScene();
@@ -523,8 +517,14 @@ namespace PlayerStuff
 
     float yaw = 0;
     float pitch = 0;
+    void Reset()
+    {
+      moveX = 0;
+      moveZ = 0;
+      yaw = 0;
+      pitch = 0;
+    }
   };
-
 
   struct Player
   {
@@ -553,68 +553,33 @@ namespace Pipeline
 {
   using namespace PlayerStuff;
 
-  void GetPlayerInput(GLFWwindow* window, int activePlayers, std::vector<Player>& players)
+  void GetPlayerInputAction(int playerIndex, std::string action, std::vector<PlayerStuff::Player>& players)
   {
-    if (players.size() > 2) return;
+    Player& currentPlayer = players[playerIndex];
 
-    if (activePlayers >= 1)
+    if (action == "Forward")
     {
-      playerActions action;
-      if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-      {
-        action.moveX = 1;
-      }
-      if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-      {
-        action.moveX = -1;
-      }
-      if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-      {
-        action.yaw = -1;
-      }
-      if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-      {
-        action.yaw = 1;
-      }
-      if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-      {
-        action.pitch = 1;
-      }
-      if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-      {
-        action.pitch = -1;
-      }
-      players[0].Action = action;
+      currentPlayer.Action.moveX = 1;
     }
-
-    if (players.size() >= 2)
+    else if (action == "Backward")
     {
-      playerActions action;
-      if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-      {
-        action.moveX = 1;
-      }
-      if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-      {
-        action.moveX = -1;
-      }
-      if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-      {
-        action.yaw = -1;
-      }
-      if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-      {
-        action.yaw = 1;
-      }
-      if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS)
-      {
-        action.pitch = 1;
-      }
-      if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS)
-      {
-        action.pitch = -1;
-      }
-      players[1].Action = action;
+      currentPlayer.Action.moveX = -1;
+    }
+    else if (action == "YawPlus")
+    {
+      currentPlayer.Action.yaw = 1;
+    }
+    else if (action == "YawMinus")
+    {
+      currentPlayer.Action.yaw = -1;
+    }
+    else if (action == "PitchPlus")
+    {
+      currentPlayer.Action.pitch = 1;
+    }
+    else if (action == "PitchMinus")
+    {
+      currentPlayer.Action.pitch = -1;
     }
   };
 
@@ -623,38 +588,37 @@ namespace Pipeline
   {
     constexpr float speed = 0.4f;
 
-    for (Player& current : players)
+    for (Player& player : players)
     {
-      playerActions& action = current.Action;
-      LumiCore::Camera& camera = current.Camera;
-      if (action.moveX != 0)
-      {
-        glm::vec3 location = camera.GetLocation();
-        location += camera.GetForwardDirection() * speed * action.moveX;
-        camera.SetLocation(location);
-        current.Position = location;
-      }
-      if (action.moveZ != 0)
-      {
-        glm::vec3 location = camera.GetLocation();
-        location += camera.GetRightDirection() * speed * action.moveZ;
-        camera.SetLocation(location);
-        current.Position = location;
-      }
+      playerActions& action = player.Action;
+      LumiCore::Camera& camera = player.Camera;
+      auto& pos = player.Position;
+      auto& rot = player.Rotation;
+
       if (action.yaw != 0)
       {
-        float yaw = camera.GetYaw();
-        yaw += speed * action.yaw;
-        camera.SetYaw(yaw);
-        current.Rotation.x = yaw;
+        rot.x += speed * action.yaw;
       }
       if (action.pitch != 0)
       {
-        float pitch = camera.GetPitch();
-        pitch += speed * action.pitch;
-        camera.SetPitch(pitch);
-        current.Rotation.y = pitch;
+        rot.y += speed * action.pitch;
       }
+      if (action.moveX != 0)
+      {
+        // Calculate the new camera position after moving player
+        const glm::vec3 forwardDir = LumiCore::Math::CalculateForwardDirectionEuler(rot.x, rot.y);
+        pos += forwardDir * speed * action.moveX;
+      }
+      if (action.moveZ != 0)
+      {
+        const glm::vec3 forwardDir = LumiCore::Math::CalculateForwardDirectionEuler(rot.x, rot.y);
+        pos += LumiCore::Math::CalculateRightDirection(forwardDir, glm::vec3(0, 1, 0) * speed * action.moveZ);
+      }
+
+      action.Reset();
+      camera.SetLocation(pos);
+      camera.SetYaw(rot.x);
+      camera.SetPitch(rot.y);
     }
   };
 
@@ -796,17 +760,29 @@ int main()
     return -1;
   }
 
+  //// ImGui Initialization ////
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGuiIO& io = ImGui::GetIO();
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; // Enable Keyboard control
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad; // Enable Gamepad control
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking Branch
+
+  // The second parameter will install GLFW callbacks and chain them to ImGui
+  ImGui_ImplGlfw_InitForOpenGL(window, true);
+  ImGui_ImplOpenGL3_Init();
+
+
   SceneStuff::SceneManager SceneManager;
   {
     const std::vector<std::string> allscenes = SceneManager.GetAllScenes();
-    std::string level = std::string("main.lscene");
+    std::string level = std::string("cats.lscene"); // main.lscene // guy.lscene // cats.lscene
     if (const SceneStuff::Scene* scene = SceneManager.SwitchScene(level); scene == nullptr)
     {
       glfwTerminate();
       return -1;
-    } // main.lscene // guy.lscene // cats.lscene
+    }
   }
-
 
   LumiCore::Resources::AssetManagers resources;
 
@@ -821,25 +797,8 @@ int main()
 
   ///////////////
 
-  LOG_INFO(std::format("OpenGL: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION))));
-  LOG_INFO(std::format("Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER))));
-
-  /// TEST WITH INPUTMANAGER ///
-  // LumiCore::InputSystem::InputSystem inputManager(window);
-  // LumiCore::InputSystem::InputKeyBind keybindW{LumiCore::InputSystem::EKeyCode::Keycode_W, 0};
-  // LumiCore::InputSystem::InputKeyBind keybindA{LumiCore::InputSystem::EKeyCode::Keycode_A, 0};
-  // LumiCore::InputSystem::InputKeyBind keybind1{LumiCore::InputSystem::EKeyCode::Keycode_Key1, 0};
-  // LumiCore::InputSystem::InputKeyBind keybind2{LumiCore::InputSystem::EKeyCode::Keycode_Key2, 0};
-  // inputManager.AddKeybind(keybindW);
-  // inputManager.BindKeybindPress(keybindW, CallbackKeyPressFunction);
-  // inputManager.AddKeybind(keybindA);
-  // inputManager.BindKeybindPress(keybindA, CallbackKeyPressFunction);
-  // inputManager.AddKeybind(keybind1);
-  // inputManager.BindKeybindPress(keybind1, WindowOpenGL::SwitchRenderingMode);
-  // inputManager.AddKeybind(keybind2);
-  // inputManager.BindKeybindPress(keybind2,
-  //                               [&camera, &shader]() { SwitchProjectionMatrix(camera, basic3DShader); });
-  /// TEST WITH INPUTMANAGER ///
+  LOG_INFO("OpenGL: {}", reinterpret_cast<const char*>(glGetString(GL_VERSION)));
+  LOG_INFO("Renderer: {}", reinterpret_cast<const char*>(glGetString(GL_RENDERER)));
 
   std::vector<PlayerStuff::Player> players;
 
@@ -851,18 +810,118 @@ int main()
     players.emplace_back(PlayerStuff::Player{transform.Position, transform.Rotation, "assets/objects/cat/Maxwell.obj"});
   }
 
+  std::vector<std::string> sceneList = SceneManager.GetAllScenes();
+  bool showAnotherWindow{false};
+
+  /// TEST WITH INPUTMANAGER ///
+  LumiCore::InputSystem::InputSystem inputManager(window);
+  LumiCore::InputSystem::InputKeyBind keybindW{LumiCore::InputSystem::EKeyCode::Keycode_W, 0};
+  LumiCore::InputSystem::InputKeyBind keybindA{LumiCore::InputSystem::EKeyCode::Keycode_A, 0};
+  LumiCore::InputSystem::InputKeyBind keybindS{LumiCore::InputSystem::EKeyCode::Keycode_S, 0};
+  LumiCore::InputSystem::InputKeyBind keybindD{LumiCore::InputSystem::EKeyCode::Keycode_D, 0};
+  LumiCore::InputSystem::InputKeyBind keybindE{LumiCore::InputSystem::EKeyCode::Keycode_E, 0};
+  LumiCore::InputSystem::InputKeyBind keybindQ{LumiCore::InputSystem::EKeyCode::Keycode_Q, 0};
+  
+  LumiCore::InputSystem::InputKeyBind keybindUpp{LumiCore::InputSystem::EKeyCode::Keycode_Up, 0};
+  LumiCore::InputSystem::InputKeyBind keybindDown{LumiCore::InputSystem::EKeyCode::Keycode_Down, 0};
+  LumiCore::InputSystem::InputKeyBind keybindLeft{LumiCore::InputSystem::EKeyCode::Keycode_Left, 0};
+  LumiCore::InputSystem::InputKeyBind keybindRight{LumiCore::InputSystem::EKeyCode::Keycode_Right, 0};
+  LumiCore::InputSystem::InputKeyBind keybindPgUp{LumiCore::InputSystem::EKeyCode::Keycode_PageUp, 0};
+  LumiCore::InputSystem::InputKeyBind keybindPgDn{LumiCore::InputSystem::EKeyCode::Keycode_PageDown, 0};
+
+  // Inputs for player 1
+  inputManager.BindKeybind(keybindW, LumiCore::InputSystem::EKeyState::Hold, [&players]()
+                           { Pipeline::GetPlayerInputAction(0, "Forward", players); });
+  inputManager.BindKeybind(keybindS, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
+                           { Pipeline::GetPlayerInputAction(0, "Backward", players); });
+  inputManager.BindKeybind(keybindD, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
+                           { Pipeline::GetPlayerInputAction(0, "YawPlus", players); });
+  inputManager.BindKeybind(keybindA, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
+                           { Pipeline::GetPlayerInputAction(0, "YawMinus", players); });
+  inputManager.BindKeybind(keybindE, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
+                           { Pipeline::GetPlayerInputAction(0, "PitchPlus", players); });
+  inputManager.BindKeybind(keybindQ, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
+                           { Pipeline::GetPlayerInputAction(0, "PitchMinus", players); });
+  
+  // Inputs for player 2
+  inputManager.BindKeybind(keybindUpp, LumiCore::InputSystem::EKeyState::Hold, [&players]()
+                           { Pipeline::GetPlayerInputAction(1, "Forward", players); });
+  inputManager.BindKeybind(keybindDown, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
+                           { Pipeline::GetPlayerInputAction(1, "Backward", players); });
+  inputManager.BindKeybind(keybindRight, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
+                           { Pipeline::GetPlayerInputAction(1, "YawPlus", players); });
+  inputManager.BindKeybind(keybindLeft, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
+                           { Pipeline::GetPlayerInputAction(1, "YawMinus", players); });
+  inputManager.BindKeybind(keybindPgUp, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
+                           { Pipeline::GetPlayerInputAction(1, "PitchPlus", players); });
+  inputManager.BindKeybind(keybindPgDn, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
+                           { Pipeline::GetPlayerInputAction(1, "PitchMinus", players); });
+  
+  /// TEST WITH INPUTMANAGER ///
+
+
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
   {
     float runningTime = (float)glfwGetTime();
 
+    // Start ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    { // Draw scene switcher
+      ImGui::Begin("LumiEngine");
+      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+      ImGui::Checkbox("Check Scene List", &showAnotherWindow);
+
+      for (int i = 0; i < activePlayers; i++)
+      {
+        PlayerStuff::Player& p = players[i];
+        std::string playerInfoText = std::format("Player {}: pos {},{},{}: rot {},{},{}", i + 1, p.Position.x,
+                                                 p.Position.y, p.Position.z, p.Rotation.x, p.Rotation.y, p.Rotation.z);
+        ImGui::Text("%s", playerInfoText.c_str());
+      }
+
+      ImGui::End();
+    }
+
+    if (showAnotherWindow)
+    {
+      ImGui::Begin("Scene Switcher", &showAnotherWindow);
+
+      ImGui::Text("Switch Scene by Pressing on the button");
+      for (int i = 0; i < sceneList.size(); ++i)
+      {
+        std::string name = sceneList[i];
+        if (ImGui::Button(name.c_str()))
+        {
+          // Switch the scene
+          SceneManager.SwitchScene(name);
+
+          // Move the players to spawn location
+          for (int i = 0; i < activePlayers; i++)
+          {
+            Objects::Transform transform = SceneManager.GetCurrentScene().SpawnPoints[i];
+            players[i].Position = transform.Position;
+            players[i].Rotation = transform.Rotation;
+          }
+        }
+      }
+      if (ImGui::Button("Close"))
+      {
+        showAnotherWindow = false;
+      }
+      ImGui::End();
+    }
+
     //////////////////////
     //// Handle input ////
     //////////////////////
 
-    std::vector<PlayerStuff::playerActions> inputs;
-    inputs.resize(activePlayers);
-    Pipeline::GetPlayerInput(window, activePlayers, players);
+    glfwPollEvents();
+    // need to call update so that we can send out the event for the different key states
+    inputManager.Update();
 
     //////////////////////
     //// Handle Logic ////
@@ -877,9 +936,17 @@ int main()
     /* Render here */
     Pipeline::RenderPlay(window, shader, activePlayers, players, SceneManager.GetCurrentScene(), resources);
 
+    // End ImGui frame and draws the ImGui frames
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
     glfwSwapBuffers(window);
-    glfwPollEvents();
   }
+
+  // Shutdown for ImGui
+  ImGui_ImplOpenGL3_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
 
   glfwTerminate();
   return 0;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Mesh.h"
 #include "glm/detail/qualifier.hpp"
 #include "logger/Logger.h"
 #include <filesystem>
@@ -61,6 +60,12 @@ namespace LumiCore::Utility
     return vector.size() >= value;
   }
 
+  template <typename T>
+  inline bool ContainsInVector(const std::vector<T>& vector, const T& item)
+  {
+    return std::find(vector.begin(), vector.end(), item) != vector.end();
+  }
+
   inline unsigned int GenerateTexture(const std::string& filePath)
   {
     stbi_set_flip_vertically_on_load(true);
@@ -84,7 +89,7 @@ namespace LumiCore::Utility
 
       glBindTexture(GL_TEXTURE_2D, id);
 
-      // set texture options
+      // set texture optionsmesh
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -93,7 +98,7 @@ namespace LumiCore::Utility
       glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
       glGenerateMipmap(GL_TEXTURE_2D);
     }
-    else LOG_WARNING(std::format("Could not load in texture: {}", filePath));
+    else LOG_WARNING("Could not load in texture: {}", filePath);
 
     // Once we have called `glTexImage2D`, we have bound the texture object and
     // attached an image to it. We can generate a Mipmap with `glGenerateMipmap`,
@@ -118,12 +123,6 @@ namespace LumiCore::Utility
       start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
     }
     return str;
-  }
-
-  template <typename T>
-  inline bool ContainsInVector(const std::vector<T>& vector, const T& item)
-  {
-    return std::find(vector.begin(), vector.end(), item) != vector.end();
   }
 
 

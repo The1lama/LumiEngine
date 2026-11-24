@@ -47,11 +47,11 @@ namespace LumiCore
   {
     if (!LumiCore::Utility::IsValidFile(path, LumiEngine::ValidObjectFileExtentsions))
     {
-      LOG_WARNING(std::format("File {} is not valid", path));
+      LOG_WARNING("File {} is not valid", path);
       return;
     };
 
-    LOG_INFO(std::format("Generating model: {}", path));
+    LOG_INFO("Generating model: {}", path);
 
     if (LumiEngine::useCustomObjectLoader) CustomLoader(path, resources);
     else AssLoader(path, resources);
@@ -142,7 +142,7 @@ namespace LumiCore
     // check if error occurred
     if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
     {
-      LOG_CRITICAL(std::format("ASSIMP could not generate model: {}", importer.GetErrorString()));
+      LOG_CRITICAL("ASSIMP could not generate model: {}", importer.GetErrorString());
       return;
     }
 
@@ -166,7 +166,7 @@ namespace LumiCore
     std::ifstream file(path);
     if (!file.is_open())
     {
-      LOG_CRITICAL(std::format("Failed to open OBJ file: {}", path));
+      LOG_CRITICAL("Failed to open OBJ file: {}", path);
       return;
     }
 
@@ -285,7 +285,7 @@ namespace LumiCore
         //
         std::string name;
         ss >> name;
-        LOG_INFO(std::format("Object name: {}", name));
+        LOG_INFO("Object name: {}", name);
       }
 
     } // while
