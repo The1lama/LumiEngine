@@ -1,19 +1,18 @@
-#include "LumiCore/math.h"
 #define STB_IMAGE_IMPLEMENTATION
 #include "LumiCore/EngineSettings.h"
 #include "LumiCore/InputSystem.h"
 #include "LumiCore/Model.h"
 #include "LumiCore/ResourceManager.h"
+#include "LumiCore/Scene/Scene.h"
+#include "LumiCore/Scene/SceneManager.h"
+#include "LumiCore/math.h"
 #include "glm/ext/matrix_float3x3.hpp"
 #include "glm/matrix.hpp"
 #include <GLFW/glfw3.h>
-#include <filesystem>
 #include <format>
-#include <fstream>
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
-#include <memory>
 #include <string>
 #include <vector>
 
@@ -186,322 +185,6 @@ namespace WindowOpenGL
   };
 } // namespace WindowOpenGL
 
-namespace Objects
-{
-  struct Transform
-  {
-    glm::vec3 Position;
-    glm::vec3 Rotation;
-    glm::vec3 Scale = glm::vec3(1.0f);
-  };
-
-  struct GameObject
-  {
-    std::string ModelPath;
-    std::string TexturePath;
-    Objects::Transform Transform;
-  };
-
-} // namespace Objects
-
-namespace SceneStuff
-{
-  enum class ObjectType
-  {
-    None,
-    Static,
-    Dynamic,
-  };
-
-  struct Scene
-  {
-    // Scene Info //
-    std::string SceneName;
-    std::string FilePath;
-    int LevelId;
-
-    std::vector<Objects::Transform> SpawnPoints;
-    glm::vec3 GoalPosition;
-
-    // Scene Objects //
-    std::vector<Objects::GameObject> WorldStatic;
-    std::vector<Objects::GameObject> WorldDynamic;
-
-    bool Initialize(const std::string& newScene)
-    {
-      // check if file is correct
-      auto fsPath = std::filesystem::path(newScene);
-      if (fsPath.extension() != ".lscene")
-        return false; // This have to be done before calling initialize but is here now
-
-      FilePath = newScene;
-
-      // read file
-      std::ifstream file(newScene);
-      if (!file.is_open())
-      {
-        LOG_CRITICAL("Failed to open scene file: {}", newScene);
-        return false;
-      }
-
-      ObjectType objectType = ObjectType::None;
-
-      // This will read the line in the file, line by line
-      std::string line;
-      unsigned int row = -1;
-      while (std::getline(file, line))
-      {
-        std::stringstream ss(line);
-        std::string prefix;
-        ss >> prefix;
-        ++row;
-        if (prefix == std::string("o")) // file name
-        {
-          std::string str;
-          while (ss >> str || IsNotAComment(str))
-          {
-            SceneName = std::format("{} {}", SceneName, str);
-          }
-          LOG_DEBUG("Scene Loaded: {}", SceneName);
-        }
-        else if (prefix == std::string("sp")) // spawn point, is in a vector as there could be more SpawnPoints in scene
-        {
-          Objects::Transform transfrom;
-          std::string stringTransform;
-
-          // Get Position
-          ss >> stringTransform;
-          std::vector<std::string> positions = LumiCore::Utility::SplitString(stringTransform, ",");
-          if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
-          {
-            LOG_WARNING("Could not load in {} row. As poition is wrongly formated", row);
-            transfrom.Position = glm::vec3(0);
-          }
-          else
-            transfrom.Position = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
-
-          // Get Rotation
-          ss >> stringTransform;
-          positions = LumiCore::Utility::SplitString(stringTransform, ",");
-          if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
-          {
-            LOG_WARNING("Could not load in row {}. As poition is wrongly formated", row);
-            transfrom.Rotation = glm::vec3(0);
-          }
-          else
-            transfrom.Rotation = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
-
-          SpawnPoints.emplace_back(transfrom);
-        }
-        else if (prefix == std::string("gp")) // Goal position
-        {
-          ss >> GoalPosition.x >> GoalPosition.y >> GoalPosition.z;
-        }
-        else if (prefix == std::string("END")) // Set the object type to None
-        {
-          objectType = ObjectType::None;
-        }
-        else if (prefix == std::string("STATIC")) // Set the object type to Static
-        {
-          objectType = ObjectType::Static;
-        }
-        else if (prefix == std::string("DYNAMIC")) // Set the object type to Dynamic
-        {
-          objectType = ObjectType::Dynamic;
-        }
-        else if (prefix == std::string("e")) // Create Object/ model
-        {
-          Objects::GameObject object;
-
-          // get model path
-          std::string filePath;
-          ss >> filePath;
-          object.ModelPath = "assets/objects/" + filePath;
-
-          // Get texture if there is a specified
-          ss >> filePath;
-          if (filePath != "NONE") object.TexturePath = "assets/textures/" + filePath;
-
-          Objects::Transform transform;
-          std::string posi;
-
-          ss >> posi;
-          std::vector<std::string> positions = LumiCore::Utility::SplitString(posi, ",");
-          if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
-          {
-            LOG_WARNING("Could not load in {} row. As poition is wrongly formated", row);
-            continue;
-          }
-          transform.Position = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
-
-          // Get Rotation
-          ss >> posi;
-          positions = LumiCore::Utility::SplitString(posi, ",");
-          if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
-          {
-            LOG_WARNING("Could not load in {} row. As Rotation is wrongly formated", row);
-            continue;
-          }
-          transform.Rotation = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
-
-          // Get Scale
-          ss >> posi;
-          positions = LumiCore::Utility::SplitString(posi, ",");
-          if (!LumiCore::Utility::VectorIsGreaterOrEqualTo(positions, 3))
-          {
-            LOG_WARNING("Could not load in {} row. As Scale is wrongly formated", row);
-            continue;
-          }
-          transform.Scale = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
-
-          object.Transform = transform;
-          AddToScene(object, objectType);
-        }
-      } // while
-        // parse through it
-      return true;
-    }
-
-    bool IsNotAComment(std::string str)
-    {
-      return str == "#";
-    }
-
-    void AddToScene(Objects::GameObject& object, const ObjectType type)
-    {
-      // TODO: Check if object is valid
-      switch (type)
-      {
-      case ObjectType::Static:
-        WorldStatic.emplace_back(std::move(object));
-        break;
-      case ObjectType::Dynamic:
-        WorldDynamic.emplace_back(std::move(object));
-        break;
-      case ObjectType::None:
-        break;
-      }
-    }
-
-    // TODO: Remove Object from scene
-
-    std::vector<Objects::GameObject>& GetObjectsInWorldByType(const ObjectType type)
-    {
-      switch (type)
-      {
-      case ObjectType::Static:
-        return WorldStatic;
-      case ObjectType::Dynamic:
-        return WorldDynamic;
-      case ObjectType::None:
-      default:
-        break;
-      }
-    }
-
-    void Cleanup()
-    {
-      WorldStatic.clear();
-      WorldDynamic.clear();
-    }
-  };
-
-  struct SceneManager
-  {
-  private:
-    std::vector<std::string> m_sceneNames;
-    const std::string SceneDirectory = "assets/scenes/";
-
-    std::unique_ptr<Scene> m_currentScene;
-
-    void GenerateNewScene();
-    bool LoadInScenes();
-
-  public:
-    const std::vector<std::string>& GetAllScenes();
-
-    const Scene* SwitchScene(std::string& sceneName);
-
-    Scene& GetCurrentScene() const
-    {
-      return *m_currentScene;
-    };
-  };
-
-  void SceneManager::GenerateNewScene()
-  {
-    const std::string sceneName = "Default Level";
-    const std::string fileName = std::format("{}.lscene", LumiCore::Utility::ReplaceAllChar(sceneName, " ", "_"));
-    const std::string filePathName = std::string(std::format("{}{}", SceneDirectory, fileName));
-
-    std::ofstream fs;
-    fs.open(filePathName.c_str());
-
-    fs << std::format("o {}\n", sceneName);
-
-    fs << "# Position Rotation\n";
-    fs << "sp  1,1,0  90,0,0\n";
-    fs << "sp -8,1,0 -90,0,0\n";
-
-    fs << "# Position\n";
-    fs << "gp 8,1,0\n";
-
-    fs << "STATIC\n";
-    fs << "# Model_Name           Texture_Name   POS   ROTATION     SCALE\n";
-    fs << "e engine/Plane.obj      noise.jpg    0,-4,0   0,0,0   20.0,20.0,20.0\n";
-    fs << "e engine/Cube.obj       uvTest.png   0,0,0    0,0,0   2,2,1\n";
-    fs << "e guy/MaleVillager.obj  NONE         4,1,1    0,0,0   1,1,1\n";
-    fs << "END\n";
-
-    fs.close();
-
-    LOG_INFO("Scene file generated: {}", filePathName);
-    m_sceneNames.emplace_back(fileName);
-  }
-
-  bool SceneManager::LoadInScenes()
-  {
-    for (const auto& entry : std::filesystem::directory_iterator(SceneDirectory))
-    {
-      std::filesystem::path path = entry.path();
-      if (entry.path().extension().string() == ".lscene")
-      {
-        m_sceneNames.emplace_back(path.filename().string());
-        LOG_INFO("Scene file found: {}", path.filename().string());
-      }
-    }
-    return !m_sceneNames.empty();
-  }
-
-  const std::vector<std::string>& SceneManager::GetAllScenes()
-  {
-    m_sceneNames.clear();
-    if (!LoadInScenes()) GenerateNewScene();
-    return m_sceneNames;
-  }
-
-  const Scene* SceneManager::SwitchScene(std::string& sceneName)
-  {
-    if (!LumiCore::Utility::ContainsInVector(m_sceneNames, sceneName))
-    {
-      LOG_CRITICAL("Could not find scene {}   Loading in default scene...", sceneName);
-
-      sceneName = "Default_Level.lscene";
-      if (!LumiCore::Utility::ContainsInVector(m_sceneNames, sceneName)) GenerateNewScene();
-    }
-
-    if (m_currentScene) m_currentScene->Cleanup();
-    m_currentScene.reset();
-
-    m_currentScene = std::make_unique<Scene>();
-    m_currentScene->Initialize(SceneDirectory + sceneName);
-
-    return m_currentScene.get();
-  }
-
-
-} // namespace SceneStuff
-
 void CallbackKeyPressFunction()
 {
   LOG_DEBUG("Keypress callback has beedn called");
@@ -659,7 +342,7 @@ namespace Pipeline
 
   // Render the screen
   void RenderPlay(GLFWwindow* window, Shader& shader, const int activePlayers,
-                  std::vector<PlayerStuff::Player>& players, SceneStuff::Scene& scene,
+                  std::vector<PlayerStuff::Player>& players, LumiCore::Scene::Scene& scene,
                   LumiCore::Resources::AssetManagers& resources)
   {
 
@@ -687,7 +370,7 @@ namespace Pipeline
       shader.SetMatrix4("u_View", player.Camera.GetViewMatrix());
       shader.SetMatrix4("u_Projection", player.Camera.GetProjectionMatrix());
 
-      for (auto& object : scene.GetObjectsInWorldByType(SceneStuff::ObjectType::Static))
+      for (auto& object : scene.GetObjectsInWorldByType(LumiCore::Scene::ObjectType::Static))
       {
         LumiCore::Model& mesh = resources.Models.Get(object.ModelPath, resources);
         if (!mesh.IsValid()) continue;
@@ -772,11 +455,11 @@ int main()
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init();
 
-  SceneStuff::SceneManager SceneManager;
+  LumiCore::Scene::SceneManager SceneManager;
   {
     const std::vector<std::string> allscenes = SceneManager.GetAllScenes();
     std::string level = std::string("cats.lscene"); // main.lscene // guy.lscene // cats.lscene
-    if (const SceneStuff::Scene* scene = SceneManager.SwitchScene(level); scene == nullptr)
+    if (const LumiCore::Scene::Scene* scene = SceneManager.SwitchScene(level); scene == nullptr)
     {
       glfwTerminate();
       return -1;
@@ -805,7 +488,7 @@ int main()
 
   for (int i = 0; i < activePlayers; i++)
   {
-    Objects::Transform transform = SceneManager.GetCurrentScene().SpawnPoints[i];
+    Objects::Transform transform = SceneManager.GetCurrentScene().GetSpawnTransformByIndex(i);
     players.emplace_back(PlayerStuff::Player{transform.Position, transform.Rotation, "assets/objects/cat/Maxwell.obj"});
   }
 
@@ -909,7 +592,7 @@ int main()
           // Move the players to spawn location
           for (int i = 0; i < activePlayers; i++)
           {
-            Objects::Transform transform = SceneManager.GetCurrentScene().SpawnPoints[i];
+            Objects::Transform transform = SceneManager.GetCurrentScene().GetSpawnTransformByIndex(i);
             players[i].Position = transform.Position;
             players[i].Rotation = transform.Rotation;
           }
