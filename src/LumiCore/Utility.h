@@ -1,6 +1,5 @@
 #pragma once
 
-#include "glm/detail/qualifier.hpp"
 #include "logger/Logger.h"
 #include <filesystem>
 #include <format>
@@ -14,12 +13,27 @@
 namespace LumiCore::Utility
 {
 
-  inline bool IsValidFile(const std::string path)
+  /**
+   * Check is a file exist in a given path
+   *
+   * @ const std::string& path: The path to the file
+   *
+   * @ return bool: If the file exist on said path
+   */
+  inline bool IsValidFile(const std::string& path)
   {
     std::ifstream file(path);
     return file.good();
   }
 
+  /**
+   * Check is a file exist in a given path and if the given file extentions is also included in said file
+   *
+   * @ const std::string& filePath: The file path to the file
+   * @ const std::vector<std::string>& validExtentions: Is a vector of all the valid file extentions the files can have
+   *
+   * @ return bool: if both of the statements are true
+   */
   inline bool IsValidFile(const std::string& filePath, const std::vector<std::string>& validExtentions)
   {
     const std::filesystem::path path(filePath);
@@ -30,6 +44,14 @@ namespace LumiCore::Utility
     return fileExist && isValidExtention;
   }
 
+  /**
+   * This will split a string by a delimiter
+   *
+   * @ std::string s: The string to split
+   * @ const std::string& delimiter: The character(s) that the string should be split with
+   *
+   * @ return std::vector<std::string>: A vector of the strings that is divided up by the delimiter
+   */
   inline std::vector<std::string> SplitString(std::string s, const std::string& delimiter)
   {
     std::vector<std::string> tokens;
@@ -54,18 +76,41 @@ namespace LumiCore::Utility
     return tokens;
   }
 
+  /**
+   * If a vector is greater or equal to a value
+   *
+   * @ std::vector<T> vector: The vector we want to get the size of
+   * @ std::unsigned int value: The amount we want to check from
+   *
+   * @ return bool: if the vector size is greater or equal to value
+   */
   template <typename T>
   inline bool VectorIsGreaterOrEqualTo(std::vector<T> vector, unsigned int value)
   {
     return vector.size() >= value;
   }
 
+  /**
+   * Checks if an item is contained in a vector
+   *
+   * @ cosnt std::vector<T>& vector: The vector we want to search
+   * @ const T& item: The item we want to look up
+   *
+   * @ return bool: If the item is contained in vectector
+   */
   template <typename T>
   inline bool ContainsInVector(const std::vector<T>& vector, const T& item)
   {
     return std::find(vector.begin(), vector.end(), item) != vector.end();
   }
 
+  /**
+   * Generates a texture from a filepath that is given
+   *
+   * @ const std::string& filePath: The file path where the texture is located at
+   *
+   * @ return unsigned int: The texture Id that was genereated
+   */
   inline unsigned int GenerateTexture(const std::string& filePath)
   {
     stbi_set_flip_vertically_on_load(true);
@@ -108,12 +153,29 @@ namespace LumiCore::Utility
     return id;
   }
 
+  /**
+   * Generates a texture from a filepath that is given
+   *
+   * @ const std::string& filename: the file name of the texture
+   * @ const std::string& directory: the directory where the texture is located at
+   *
+   * @ return unsigned int: The texture Id that was genereated
+   */
   inline unsigned int GenerateTexture(const std::string& filename, const std::string& directory)
   {
     const std::string path = directory + '/' + filename;
     return GenerateTexture(path);
   }
 
+  /**
+   * Replaces all characters in a string
+   *
+   * @ std::string str: The string we want to modify
+   * @ const std::string& from: The character(s) we want to replace
+   * @ const std::string& to: The character(s) we want to replace with
+   *
+   * @ return std::string: The new string with the changed character(s)
+   */
   inline std::string ReplaceAllChar(std::string str, const std::string& from, const std::string& to)
   {
     size_t start_pos = 0;

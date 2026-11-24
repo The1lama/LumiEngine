@@ -772,7 +772,6 @@ int main()
   ImGui_ImplGlfw_InitForOpenGL(window, true);
   ImGui_ImplOpenGL3_Init();
 
-
   SceneStuff::SceneManager SceneManager;
   {
     const std::vector<std::string> allscenes = SceneManager.GetAllScenes();
@@ -813,15 +812,17 @@ int main()
   std::vector<std::string> sceneList = SceneManager.GetAllScenes();
   bool showAnotherWindow{false};
 
+#pragma region Input System
   /// TEST WITH INPUTMANAGER ///
-  LumiCore::InputSystem::InputSystem inputManager(window);
+  // Initializes Input system so it is a singleton should only need to do once
+  auto& inputManager = LumiCore::InputSystem::InputSystem::GetInstance()->Initialize(window);
   LumiCore::InputSystem::InputKeyBind keybindW{LumiCore::InputSystem::EKeyCode::Keycode_W, 0};
   LumiCore::InputSystem::InputKeyBind keybindA{LumiCore::InputSystem::EKeyCode::Keycode_A, 0};
   LumiCore::InputSystem::InputKeyBind keybindS{LumiCore::InputSystem::EKeyCode::Keycode_S, 0};
   LumiCore::InputSystem::InputKeyBind keybindD{LumiCore::InputSystem::EKeyCode::Keycode_D, 0};
   LumiCore::InputSystem::InputKeyBind keybindE{LumiCore::InputSystem::EKeyCode::Keycode_E, 0};
   LumiCore::InputSystem::InputKeyBind keybindQ{LumiCore::InputSystem::EKeyCode::Keycode_Q, 0};
-  
+
   LumiCore::InputSystem::InputKeyBind keybindUpp{LumiCore::InputSystem::EKeyCode::Keycode_Up, 0};
   LumiCore::InputSystem::InputKeyBind keybindDown{LumiCore::InputSystem::EKeyCode::Keycode_Down, 0};
   LumiCore::InputSystem::InputKeyBind keybindLeft{LumiCore::InputSystem::EKeyCode::Keycode_Left, 0};
@@ -830,35 +831,35 @@ int main()
   LumiCore::InputSystem::InputKeyBind keybindPgDn{LumiCore::InputSystem::EKeyCode::Keycode_PageDown, 0};
 
   // Inputs for player 1
-  inputManager.BindKeybind(keybindW, LumiCore::InputSystem::EKeyState::Hold, [&players]()
-                           { Pipeline::GetPlayerInputAction(0, "Forward", players); });
-  inputManager.BindKeybind(keybindS, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
-                           { Pipeline::GetPlayerInputAction(0, "Backward", players); });
-  inputManager.BindKeybind(keybindD, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
-                           { Pipeline::GetPlayerInputAction(0, "YawPlus", players); });
-  inputManager.BindKeybind(keybindA, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
-                           { Pipeline::GetPlayerInputAction(0, "YawMinus", players); });
-  inputManager.BindKeybind(keybindE, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
-                           { Pipeline::GetPlayerInputAction(0, "PitchPlus", players); });
-  inputManager.BindKeybind(keybindQ, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
-                           { Pipeline::GetPlayerInputAction(0, "PitchMinus", players); });
-  
-  // Inputs for player 2
-  inputManager.BindKeybind(keybindUpp, LumiCore::InputSystem::EKeyState::Hold, [&players]()
-                           { Pipeline::GetPlayerInputAction(1, "Forward", players); });
-  inputManager.BindKeybind(keybindDown, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
-                           { Pipeline::GetPlayerInputAction(1, "Backward", players); });
-  inputManager.BindKeybind(keybindRight, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
-                           { Pipeline::GetPlayerInputAction(1, "YawPlus", players); });
-  inputManager.BindKeybind(keybindLeft, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
-                           { Pipeline::GetPlayerInputAction(1, "YawMinus", players); });
-  inputManager.BindKeybind(keybindPgUp, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
-                           { Pipeline::GetPlayerInputAction(1, "PitchPlus", players); });
-  inputManager.BindKeybind(keybindPgDn, LumiCore::InputSystem::EKeyState::Hold, [ &players]()
-                           { Pipeline::GetPlayerInputAction(1, "PitchMinus", players); });
-  
-  /// TEST WITH INPUTMANAGER ///
+  inputManager.BindKeybind(keybindW, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(0, "Forward", players); });
+  inputManager.BindKeybind(keybindS, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(0, "Backward", players); });
+  inputManager.BindKeybind(keybindD, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(0, "YawPlus", players); });
+  inputManager.BindKeybind(keybindA, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(0, "YawMinus", players); });
+  inputManager.BindKeybind(keybindE, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(0, "PitchPlus", players); });
+  inputManager.BindKeybind(keybindQ, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(0, "PitchMinus", players); });
 
+  // Inputs for player 2
+  inputManager.BindKeybind(keybindUpp, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(1, "Forward", players); });
+  inputManager.BindKeybind(keybindDown, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(1, "Backward", players); });
+  inputManager.BindKeybind(keybindRight, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(1, "YawPlus", players); });
+  inputManager.BindKeybind(keybindLeft, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(1, "YawMinus", players); });
+  inputManager.BindKeybind(keybindPgUp, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(1, "PitchPlus", players); });
+  inputManager.BindKeybind(keybindPgDn, LumiCore::InputSystem::EKeyState::Hold,
+                           [&players]() { Pipeline::GetPlayerInputAction(1, "PitchMinus", players); });
+
+  /// TEST WITH INPUTMANAGER ///
+#pragma endregion // Input System
 
   /* Loop until the user closes the window */
   while (!glfwWindowShouldClose(window))
@@ -875,6 +876,7 @@ int main()
       ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
       ImGui::Checkbox("Check Scene List", &showAnotherWindow);
 
+      // Show active players positions
       for (int i = 0; i < activePlayers; i++)
       {
         PlayerStuff::Player& p = players[i];
@@ -882,6 +884,11 @@ int main()
                                                  p.Position.y, p.Position.z, p.Rotation.x, p.Rotation.y, p.Rotation.z);
         ImGui::Text("%s", playerInfoText.c_str());
       }
+
+      // switch between split screen or not
+      ImGui::Text("Switch between split screen");
+      ImGui::SameLine();
+      if (ImGui::Button("Toggle")) activePlayers = activePlayers == 1 ? 2 : 1;
 
       ImGui::End();
     }
@@ -947,6 +954,9 @@ int main()
   ImGui_ImplOpenGL3_Shutdown();
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
+
+  // Clean up all of the keybinds we have added
+  LumiCore::InputSystem::InputSystem::GetInstance()->Reset();
 
   glfwTerminate();
   return 0;

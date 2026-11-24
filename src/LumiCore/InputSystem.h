@@ -224,25 +224,54 @@ namespace LumiCore::InputSystem
     // InputKeyBind m_pressedKeys[348]; // The amount of keycodes that glfw has defined
     // https://www.glfw.org/docs/latest/group__keys.html
 
-    void Initialize(GLFWwindow* window);
     void Cleanup();
 
   protected:
     void GenerateKeyMap(GLFWwindow* window);
 
   public:
-    InputSystem(GLFWwindow* window);
+    InputSystem& Initialize(GLFWwindow* window);
+
+    InputSystem() = default;
     ~InputSystem();
 
+    /**
+     * This functions should only run after the glfwPollEvents() function, so that after we have
+     * sent all of our newly created input states we go through and compare what was changed from
+     * last frame. This will be the function that will send out our input events for Released, Pressed, Hold
+     * notifications
+     */
     void Update();
 
+
+    /**
+     * This creates and binds a keybind with a function with a state.
+     *
+     * @ const InputKeyBind& keyBind: The keybind we want to use
+     * @ const EKeyState state: What state we want to call the function in, Release, Hold, Pressed
+     * @ Callable&& function: The function we want to call when an input event has happened
+     */
     template <typename Callable>
     bool BindKeybind(const InputKeyBind& keyBind, const EKeyState state, Callable&& function);
 
+    /**
+     * Removes a keybind from the input system
+     */
     void RemoveKeybind(const InputKeyBind& keyBind, const EKeyState state);
 
+    /**
+     * Looks up if a keybind already exist
+     *
+     * @ return: true if it exist
+     */
     bool KeybindExist(const InputKeyBind& keyBind, const EKeyState state) const;
+
+    /**
+     * Removes all of the keybinds we have binded to the input system
+     */
+    void Reset();
   };
+
   template <typename Callable>
   inline bool InputSystem::BindKeybind(const InputKeyBind& keyBind, const EKeyState state, Callable&& function)
   {
@@ -250,20 +279,19 @@ namespace LumiCore::InputSystem
     {
     case EKeyState::Released:
       m_keybindsReleased.try_emplace(keyBind, Utility::Function::EventSystem<>());
-      m_keybindsReleased[keyBind].Attach(function); 
+      m_keybindsReleased[keyBind].Attach(function);
       return true;
     case EKeyState::Pressed:
       m_keybindsPressed.try_emplace(keyBind, Utility::Function::EventSystem<>());
-      m_keybindsPressed[keyBind].Attach(function); 
+      m_keybindsPressed[keyBind].Attach(function);
       return true;
     case EKeyState::Hold:
       m_keybindsHold.try_emplace(keyBind, Utility::Function::EventSystem<>());
-      m_keybindsHold[keyBind].Attach(function); 
+      m_keybindsHold[keyBind].Attach(function);
       return true;
     }
     return false;
   }
-
 
 } // namespace LumiCore::InputSystem
 

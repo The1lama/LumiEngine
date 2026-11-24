@@ -1,24 +1,19 @@
 #include "InputSystem.h"
 #include "GLFW/glfw3.h"
 #include "Utility.h"
-#include "logger/Logger.h"
-#include <format>
 
 namespace LumiCore::InputSystem
 {
-  InputSystem::InputSystem(GLFWwindow* window)
-  {
-    Initialize(window);
-  }
   InputSystem::~InputSystem()
   {
     Cleanup();
   }
-  void InputSystem::Initialize(GLFWwindow* window)
+  InputSystem& InputSystem::Initialize(GLFWwindow* window)
   {
     m_window = window;
     glfwSetWindowUserPointer(m_window, this);
     glfwSetKeyCallback(window, KeyCallbackStatic);
+    return *this;
   }
 
   void InputSystem::Cleanup()
@@ -42,8 +37,6 @@ namespace LumiCore::InputSystem
     inputCombo.modifierFlags = mods;
 
     // Send the notification event if there is a correct input action
-    LOG_DEBUG("Action press: {}", action);
-
     if (action == GLFW_PRESS) m_currentKeysDown.emplace_back(inputCombo);
     if (action == GLFW_RELEASE) std::erase(m_currentKeysDown, inputCombo);
   }
@@ -108,5 +101,13 @@ namespace LumiCore::InputSystem
     // override the previous keys down chache for the next frame to compare the inputs
     m_previousKeysDown = m_currentKeysDown;
   }
+
+  void InputSystem::Reset()
+  {
+    m_keybindsReleased.clear();
+    m_keybindsPressed.clear();
+    m_keybindsHold.clear();
+  }
+
 
 } // namespace LumiCore::InputSystem
