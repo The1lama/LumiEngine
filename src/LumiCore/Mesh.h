@@ -1,17 +1,16 @@
 #pragma once
 
+#include "ComponentTypes.h"
 #include "ResourceManager.h"
 #include "Utility.h"
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-#include <string>
 #include <vector>
 
 class Shader;
 
 namespace LumiCore
 {
-
   struct Vertex
   {
     glm::vec3 position;
@@ -19,33 +18,19 @@ namespace LumiCore
     glm::vec2 uvCoord;
 
     Vertex() = default;
-    Vertex(glm::vec3 VertexPosition, glm::vec3 VertexNormal, glm::vec2 UvCoord) :
-        position(VertexPosition), normal(VertexNormal), uvCoord(UvCoord) {};
+    Vertex(glm::vec3 vertexPosition, glm::vec3 vertexNormal, glm::vec2 uvCoord) :
+        position(vertexPosition), normal(vertexNormal), uvCoord(uvCoord) {};
     Vertex(float pX, float pY, float pZ, float nX, float nY, float nZ, float uX, float uY) :
         position(glm::vec3(pX, pY, pZ)), normal(glm::vec3(nX, nY, nZ)), uvCoord(glm::vec2(uX, uY)) {};
   };
 
-  struct Texture
-  {
-    unsigned int id;
-    std::string type = "diffuse";
-    std::string path;
-
-    Texture() = default;
-    Texture(const std::string& filePath, Resources::AssetManagers&)
-    {
-      path = filePath;
-      id = LumiCore::Utility::GenerateTexture(filePath);
-    }
-  };
 
   struct MeshData
   {
-    std::vector<Vertex> vertecies;
-    std::vector<unsigned int> indices;
-    std::vector<Texture> textures;
+    std::vector<Vertex> Vertecies;
+    std::vector<unsigned int> Indices;
+    std::vector<Texture> Textures;
   };
-
 
   class Mesh
   {
@@ -76,15 +61,15 @@ namespace LumiCore
     GLenum m_renderType;
 
   private:
-    GLuint m_VBO, m_VAO, m_EBO;
+    GLuint m_vbo, m_vao, m_ebo;
 
     void CreateMesh(const LumiCore::MeshData& data);
 
     void GenerateTransformationMatrix();
 
-    inline bool IsFunctional()
+    bool IsFunctional()
     {
-      return m_indicies.size() > 0 && m_VBO != 0;
+      return !m_indicies.empty() && m_vbo != 0;
     }
   };
 

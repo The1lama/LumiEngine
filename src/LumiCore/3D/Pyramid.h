@@ -1,62 +1,62 @@
 #pragma once
 
-#include <vector>
 #include "../Mesh.h"
+#include <vector>
 
 namespace LumiCore3D
 {
 
-class Pyramid : public LumiCore::Mesh
-{
+  class Pyramid : public LumiCore::Mesh
+  {
   public:
-  Pyramid(const std::vector<LumiCore::Texture> textures) : Mesh(GenerateMeshData(textures), GL_TRIANGLES) {};
+    Pyramid(const std::vector<LumiCore::Texture> textures) : Mesh(GenerateMeshData(textures), GL_TRIANGLES) {};
 
   private:
-  static inline LumiCore::MeshData GenerateMeshData(const std::vector<LumiCore::Texture> textures)
-  {
-    LumiCore::MeshData data;
+    static inline LumiCore::MeshData GenerateMeshData(const std::vector<LumiCore::Texture> textures)
+    {
+      LumiCore::MeshData data;
 
-    data.vertecies = std::move(Pyramid::GenerateVertexArray());
-    data.indices = std::move(Pyramid::GenerateIndicies());
-    data.textures = std::move(textures);
+      data.Vertecies = std::move(Pyramid::GenerateVertexArray());
+      data.Indices = std::move(Pyramid::GenerateIndicies());
+      data.Textures = std::move(textures);
 
-    return data;
-  };
-
-  static inline std::vector<LumiCore::Vertex> GenerateVertexArray()
-  {
-    return std::vector<LumiCore::Vertex>{
-        //                 // Position // // Normal // UV COORD //
-        // Forward side
-        LumiCore::Vertex(0.f, 1.f, 0.f, 1.0f, 0.5f, 0.0f, 0.5f, 0.5f), // TOP
-        LumiCore::Vertex(1.f, -1.f, -1.f, 1.0f, 0.5f, 0.0f, 1.0f, 0.0f), // Bottom RIGHT
-        LumiCore::Vertex(1.f, -1.f, 1.f, 1.0f, 0.5f, 0.0f, 0.0f, 0.0f), // BOTTOM LEFT
-
-        // Back side
-        LumiCore::Vertex(0.f, 1.f, 0.f, -1.0f, 0.5f, 0.0f, 0.5f, 0.5f), // TOP
-        LumiCore::Vertex(-1.f, -1.f, 1.f, -1.0f, 0.5f, 0.0f, 1.0f, 0.0f), // Bottom RIGHT
-        LumiCore::Vertex(-1.f, -1.f, -1.f, -1.0f, 0.5f, 0.0f, 0.0f, 0.0f), // BOTTOM LEFT
-
-        // Right side
-        LumiCore::Vertex(0.f, 1.f, 0.f, 0.0f, 0.5f, 1.0f, 0.5f, 0.5f), // TOP
-        LumiCore::Vertex(1.f, -1.f, 1.f, 0.0f, 0.5f, 1.0f, 1.0f, 0.0f), // Bottom RIGHT
-        LumiCore::Vertex(-1.f, -1.f, 1.f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f), // BOTTOM LEFT
-
-        // Left side
-        LumiCore::Vertex(0.f, 1.f, 0.f, 0.0f, 0.5f, -1.0f, 0.5f, 0.5f), // TOP
-        LumiCore::Vertex(-1.f, -1.f, -1.f, 0.0f, 0.5f, -1.0f, 1.0f, 0.0f), // Bottom RIGHT
-        LumiCore::Vertex(1.f, -1.f, -1.f, 0.0f, 0.5f, -1.0f, 0.0f, 0.0f), // BOTTOM LEFT
-
-        // Bottom side
-        LumiCore::Vertex(-1.f, -1.f, 1.f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f), // TOP LEFT
-        LumiCore::Vertex(1.f, -1.f, 1.f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f), // TOP RIGHT
-        LumiCore::Vertex(1.f, -1.f, -1.f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f), // BOTTOM RIGHT
-        LumiCore::Vertex(-1.f, -1.f, -1.f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f) // BOTTOM LEFT
+      return data;
     };
-  }
-  static inline std::vector<unsigned int> GenerateIndicies()
-  {
-    // clang-format off
+
+    static inline std::vector<LumiCore::Vertex> GenerateVertexArray()
+    {
+      return std::vector<LumiCore::Vertex>{
+          //                 // Position // // Normal // UV COORD //
+          // Forward side
+          LumiCore::Vertex(0.f, 1.f, 0.f, 1.0f, 0.5f, 0.0f, 0.5f, 0.5f), // TOP
+          LumiCore::Vertex(1.f, -1.f, -1.f, 1.0f, 0.5f, 0.0f, 1.0f, 0.0f), // Bottom RIGHT
+          LumiCore::Vertex(1.f, -1.f, 1.f, 1.0f, 0.5f, 0.0f, 0.0f, 0.0f), // BOTTOM LEFT
+
+          // Back side
+          LumiCore::Vertex(0.f, 1.f, 0.f, -1.0f, 0.5f, 0.0f, 0.5f, 0.5f), // TOP
+          LumiCore::Vertex(-1.f, -1.f, 1.f, -1.0f, 0.5f, 0.0f, 1.0f, 0.0f), // Bottom RIGHT
+          LumiCore::Vertex(-1.f, -1.f, -1.f, -1.0f, 0.5f, 0.0f, 0.0f, 0.0f), // BOTTOM LEFT
+
+          // Right side
+          LumiCore::Vertex(0.f, 1.f, 0.f, 0.0f, 0.5f, 1.0f, 0.5f, 0.5f), // TOP
+          LumiCore::Vertex(1.f, -1.f, 1.f, 0.0f, 0.5f, 1.0f, 1.0f, 0.0f), // Bottom RIGHT
+          LumiCore::Vertex(-1.f, -1.f, 1.f, 0.0f, 0.5f, 1.0f, 0.0f, 0.0f), // BOTTOM LEFT
+
+          // Left side
+          LumiCore::Vertex(0.f, 1.f, 0.f, 0.0f, 0.5f, -1.0f, 0.5f, 0.5f), // TOP
+          LumiCore::Vertex(-1.f, -1.f, -1.f, 0.0f, 0.5f, -1.0f, 1.0f, 0.0f), // Bottom RIGHT
+          LumiCore::Vertex(1.f, -1.f, -1.f, 0.0f, 0.5f, -1.0f, 0.0f, 0.0f), // BOTTOM LEFT
+
+          // Bottom side
+          LumiCore::Vertex(-1.f, -1.f, 1.f, 0.0f, -1.0f, 0.0f, 0.0f, 1.0f), // TOP LEFT
+          LumiCore::Vertex(1.f, -1.f, 1.f, 0.0f, -1.0f, 0.0f, 1.0f, 1.0f), // TOP RIGHT
+          LumiCore::Vertex(1.f, -1.f, -1.f, 0.0f, -1.0f, 0.0f, 1.0f, 0.0f), // BOTTOM RIGHT
+          LumiCore::Vertex(-1.f, -1.f, -1.f, 0.0f, -1.0f, 0.0f, 0.0f, 0.0f) // BOTTOM LEFT
+      };
+    }
+    static inline std::vector<unsigned int> GenerateIndicies()
+    {
+      // clang-format off
     return std::vector<unsigned int>{
       // Front Side
       0,2,1,
@@ -70,8 +70,8 @@ class Pyramid : public LumiCore::Mesh
       12,14,13,
       12,15,14
     };
-    // clang-format on
-  }
-};
+      // clang-format on
+    }
+  };
 
 } // namespace LumiCore3D

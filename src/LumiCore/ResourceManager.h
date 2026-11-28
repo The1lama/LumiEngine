@@ -37,9 +37,9 @@ namespace LumiCore::Resources
      *
      * @ const std::string& resourcePath: the path to the resource we want to use
      *
-     * @ return: a const reference of the resource
+     * @ return: a reference of the resource
      */
-    Resource& Get(std::string& resourcePath, Resources::AssetManagers& resources);
+    Resource& Get(std::string& resourcePath, AssetManagers& resources);
 
     /**
      * The resource will be moved to the resource manager. This will put the resource in a moved from state.
@@ -91,11 +91,10 @@ namespace LumiCore::Resources
     return *m_resources.at(resourcePath);
   }
 
-
   struct AssetManagers
   {
-    Resources::ResourceManager<LumiCore::Texture> Textures;
-    Resources::ResourceManager<LumiCore::Model> Models;
+    Resources::ResourceManager<Texture> Textures;
+    Resources::ResourceManager<Model> Models;
   };
 
 } // namespace LumiCore::Resources

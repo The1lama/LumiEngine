@@ -1,11 +1,25 @@
 #pragma once
 
-#include "Objects.h"
+#include <cstdint>
 #include <glm/vec3.hpp>
+#include <memory>
 #include <string>
+
+namespace LumiCore
+{
+  struct Transform;
+
+  namespace ECS
+  {
+    using Entity = std::uint32_t;
+
+    class ECSFacade;
+  } // namespace ECS
+} // namespace LumiCore
 
 namespace LumiCore::Scene
 {
+
   enum class ObjectType
   {
     None,
@@ -21,19 +35,21 @@ namespace LumiCore::Scene
     std::string m_filePath;
     int m_levelId;
 
-    std::vector<Objects::Transform> m_spawnPoints;
+    std::vector<LumiCore::Transform> m_spawnPoints;
     glm::vec3 m_goalPosition;
 
     // Scene Objects //
-    std::vector<Objects::GameObject> m_worldStatic;
-    std::vector<Objects::GameObject> m_worldDynamic;
+    std::vector<ECS::Entity> m_worldStatic;
+    std::vector<ECS::Entity> m_worldDynamic;
 
     bool IsNotAComment(std::string str);
 
   public:
+    Scene();
+    ~Scene();
     bool Initialize(const std::string& newScene);
 
-    void AddToScene(Objects::GameObject& object, const ObjectType type);
+    void AddToScene(ECS::Entity entity, const ObjectType type);
 
     void Cleanup()
     {
@@ -42,7 +58,7 @@ namespace LumiCore::Scene
     }
 
 #pragma region Getters
-    Objects::Transform GetSpawnTransformByIndex(const int index);
+    LumiCore::Transform GetSpawnTransformByIndex(const int index);
 
     std::string GetScenename() const
     {
@@ -57,7 +73,7 @@ namespace LumiCore::Scene
       return m_levelId;
     }
 
-    std::vector<Objects::GameObject>& GetObjectsInWorldByType(const ObjectType type);
+    std::vector<ECS::Entity>& GetObjectsInWorldByType(const ObjectType type);
 #pragma endregion // Getters
   };
 

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Scene.h"
 #include <memory>
+#include <vector>
 
 
 namespace PlayerStuff
@@ -12,6 +12,7 @@ namespace PlayerStuff
 
 namespace LumiCore::Scene
 {
+  class Scene;
 
   class SceneManager
   {
@@ -44,7 +45,7 @@ namespace LumiCore::Scene
     {
       return m_players.size();
     }
-    PlayerStuff::Player& extracted();
+    PlayerStuff::Player& Extracted();
     PlayerStuff::Player& GetPlayerByIndex(const unsigned int index);
 
 

@@ -1,34 +1,22 @@
 #pragma once
 
+#include "ECSTypes.h"
+
 #include <array>
-#include <bitset>
 #include <cstdint>
 #include <stack>
+#include <vector>
 
 namespace LumiCore::ECS
 {
-  // Type alias for entity (Can be changed for other types if needed)
-  using Entity = std::uint32_t;
-
-  // Set the amount of entities we can use. (This is just an abritrary number that I have set)
-  inline extern const Entity MaxEntities = 5000;
-
-  // Type alias for each component (Can be changed for other types if needed)
-  using ComponentType = std::uint8_t;
-
-  // Set the max amount of components we can use (This is just an abritrary number that I have set)
-  inline const ComponentType MaxComponents = 32;
-
-  // What components the entity is using for faster lookup as it is using bits
-  // The MaxComponents is the number of bits are are allocating storage for
-  using Signature = std::bitset<MaxComponents>;
 
   class EntityManager
   {
   private:
     std::stack<Entity> m_freeEntities;
     std::array<Signature, MaxEntities> m_signatures;
-    uint32_t m_livingEntityCount;
+    std::vector<Entity> m_aliveEntities;
+    uint32_t m_livingEntityCount {0};
 
   public:
     EntityManager();
@@ -59,6 +47,8 @@ namespace LumiCore::ECS
      * @ return Signature: The signature that the entity has
      */
     Signature GetSignature(Entity entity);
+
+    const std::vector<Entity>& GetAliveEntities() const;
   };
 
 } // namespace LumiCore::ECS

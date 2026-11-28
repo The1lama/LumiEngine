@@ -1,6 +1,7 @@
 #include "Model.h"
 
 #include "3D/GeneratedMesh.h"
+#include "ComponentTypes.h"
 #include "EngineSettings.h"
 #include "Mesh.h"
 #include "ResourceManager.h"
@@ -315,9 +316,9 @@ namespace LumiCore
       if (!resources.Textures.Contains(texturePath))
       {
         Texture texture;
-        texture.id = LumiCore::Utility::GenerateTexture(str.C_Str(), m_directory); // Generate texture
-        texture.type = typeName;
-        texture.path = str.C_Str();
+        texture.Id = LumiCore::Utility::GenerateTexture(str.C_Str(), m_directory); // Generate texture
+        texture.Type = typeName;
+        texture.Path = str.C_Str();
         resources.Textures.Create(texturePath, texture);
       }
 

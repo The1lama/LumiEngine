@@ -1,8 +1,12 @@
 #include "SceneManager.h"
-#include <format>
 
+#include <format>
+#include <memory>
+
+#include "../ComponentTypes.h"
 #include "../Utility.h"
 #include "Objects.h"
+#include "Scene.h"
 
 namespace LumiCore::Scene
 {
@@ -46,7 +50,7 @@ namespace LumiCore::Scene
       if (entry.path().extension().string() == ".lscene")
       {
         m_sceneNames.emplace_back(path.filename().string());
-        LOG_INFO("Scene file found: {}", path.filename().string());
+        // LOG_INFO("Scene file found: {}", path.filename().string());
       }
     }
     return !m_sceneNames.empty();
@@ -85,9 +89,9 @@ namespace LumiCore::Scene
   void SceneManager::CreateNewPlayer()
   {
     const unsigned int playerIndex = m_players.size();
-    Objects::Transform transform = GetCurrentScene().GetSpawnTransformByIndex(playerIndex);
-    m_players.emplace_back(
-      std::make_unique<PlayerStuff::Player>(transform.Position, transform.Rotation, "assets/objects/cat/Maxwell.obj", playerIndex));
+    Transform transform = GetCurrentScene().GetSpawnTransformByIndex(playerIndex);
+    m_players.emplace_back(std::make_unique<PlayerStuff::Player>(transform.Position, transform.Rotation,
+                                                                 "assets/objects/cat/Maxwell.obj", playerIndex));
 
     LOG_DEBUG("Created new player. Player amount: {}", m_players.size());
   }

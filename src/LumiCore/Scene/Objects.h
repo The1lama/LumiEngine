@@ -10,24 +10,6 @@
 #include "../logger/Logger.h"
 
 
-namespace Objects
-{
-  struct Transform
-  {
-    glm::vec3 Position{0};
-    glm::vec3 Rotation{0};
-    glm::vec3 Scale{1};
-  };
-
-  struct GameObject
-  {
-    std::string ModelPath;
-    std::string TexturePath;
-    Objects::Transform Transform;
-  };
-
-} // namespace Objects
-
 namespace PlayerStuff
 {
 
@@ -129,7 +111,7 @@ namespace PlayerStuff
                                 [this]() { GetPlayerInputAction(0, "PitchPlus"); });
       inputManager->BindKeybind(m_keybindDown, LumiCore::InputSystem::EKeyState::Hold,
                                 [this]() { GetPlayerInputAction(0, "PitchMinus"); });
-      
+
       std::cout << this << std::endl;
     }
 

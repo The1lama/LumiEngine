@@ -1,13 +1,35 @@
 #include "Scene.h"
 
+#include "../ComponentTypes.h"
+#include "../ECS/EcsFacade.h"
 #include "../Utility.h"
 #include "../logger/Logger.h"
 
 namespace LumiCore::Scene
 {
 
+  Scene::Scene()
+  {
+    // Initialize ECS and register components that we can use
+    ECS::ECSFacade* m_ecsFacade = ECS::ECSFacade::GetInstance();
+
+    m_ecsFacade->Initialize();
+    m_ecsFacade->RegisterComponent<LumiCore::Transform>();
+    m_ecsFacade->RegisterComponent<LumiCore::ModelComponent>();
+    m_ecsFacade->RegisterComponent<LumiCore::NameComponent>();
+    m_ecsFacade->RegisterComponent<LumiCore::TextureComponent>();
+
+    // Then we should add systems that do stuff
+    // and register signatures that said system uses
+  }
+
+  Scene::~Scene() = default;
+
+
   bool Scene::Initialize(const std::string& newScene)
   {
+    ECS::ECSFacade* m_ecsFacade = ECS::ECSFacade::GetInstance();
+    
     // check if file is correct
     auto fsPath = std::filesystem::path(newScene);
     if (fsPath.extension() != ".lscene") return false; // This have to be done before calling initialize but is here now
@@ -44,7 +66,7 @@ namespace LumiCore::Scene
       }
       else if (prefix == std::string("sp")) // spawn point, is in a vector as there could be more SpawnPoints in scene
       {
-        Objects::Transform transfrom;
+        Transform transfrom;
         std::string stringTransform;
 
         // Get Position
@@ -87,18 +109,32 @@ namespace LumiCore::Scene
       }
       else if (prefix == std::string("e")) // Create Object/ model
       {
-        Objects::GameObject object;
+        // Objects::GameObject object;
+        auto entity = m_ecsFacade->CreateEntity();
 
         // get model path
         std::string filePath;
         ss >> filePath;
-        object.ModelPath = "assets/objects/" + filePath;
+
+        // object.ModelPath = "assets/objects/" + filePath;
+        //
+        // Add the model component to entity
+        m_ecsFacade->AddComponent(entity, ModelComponent{"assets/objects/" + filePath});
 
         // Get texture if there is a specified
         ss >> filePath;
-        if (filePath != "NONE") object.TexturePath = "assets/textures/" + filePath;
+        //
+        // if (filePath != "NONE") object.TexturePath = "assets/textures/" + filePath;
+        //
+        // only add a texture component if we want to override the texture on the model.
+        // else we will not add the texture component to the entity, and on render we handel
+        // if we should override the textures
+        if (filePath != "NONE")
+        {
+          m_ecsFacade->AddComponent(entity, TextureComponent{"assets/textures/" + filePath});
+        }
 
-        Objects::Transform transform;
+        Transform transform;
         std::string posi;
 
         ss >> posi;
@@ -130,8 +166,10 @@ namespace LumiCore::Scene
         }
         transform.Scale = glm::vec3(std::stof(positions[0]), std::stof(positions[1]), std::stof(positions[2]));
 
-        object.Transform = transform;
-        AddToScene(object, objectType);
+
+        m_ecsFacade->AddComponent(entity, transform);
+        // object.Transform = transform;
+        AddToScene(entity, objectType);
       }
     } // while
       // parse through it
@@ -141,28 +179,28 @@ namespace LumiCore::Scene
   {
     return str == "#";
   }
-  void Scene::AddToScene(Objects::GameObject& object, const ObjectType type)
+  void Scene::AddToScene(ECS::Entity entity, const ObjectType type)
   {
     // TODO: Check if object is valid
     switch (type)
     {
     case ObjectType::Static:
-      m_worldStatic.emplace_back(std::move(object));
+      m_worldStatic.emplace_back(entity);
       break;
     case ObjectType::Dynamic:
-      m_worldDynamic.emplace_back(std::move(object));
+      m_worldDynamic.emplace_back(entity);
       break;
     case ObjectType::None:
       break;
     }
   }
 
-  Objects::Transform Scene::GetSpawnTransformByIndex(const int index)
+  Transform Scene::GetSpawnTransformByIndex(const int index)
   {
     return m_spawnPoints[index % m_spawnPoints.size()];
   }
 
-  std::vector<Objects::GameObject>& Scene::GetObjectsInWorldByType(const ObjectType type)
+  std::vector<ECS::Entity>& Scene::GetObjectsInWorldByType(const ObjectType type)
   {
     switch (type)
     {

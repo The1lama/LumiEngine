@@ -1,30 +1,34 @@
 #define STB_IMAGE_IMPLEMENTATION
+
+#include "LumiCore/Camera.h"
+#include "LumiCore/ComponentTypes.h"
+#include "LumiCore/ECS/ECSTypes.h"
+#include "LumiCore/ECS/EcsFacade.h"
+#include "LumiCore/ECS/Systems/RenderSystem.h"
 #include "LumiCore/EngineSettings.h"
 #include "LumiCore/InputSystem.h"
+#include "LumiCore/Mesh.h"
 #include "LumiCore/Model.h"
 #include "LumiCore/ResourceManager.h"
 #include "LumiCore/Scene/Objects.h"
 #include "LumiCore/Scene/Scene.h"
 #include "LumiCore/Scene/SceneManager.h"
+#include "LumiCore/Shader.h"
+#include "LumiCore/Utility.h"
+#include "LumiCore/logger/Logger.h"
 #include "LumiCore/math.h"
-#include "glm/ext/matrix_float3x3.hpp"
-#include "glm/matrix.hpp"
+
+
 #include <GLFW/glfw3.h>
 #include <format>
 #include <glad/glad.h>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <memory>
 #include <string>
 #include <vector>
 
-#include "LumiCore/Camera.h"
-#include "LumiCore/Mesh.h"
-#include "LumiCore/Shader.h"
-#include "LumiCore/Utility.h"
-#include "LumiCore/logger/Logger.h"
-#include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/vector_float3.hpp"
-#include "glm/trigonometric.hpp"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -274,7 +278,8 @@ namespace Pipeline
   // Render the screen
   void RenderPlay(GLFWwindow* window, Shader& shader, const int activePlayers,
                   std::vector<std::unique_ptr<PlayerStuff::Player>>& players, LumiCore::Scene::Scene& scene,
-                  LumiCore::Resources::AssetManagers& resources)
+                  LumiCore::Resources::AssetManagers& resources,
+                  std::shared_ptr<LumiCore::ECS::Systems::RenderSystem> renderSystem)
   {
 
     glClearColor(.1f, .09f, .12f, 1.0f);
@@ -285,10 +290,6 @@ namespace Pipeline
     glFrontFace(GL_CCW);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    constexpr glm::vec3 forward(1.0f, 0.0f, 0.0f);
-    constexpr glm::vec3 up(0.0f, 1.0f, 0.0f);
-    constexpr glm::vec3 right(0.0f, 0.0f, 1.0f);
 
     shader.Use();
     for (int i = 0; i < activePlayers; ++i)
@@ -301,6 +302,7 @@ namespace Pipeline
       shader.SetMatrix4("u_View", player->Camera.GetViewMatrix());
       shader.SetMatrix4("u_Projection", player->Camera.GetProjectionMatrix());
 
+      /*
       for (auto& object : scene.GetObjectsInWorldByType(LumiCore::Scene::ObjectType::Static))
       {
         LumiCore::Model& mesh = resources.Models.Get(object.ModelPath, resources);
@@ -310,7 +312,7 @@ namespace Pipeline
         std::string& texPath = object.TexturePath;
         if (!texPath.empty())
         {
-          auto texId = resources.Textures.Get(texPath, resources).id;
+          auto texId = resources.Textures.Get(texPath, resources).Id;
           shader.SetInt("u_Texture_diffuse1", texId);
           glBindTexture(GL_TEXTURE_2D, texId);
         }
@@ -334,34 +336,37 @@ namespace Pipeline
 
         mesh.Draw(shader);
       }
+      */
+      renderSystem->Render(shader, resources);
 
       // if there are more players render them out
-      if (activePlayers > 1)
-      {
-        Player* other = players[(i + 1) % activePlayers].get();
+      // if (activePlayers > 1)
+      //{
+      //  Player* other = players[(i + 1) % activePlayers].get();
 
-        LumiCore::Model& mesh = resources.Models.Get(other->ModelPath, resources);
-        if (!mesh.IsValid()) continue;
+      //  LumiCore::Model& mesh = resources.Models.Get(other->ModelPath, resources);
+      //  if (!mesh.IsValid()) continue;
 
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, other->Position);
+      //  glm::mat4 model = glm::mat4(1.0f);
+      //  model = glm::translate(model, other->Position);
 
-        model = glm::rotate(model, glm::radians(other->Rotation.x), up);
-        model = glm::rotate(model, glm::radians(other->Rotation.y), right);
-        model = glm::rotate(model, glm::radians(other->Rotation.z), forward);
+      //  model = glm::rotate(model, glm::radians(other->Rotation.x), up);
+      //  model = glm::rotate(model, glm::radians(other->Rotation.y), right);
+      //  model = glm::rotate(model, glm::radians(other->Rotation.z), forward);
 
-        glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
-        shader.SetMatrix3("u_NormalMatrix", normalMatrix);
-        shader.SetMatrix4("u_Model", model);
+      //  glm::mat3 normalMatrix = glm::mat3(glm::transpose(glm::inverse(glm::mat3(model))));
+      //  shader.SetMatrix3("u_NormalMatrix", normalMatrix);
+      //  shader.SetMatrix4("u_Model", model);
 
-        mesh.Draw(shader);
-      }
+      //  mesh.Draw(shader);
+      //}
     }
     glDisable(GL_SCISSOR_TEST);
   };
 
 } // namespace Pipeline
 
+void StartImGUIFrame(bool& showAnotherWindow, LumiCore::Scene::SceneManager& sceneManager, ImGuiIO& io);
 
 int main()
 {
@@ -412,9 +417,18 @@ int main()
     return -2;
   }
 
+
+  auto* ecs = LumiCore::ECS::ECSFacade::GetInstance();
+
+  auto renderSystem = ecs->RegisterSystem<LumiCore::ECS::Systems::RenderSystem>();
+
+  LumiCore::ECS::Signature renderSignature;
+  renderSignature.set(ecs->GetComponentType<LumiCore::Transform>());
+  renderSignature.set(ecs->GetComponentType<LumiCore::ModelComponent>());
+  ecs->SetSystemSignature<LumiCore::ECS::Systems::RenderSystem>(renderSignature);
+
   ///////////////
 
-  std::vector<std::string> sceneList = SceneManager.GetAllScenes();
   bool showAnotherWindow{false};
 
 #pragma region Input System
@@ -430,65 +444,7 @@ int main()
   {
     float runningTime = (float)glfwGetTime();
 
-    // Start ImGui frame
-    ImGui_ImplOpenGL3_NewFrame();
-    ImGui_ImplGlfw_NewFrame();
-    ImGui::NewFrame();
-
-    { // Draw scene switcher
-      ImGui::Begin("LumiEngine");
-      ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-      ImGui::Checkbox("Check Scene List", &showAnotherWindow);
-
-      // Show active players positions
-      for (int i = 0; i < SceneManager.GetAllPlayerCount(); i++)
-      {
-        PlayerStuff::Player& p = SceneManager.GetPlayerByIndex(i);
-        std::string playerInfoText = std::format("Player {}: pos {},{},{}: rot {},{},{}", i + 1, p.Position.x,
-                                                 p.Position.y, p.Position.z, p.Rotation.x, p.Rotation.y, p.Rotation.z);
-        ImGui::Text("%s", playerInfoText.c_str());
-      }
-
-      // switch between split screen or not
-      ImGui::Text("Switch between split screen");
-      ImGui::SameLine();
-      if (ImGui::Button("Toggle"))
-      {
-        SceneManager.GetAllPlayerCount() == 2 ? SceneManager.RemovePlayer(1) : SceneManager.CreateNewPlayer();
-      }
-
-      ImGui::End();
-    }
-
-    if (showAnotherWindow)
-    {
-      ImGui::Begin("Scene Switcher", &showAnotherWindow);
-
-      ImGui::Text("Switch Scene by Pressing on the button");
-      for (int i = 0; i < sceneList.size(); ++i)
-      {
-        std::string name = sceneList[i];
-        if (ImGui::Button(name.c_str()))
-        {
-          // Switch the scene
-          SceneManager.SwitchScene(name);
-
-          // Move the players to spawn location
-          for (int i = 0; i < SceneManager.GetAllPlayerCount(); i++)
-          {
-            Objects::Transform transform = SceneManager.GetCurrentScene().GetSpawnTransformByIndex(i);
-            PlayerStuff::Player player = SceneManager.GetPlayerByIndex(i);
-            player.Position = transform.Position;
-            player.Rotation = transform.Rotation;
-          }
-        }
-      }
-      if (ImGui::Button("Close"))
-      {
-        showAnotherWindow = false;
-      }
-      ImGui::End();
-    }
+    StartImGUIFrame(showAnotherWindow, SceneManager, io);
 
     //////////////////////
     //// Handle input ////
@@ -502,15 +458,15 @@ int main()
     //// Handle Logic ////
     //////////////////////
 
-    Pipeline::GameLogic(SceneManager.GetAllPlayerCount(), SceneManager.GetAllPlayers());
+    Pipeline::GameLogic((int)SceneManager.GetAllPlayerCount(), SceneManager.GetAllPlayers());
 
     //////////////////////////
     //// Handle Rendering ////
     //////////////////////////
 
     /* Render here */
-    Pipeline::RenderPlay(window, shader, SceneManager.GetAllPlayerCount(), SceneManager.GetAllPlayers(),
-                         SceneManager.GetCurrentScene(), resources);
+    Pipeline::RenderPlay(window, shader, (int)SceneManager.GetAllPlayerCount(), SceneManager.GetAllPlayers(),
+                         SceneManager.GetCurrentScene(), resources, renderSystem);
 
     // End ImGui frame and draws the ImGui frames
     ImGui::Render();
@@ -530,3 +486,70 @@ int main()
   glfwTerminate();
   return 0;
 }
+
+void StartImGUIFrame(bool& showAnotherWindow, LumiCore::Scene::SceneManager& sceneManager, ImGuiIO& io)
+{
+  // Start ImGui frame
+  ImGui_ImplOpenGL3_NewFrame();
+  ImGui_ImplGlfw_NewFrame();
+  ImGui::NewFrame();
+
+  { // Draw scene switcher
+    ImGui::Begin("LumiEngine");
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+    ImGui::Checkbox("Check Scene List", &showAnotherWindow);
+
+    // Show active players positions
+    for (int i = 0; i < sceneManager.GetAllPlayerCount(); i++)
+    {
+      PlayerStuff::Player& p = sceneManager.GetPlayerByIndex(i);
+      std::string playerInfoText = std::format("Player {}: pos {},{},{}: rot {},{},{}", i + 1, p.Position.x,
+                                               p.Position.y, p.Position.z, p.Rotation.x, p.Rotation.y, p.Rotation.z);
+      ImGui::Text("%s", playerInfoText.c_str());
+    }
+
+    // switch between split screen or not
+    ImGui::Text("Switch between split screen");
+    ImGui::SameLine();
+    if (ImGui::Button("Toggle"))
+    {
+      sceneManager.GetAllPlayerCount() == 2 ? sceneManager.RemovePlayer(1) : sceneManager.CreateNewPlayer();
+    }
+
+    ImGui::End();
+  }
+
+  if (showAnotherWindow)
+  {
+    std::vector<std::string> sceneList = sceneManager.GetAllScenes();
+
+    ImGui::Begin("Scene Switcher", &showAnotherWindow);
+
+    ImGui::Text("Switch Scene by Pressing on the button");
+    for (int i = 0; i < sceneList.size(); ++i)
+    {
+      std::string name = sceneList[i];
+      if (ImGui::Button(name.c_str()))
+      {
+        // Switch the scene
+        sceneManager.SwitchScene(name);
+
+        // Move the players to spawn location
+        for (int i = 0; i < sceneManager.GetAllPlayerCount(); i++)
+        {
+          LumiCore::Transform transform = sceneManager.GetCurrentScene().GetSpawnTransformByIndex(i);
+          PlayerStuff::Player& player = sceneManager.GetPlayerByIndex(i);
+          player.Position = transform.Position;
+          player.Rotation = transform.Rotation;
+        }
+      }
+    }
+    if (ImGui::Button("Close"))
+    {
+      showAnotherWindow = false;
+    }
+    ImGui::End();
+  }
+}
+
+

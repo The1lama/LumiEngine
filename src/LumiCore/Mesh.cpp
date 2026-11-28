@@ -1,5 +1,6 @@
 #include "Mesh.h"
 
+#include "ComponentTypes.h"
 #include "Shader.h"
 #include "logger/Logger.h"
 #include <cstddef>
@@ -12,8 +13,8 @@ namespace LumiCore
 
   Mesh::Mesh(const LumiCore::MeshData& data, const GLenum renderType)
   {
-    m_indicies = std::move(data.indices);
-    m_textures = std::move(data.textures);
+    m_indicies = std::move(data.Indices);
+    m_textures = std::move(data.Textures);
     m_renderType = renderType;
 
     CreateMesh(data);
@@ -28,9 +29,9 @@ namespace LumiCore
   // the noexcept tells the compiler that this funcion is not going to throw exceptions
   Mesh::Mesh(Mesh&& other) noexcept
   {
-    m_VAO = std::exchange(other.m_VAO, 0);
-    m_VBO = std::exchange(other.m_VBO, 0);
-    m_EBO = std::exchange(other.m_EBO, 0);
+    m_vao = std::exchange(other.m_vao, 0);
+    m_vbo = std::exchange(other.m_vbo, 0);
+    m_ebo = std::exchange(other.m_ebo, 0);
 
     m_indicies = std::move(other.m_indicies);
     m_textures = std::move(other.m_textures);
@@ -41,9 +42,9 @@ namespace LumiCore
   {
     if (this != &other)
     {
-      m_VAO = std::exchange(other.m_VAO, 0);
-      m_VBO = std::exchange(other.m_VBO, 0);
-      m_EBO = std::exchange(other.m_EBO, 0);
+      m_vao = std::exchange(other.m_vao, 0);
+      m_vbo = std::exchange(other.m_vbo, 0);
+      m_ebo = std::exchange(other.m_ebo, 0);
 
       m_indicies = std::move(other.m_indicies);
       m_textures = std::move(other.m_textures);
@@ -55,9 +56,9 @@ namespace LumiCore
 
   void Mesh::Release()
   {
-    if (m_VBO) glDeleteBuffers(1, &m_VBO);
-    if (m_VAO) glDeleteVertexArrays(1, &m_VAO);
-    if (m_EBO) glDeleteBuffers(1, &m_EBO);
+    if (m_vbo) glDeleteBuffers(1, &m_vbo);
+    if (m_vao) glDeleteVertexArrays(1, &m_vao);
+    if (m_ebo) glDeleteBuffers(1, &m_ebo);
   }
 
   void Mesh::CreateMesh(const LumiCore::MeshData& data)
@@ -65,18 +66,18 @@ namespace LumiCore
     constexpr size_t vertexSize = sizeof(Vertex);
 
     // Create VAO
-    glGenVertexArrays(1, &m_VAO);
-    glBindVertexArray(m_VAO);
+    glGenVertexArrays(1, &m_vao);
+    glBindVertexArray(m_vao);
 
     // Create VBO
-    glGenBuffers(1, &m_VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, m_VBO);
-    glBufferData(GL_ARRAY_BUFFER, data.vertecies.size() * vertexSize, data.vertecies.data(), GL_STATIC_DRAW);
+    glGenBuffers(1, &m_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+    glBufferData(GL_ARRAY_BUFFER, data.Vertecies.size() * vertexSize, data.Vertecies.data(), GL_STATIC_DRAW);
 
     // Create EBO
-    glGenBuffers(1, &m_EBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.indices.size() * sizeof(unsigned int), data.indices.data(),
+    glGenBuffers(1, &m_ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.Indices.size() * sizeof(unsigned int), data.Indices.data(),
                  GL_STATIC_DRAW);
 
     constexpr GLsizei stride = sizeof(Vertex);
@@ -101,7 +102,7 @@ namespace LumiCore
 
   bool Mesh::IsValid() const
   {
-    return glIsVertexArray(m_VAO);
+    return glIsVertexArray(m_vao);
   }
 
 
@@ -109,7 +110,7 @@ namespace LumiCore
   {
     if (!IsFunctional())
     {
-      LOG_CRITICAL("Could not load in mesh: {}", m_VAO);
+      LOG_CRITICAL("Could not load in mesh: {}", m_vao);
       return;
     }
 
@@ -128,19 +129,19 @@ namespace LumiCore
         glActiveTexture(GL_TEXTURE0 + i);
 
         std::string number;
-        std::string name = m_textures[i].type;
+        std::string name = m_textures[i].Type;
         if (name == "diffuse") number = std::to_string(diffuseNr++);
         else if (name == "specular") number = std::to_string(specularNr++);
         else if (name == "normal") number = std::to_string(normalNr++);
 
         shader.SetInt(("u_Texture_" + name + number), (int)i);
-        glBindTexture(GL_TEXTURE_2D, m_textures[i].id);
+        glBindTexture(GL_TEXTURE_2D, m_textures[i].Id);
       }
     }
     glActiveTexture(GL_TEXTURE0); // Reset the active texture
 
     // Draw mesh
-    glBindVertexArray(m_VAO);
+    glBindVertexArray(m_vao);
     glDrawElements(m_renderType, static_cast<GLsizei>(m_indicies.size()), GL_UNSIGNED_INT, nullptr);
 
     // unbind the VAO
